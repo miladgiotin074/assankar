@@ -1588,6 +1588,11 @@ select.field {
   flex: 1;
   flex-direction: column;
   gap: 0.85rem;
+  overflow: auto;
+}
+
+.pick-scroll > * {
+  flex-shrink: 0;
 }
 
 .pick-rail {
@@ -1599,15 +1604,8 @@ select.field {
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scroll-snap-type: x mandatory;
-  scroll-padding-inline: 11%;
   padding-block: 0.2rem 0.35rem;
   scrollbar-width: none;
-}
-
-.pick-rail::before,
-.pick-rail::after {
-  content: "";
-  flex: 0 0 11%;
 }
 
 .pick-rail::-webkit-scrollbar {
@@ -1616,9 +1614,9 @@ select.field {
 
 .pick-card {
   display: flex;
-  flex: 0 0 78%;
+  flex: 0 0 100%;
   min-width: 0;
-  max-width: 78%;
+  max-width: 100%;
   scroll-snap-align: center;
   scroll-snap-stop: always;
   flex-direction: column;
@@ -1638,9 +1636,12 @@ select.field {
 }
 
 .pick-card strong {
+  display: block;
+  min-height: 2.8rem;
   padding-inline: 0.35rem;
   font-size: 1rem;
   font-weight: 800;
+  line-height: 1.4;
 }
 
 .pick-card small {
@@ -1652,7 +1653,8 @@ select.field {
 
 .pick-photo {
   display: grid;
-  aspect-ratio: 16 / 10;
+  flex: none;
+  aspect-ratio: 16 / 9;
   place-items: center;
   overflow: hidden;
   border-radius: 0.95rem;
