@@ -946,10 +946,11 @@ input[type="range"] {
 }
 
 .app-device.is-form {
-  height: 100dvh;
-  max-height: 100dvh;
+  height: 100svh;
+  max-height: 100svh;
   overflow: hidden;
   background: #f3f7fb;
+  overscroll-behavior: none;
 }
 
 .app-device.is-form .app-bar {
@@ -957,9 +958,18 @@ input[type="range"] {
 }
 
 .app-device.is-form .app-main {
-  overflow: auto;
+  overflow-x: clip;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: transparent;
   scrollbar-width: none;
+}
+
+html:has(.app-device.is-form),
+body:has(.app-device.is-form) {
+  height: 100%;
+  overflow: hidden;
+  background-color: #f3f7fb;
 }
 
 .app-device.is-form .app-main::-webkit-scrollbar {
@@ -2360,10 +2370,11 @@ select.field {
 
 .pay-screen {
   display: flex;
-  min-height: 0;
-  flex: 1;
+  width: 100%;
+  min-width: 0;
   flex-direction: column;
   gap: 1.05rem;
+  padding-bottom: 0.35rem;
 }
 
 .pay-intro {
@@ -2406,7 +2417,9 @@ select.field {
 
 .bank-stage {
   perspective: 1200px;
-  padding: 0.15rem 0.05rem 0.05rem;
+  overflow: clip;
+  padding: 0.15rem 0.05rem 0.35rem;
+  contain: layout paint;
 }
 
 .bank-flip {
@@ -2418,8 +2431,10 @@ select.field {
   border: 0;
   background: transparent;
   transform-style: preserve-3d;
+  transform: translateZ(0);
   cursor: pointer;
   transition: transform 0.25s ease;
+  will-change: transform;
 }
 
 .bank-flip:not(.is-spin):hover {
@@ -2703,8 +2718,8 @@ select.field {
 
 .pay-form {
   display: flex;
-  min-height: 0;
-  flex: 1;
+  width: 100%;
+  min-width: 0;
   flex-direction: column;
   gap: 0.9rem;
 }
@@ -2994,7 +3009,7 @@ select.field {
   }
 
   .app-device.is-form {
-    height: min(52rem, calc(100dvh - 3rem));
-    max-height: min(52rem, calc(100dvh - 3rem));
+    height: min(52rem, calc(100svh - 3rem));
+    max-height: min(52rem, calc(100svh - 3rem));
   }
 }
