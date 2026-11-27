@@ -613,10 +613,43 @@ function PayLedger({
         </strong>
       </footer>
       <div className="dash-ledger-ready">
-        <p className="dash-ledger-ready-title">محصولتان ارسال شده است</p>
-        <p>این مبلغ آمادهٔ واریز به حساب شماست. برای تأیید واریز به پشتیبانی پیام دهید.</p>
-        <a href={`https://t.me/${site.telegramUser}`} target="_blank" rel="noopener noreferrer">
+        <div className="dash-ledger-ready-head">
+          <span className="dash-ledger-ready-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M3.5 16.5h10.2V7.8H3.5zM13.7 11.2h3.4l2.4 2.6v2.7h-5.8z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinejoin="round"
+              />
+              <circle cx="7.2" cy="17.8" r="1.35" fill="none" stroke="currentColor" strokeWidth="1.7" />
+              <circle cx="16.8" cy="17.8" r="1.35" fill="none" stroke="currentColor" strokeWidth="1.7" />
+            </svg>
+          </span>
+          <div>
+            <p className="dash-ledger-ready-kicker">وضعیت ارسال</p>
+            <strong>محصولتان ارسال شده است</strong>
+          </div>
+        </div>
+        <p className="dash-ledger-ready-text">
+          این مبلغ آمادهٔ واریز به حساب شماست. برای تأیید واریز به پشتیبانی پیام دهید.
+        </p>
+        <div className="dash-ledger-ready-pay">
+          <span>مبلغ آمادهٔ واریز</span>
+          <strong className="dash-ledger-sum">
+            <b>{faNum(balance)}</b>
+            <small>تومان</small>
+          </strong>
+        </div>
+        <a
+          className="dash-ledger-ready-cta"
+          href={`https://t.me/${site.telegramUser}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           پیام به پشتیبانی
+          <span aria-hidden="true">‹</span>
         </a>
       </div>
     </section>
