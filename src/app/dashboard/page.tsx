@@ -36,25 +36,8 @@ function AccountTools() {
         </button>
       </form>
       <form action={logout}>
-        <button type="submit" className="dash-logout">
-          <span>خروج</span>
-          <svg viewBox="0 0 24 24" className="size-4" aria-hidden="true">
-            <path
-              d="M10 7V5.5A1.5 1.5 0 0 1 11.5 4h6A1.5 1.5 0 0 1 19 5.5v13a1.5 1.5 0 0 1-1.5 1.5h-6A1.5 1.5 0 0 1 10 18.5V17"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-            />
-            <path
-              d="M13 12H4m0 0 2.5-2.5M4 12l2.5 2.5"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+        <button type="submit" className="dash-logout" aria-label="خروج">
+          خروج
         </button>
       </form>
     </div>
