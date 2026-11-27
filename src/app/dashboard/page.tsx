@@ -5,7 +5,7 @@ import { AppShell } from "@/components/app-shell";
 import { logout, resetAccount } from "@/app/account/actions";
 import Link from "next/link";
 import { readChoices, type ChoiceItem } from "@/lib/catalog";
-import { faDigits } from "@/lib/format";
+import { faDigits, toman } from "@/lib/format";
 import { hasProfile } from "@/lib/profile";
 import { readSession } from "@/lib/session";
 import { heroFlow, site } from "@/lib/site";
@@ -136,18 +136,28 @@ async function DashboardHome() {
         {chosen ? (
           <section className="dash-picks" aria-label="محصولات انتخاب‌شده">
             <div className="dash-picks-head">
-              <h2>محصولات انتخاب‌شده</h2>
-              <Link href="/dashboard/products">ویرایش</Link>
+              <div>
+                <p className="dash-picks-kicker">انتخاب شما</p>
+                <h2>محصولات انتخاب‌شده</h2>
+                <p className="dash-picks-count">
+                  {faDigits(String(choices.length))} محصول با تعداد بسته ثبت شده است.
+                </p>
+              </div>
+              <Link href="/dashboard/products" className="dash-picks-edit">
+                ویرایش
+              </Link>
             </div>
             <ul>
               {choices.map((item, index) => (
                 <li key={item.productId}>
-                  <span className="dash-picks-no" aria-hidden="true">
-                    {faDigits(String(index + 1))}
+                  <span className="dash-picks-thumb" aria-hidden="true">
+                    {item.image ? <img src={item.image} alt="" /> : <span>{faDigits(String(index + 1))}</span>}
+                    <em>{faDigits(String(index + 1))}</em>
                   </span>
                   <div>
                     <strong>{item.title}</strong>
                     <p>{item.label}</p>
+                    <b>{toman(item.amount)}</b>
                   </div>
                 </li>
               ))}

@@ -15,8 +15,10 @@ export type CatalogCard = {
 export type ChoiceItem = {
   productId: string;
   title: string;
+  image: string;
   quantity: number;
   label: string;
+  amount: number;
 };
 
 export const maxChoices = 3;

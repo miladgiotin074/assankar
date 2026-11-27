@@ -222,7 +222,14 @@ export async function readChoices(phone: string): Promise<ChoiceItem[]> {
       const item = await productById(line.productId);
       const row = item?.wages.find((wage) => wage.packs === line.quantity);
       if (!item || !row) return null;
-      return { productId: item.id, title: item.title, quantity: row.packs, label: row.label } satisfies ChoiceItem;
+      return {
+        productId: item.id,
+        title: item.title,
+        image: item.image,
+        quantity: row.packs,
+        label: row.label,
+        amount: row.amount,
+      } satisfies ChoiceItem;
     }),
   );
   return resolved.filter((item): item is ChoiceItem => Boolean(item));

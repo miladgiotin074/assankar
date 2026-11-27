@@ -28,9 +28,11 @@ export function ProductPicker({
   const [broken, setBroken] = useState<Record<string, true>>({});
   const [localError, setLocalError] = useState("");
   const railRef = useRef<HTMLDivElement>(null);
+  const basketRef = useRef<HTMLElement>(null);
   const openedOn = useRef(selected);
   const product = products.find((item) => item.id === selected) ?? products[0];
   const inBasket = basket.find((item) => item.productId === product?.id);
+  const productIndex = Math.max(0, products.findIndex((item) => item.id === product?.id));
 
   useEffect(() => {
     const rail = railRef.current;
@@ -109,6 +111,9 @@ export function ProductPicker({
       return;
     }
     setBasket((current) => [...current, { productId: product.id, quantity: wage.packs }]);
+    requestAnimationFrame(() => {
+      basketRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
   }
 
   function removeLine(productId: string) {
@@ -120,15 +125,23 @@ export function ProductPicker({
     const item = products.find((entry) => entry.id === line.productId);
     const row = item?.wages.find((wageRow) => wageRow.packs === line.quantity);
     if (!item || !row) return [];
-    return [{ ...line, title: item.title, label: row.label, amount: row.amount }];
+    return [{ ...line, title: item.title, image: item.image, label: row.label, amount: row.amount }];
   });
 
   return (
     <form action={action} className="pick-form">
       <div className="pick-scroll">
-        <p className="profile-lead">
-          محصول را بکشید تا وسط بیاید، تعداد بسته را انتخاب کنید و تا سه محصول به فهرست اضافه کنید.
-        </p>
+        <div className="pick-intro">
+          <p className="pick-lead">محصول را بکشید، تعداد بسته را بزنید و تا سه مورد اضافه کنید.</p>
+          <div className="pick-slots" aria-label={`ظرفیت انتخاب ${faDigits(String(basket.length))} از ${faDigits(String(maxChoices))}`}>
+            {Array.from({ length: maxChoices }, (_, index) => (
+              <span key={index} className={index < basket.length ? "is-on" : undefined} />
+            ))}
+            <strong>
+              {faDigits(String(basket.length))} از {faDigits(String(maxChoices))}
+            </strong>
+          </div>
+        </div>
 
         <div
           ref={railRef}
@@ -155,7 +168,7 @@ export function ProductPicker({
                 key={item.id}
                 type="button"
                 data-id={item.id}
-                className={on ? "pick-card is-on" : "pick-card"}
+                className={on ? (picked ? "pick-card is-on is-picked" : "pick-card is-on") : picked ? "pick-card is-picked" : "pick-card"}
                 role="option"
                 aria-selected={on}
                 onClick={() => focusCard(item.id)}
@@ -170,20 +183,23 @@ export function ProductPicker({
                   ) : (
                     <PhotoFallback />
                   )}
+                  {picked ? <span className="pick-badge">انتخاب شد</span> : null}
                 </span>
-                <strong>{item.title}</strong>
-                <small>{picked ? "در فهرست انتخاب" : item.wages.length ? "جدول دستمزد" : "دستمزد بعداً ثبت می‌شود"}</small>
+                <span className="pick-card-meta">
+                  <strong>{item.title}</strong>
+                  <small>{picked ? "در فهرست شماست" : "بکشید و تعداد را انتخاب کنید"}</small>
+                </span>
               </button>
             );
           })}
         </div>
 
         <div className="pick-dots" aria-hidden="true">
-          {products.map((item) => (
+          {products.map((item, index) => (
             <button
               key={item.id}
               type="button"
-              className={item.id === product.id ? "is-on" : undefined}
+              className={index === productIndex ? "is-on" : undefined}
               onClick={() => focusCard(item.id)}
             />
           ))}
@@ -192,7 +208,10 @@ export function ProductPicker({
         {product.note ? <p className="pick-note">{product.note}</p> : null}
 
         <section className="pick-panel" aria-label="جدول دستمزد">
-          <h2>تعداد و دستمزد</h2>
+          <div className="pick-panel-head">
+            <h2>تعداد و دستمزد</h2>
+            <span>{product.title}</span>
+          </div>
           {product.wages.length ? (
             <div className="pick-wages" role="radiogroup" aria-label="تعداد بسته">
               {product.wages.map((row) => {
@@ -206,8 +225,11 @@ export function ProductPicker({
                     aria-checked={on}
                     onClick={() => setWage(row.packs)}
                   >
-                    <span>{row.label}</span>
-                    <strong>{toman(row.amount)}</strong>
+                    <span className="pick-wage-mark" aria-hidden="true" />
+                    <span className="pick-wage-copy">
+                      <span>{row.label}</span>
+                      <strong>{toman(row.amount)}</strong>
+                    </span>
                   </button>
                 );
               })}
@@ -222,38 +244,57 @@ export function ProductPicker({
             onClick={toggleCurrent}
             disabled={!wage}
           >
-            {inBasket ? "حذف از فهرست" : `افزودن به فهرست (${faDigits(String(basket.length))}/${faDigits(String(maxChoices))})`}
+            {inBasket ? "حذف از فهرست" : "افزودن به فهرست"}
           </button>
         </section>
 
-        <section className="pick-basket" aria-label="محصولات انتخاب‌شده">
+        <section ref={basketRef} className={basketCards.length ? "pick-basket is-filled" : "pick-basket"} aria-label="محصولات انتخاب‌شده">
           <div className="pick-basket-head">
-            <h2>انتخاب شما</h2>
-            <span>{faDigits(String(basketCards.length))} از {faDigits(String(maxChoices))}</span>
+            <div>
+              <h2>فهرست انتخاب</h2>
+              <p>برای ادامه حداقل یک محصول لازم است.</p>
+            </div>
+            <span>
+              {faDigits(String(basketCards.length))}/{faDigits(String(maxChoices))}
+            </span>
           </div>
           {basketCards.length ? (
             <ul>
-              {basketCards.map((item) => (
+              {basketCards.map((item, index) => (
                 <li key={item.productId}>
+                  <span className="pick-basket-thumb" aria-hidden="true">
+                    {item.image && !broken[item.productId] ? (
+                      <img
+                        src={item.image}
+                        alt=""
+                        onError={() => setBroken((current) => ({ ...current, [item.productId]: true }))}
+                      />
+                    ) : (
+                      <PhotoFallback />
+                    )}
+                    <em>{faDigits(String(index + 1))}</em>
+                  </span>
                   <div>
                     <strong>{item.title}</strong>
-                    <small>
-                      {item.label} · {toman(item.amount)}
-                    </small>
+                    <small>{item.label}</small>
+                    <b>{toman(item.amount)}</b>
                   </div>
-                  <button type="button" onClick={() => removeLine(item.productId)}>
+                  <button type="button" aria-label={`حذف ${item.title}`} onClick={() => removeLine(item.productId)}>
                     حذف
                   </button>
                 </li>
               ))}
             </ul>
           ) : (
-            <p>هنوز محصولی اضافه نشده است.</p>
+            <div className="pick-basket-empty">
+              <span aria-hidden="true" />
+              <p>هنوز چیزی اضافه نشده. محصول را بکشید و «افزودن به فهرست» را بزنید.</p>
+            </div>
           )}
         </section>
 
         {error ? (
-          <p className="text-sm font-bold leading-7 text-pine" role="alert">
+          <p className="pick-alert" role="alert">
             {error}
           </p>
         ) : null}
@@ -261,7 +302,7 @@ export function ProductPicker({
 
       <input type="hidden" name="picks" value={JSON.stringify(basket)} />
       <button className="btn w-full" type="submit" disabled={pending || !basket.length}>
-        {pending ? "در حال ثبت" : basket.length ? "ثبت انتخاب و ادامه" : "حداقل یک محصول انتخاب کنید"}
+        {pending ? "در حال ثبت" : basket.length ? `ثبت ${faDigits(String(basket.length))} محصول و ادامه` : "حداقل یک محصول انتخاب کنید"}
       </button>
     </form>
   );

@@ -1631,6 +1631,47 @@ select.field {
   height: 0;
 }
 
+.pick-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.pick-lead {
+  color: #4e6578;
+  font-size: 0.92rem;
+  line-height: 1.85;
+}
+
+.pick-slots {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid #e3edf5;
+  border-radius: 999px;
+  background: #fff;
+}
+
+.pick-slots span {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 999px;
+  background: #d7e3ee;
+}
+
+.pick-slots span.is-on {
+  background: #18a56f;
+  box-shadow: 0 0 0 4px rgba(24, 165, 111, 0.16);
+}
+
+.pick-slots strong {
+  margin-inline-start: auto;
+  color: #0c4d86;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
 .pick-card {
   display: flex;
   flex: 0 0 100%;
@@ -1639,45 +1680,68 @@ select.field {
   scroll-snap-align: center;
   scroll-snap-stop: always;
   flex-direction: column;
-  gap: 0.35rem;
-  padding: 0.55rem 0.55rem 0.8rem;
+  gap: 0.55rem;
+  padding: 0.55rem;
   border: 1px solid #e3edf5;
-  border-radius: 1.25rem;
+  border-radius: 1.35rem;
   background: #fff;
   color: #10293f;
   text-align: start;
-  box-shadow: 0 8px 20px rgba(16, 41, 63, 0.04);
+  box-shadow: 0 10px 24px rgba(16, 41, 63, 0.05);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
 }
 
 .pick-card.is-on {
   border-color: #f0a23a;
-  box-shadow: 0 12px 26px rgba(212, 114, 10, 0.18);
+  box-shadow: 0 14px 28px rgba(212, 114, 10, 0.18);
+  transform: translateY(-1px);
+}
+
+.pick-card.is-picked {
+  border-color: #18a56f;
+}
+
+.pick-card.is-on.is-picked {
+  border-color: #f0a23a;
+}
+
+.pick-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  padding: 0.15rem 0.4rem 0.35rem;
 }
 
 .pick-card strong {
   display: block;
-  min-height: 2.8rem;
-  padding-inline: 0.35rem;
+  min-height: 2.6rem;
   font-size: 1rem;
   font-weight: 800;
   line-height: 1.4;
 }
 
 .pick-card small {
-  padding-inline: 0.35rem;
-  color: #0b6e50;
+  color: #4e6578;
   font-size: 0.78rem;
   font-weight: 700;
 }
 
+.pick-card.is-picked small {
+  color: #0b7a52;
+}
+
 .pick-photo {
+  position: relative;
   display: grid;
   flex: none;
   aspect-ratio: 16 / 9;
   place-items: center;
   overflow: hidden;
-  border-radius: 0.95rem;
-  background: #fff;
+  border-radius: 1.05rem;
+  background: #eef5fb;
   color: #0c4d86;
 }
 
@@ -1688,8 +1752,23 @@ select.field {
   object-position: center;
 }
 
+.pick-badge {
+  position: absolute;
+  top: 0.7rem;
+  inset-inline-start: 0.7rem;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(11, 122, 82, 0.94);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  box-shadow: 0 8px 18px rgba(11, 122, 82, 0.28);
+}
+
 .pick-photo svg,
-.pick-empty-mark svg {
+.pick-empty-mark svg,
+.pick-basket-thumb svg,
+.dash-picks-thumb svg {
   width: 2.4rem;
   height: 2.4rem;
 }
@@ -1715,15 +1794,29 @@ select.field {
 .pick-panel {
   min-width: 0;
   max-width: 100%;
-  padding: 0.9rem;
+  padding: 0.95rem;
   border: 1px solid #e3edf5;
-  border-radius: 1.15rem;
+  border-radius: 1.25rem;
   background: #fff;
 }
 
+.pick-panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.pick-panel-head h2,
 .pick-panel h2 {
   font-size: 0.98rem;
   font-weight: 800;
+}
+
+.pick-panel-head span {
+  color: #4e6578;
+  font-size: 0.78rem;
+  font-weight: 700;
 }
 
 .pick-panel p {
@@ -1854,16 +1947,37 @@ select.field {
   display: grid;
   min-width: 0;
   max-width: 100%;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 0.75rem;
   width: 100%;
-  padding: 0.75rem 0.8rem;
+  padding: 0.8rem 0.85rem;
   border: 1px solid #e3edf5;
-  border-radius: 0.9rem;
+  border-radius: 1rem;
   background: #f7fbfe;
   color: #10293f;
   text-align: start;
+}
+
+.pick-wage-mark {
+  width: 1.05rem;
+  height: 1.05rem;
+  border: 2px solid #c7d7e6;
+  border-radius: 999px;
+  background: #fff;
+}
+
+.pick-wages button.is-on .pick-wage-mark {
+  border-color: #d4720a;
+  background: radial-gradient(circle at center, #d4720a 0 38%, #fff 42%);
+}
+
+.pick-wage-copy {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
 }
 
 .pick-wages button strong {
@@ -1880,32 +1994,47 @@ select.field {
 
 .pick-add {
   width: 100%;
-  margin-top: 0.85rem;
-  height: 2.7rem;
-  border: 1px solid #f0a23a;
-  border-radius: 0.95rem;
-  background: #fff8ef;
-  color: #9a5408;
-  font-size: 0.92rem;
+  margin-top: 0.9rem;
+  height: 2.85rem;
+  border: 0;
+  border-radius: 1rem;
+  background: linear-gradient(145deg, #18a56f 0%, #0b7a52 100%);
+  color: #fff;
+  font-size: 0.94rem;
   font-weight: 800;
+  box-shadow: 0 10px 22px rgba(11, 122, 82, 0.24);
+}
+
+.pick-add:active {
+  transform: translateY(1px);
 }
 
 .pick-add.is-on {
-  border-color: #d7e3ee;
-  background: #f7fbfe;
+  background: #eef5fb;
   color: #0c4d86;
+  box-shadow: none;
+}
+
+.pick-add:disabled {
+  opacity: 0.45;
+  box-shadow: none;
 }
 
 .pick-basket {
-  padding: 0.9rem;
+  padding: 0.95rem;
   border: 1px solid #e3edf5;
-  border-radius: 1.15rem;
+  border-radius: 1.25rem;
   background: #fff;
+}
+
+.pick-basket.is-filled {
+  border-color: #cfe8dc;
+  background: linear-gradient(180deg, #f4fbf7 0%, #fff 42%);
 }
 
 .pick-basket-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
 }
@@ -1915,16 +2044,50 @@ select.field {
   font-weight: 800;
 }
 
-.pick-basket-head span {
+.pick-basket-head p {
+  margin-top: 0.18rem;
   color: #4e6578;
-  font-size: 0.82rem;
-  font-weight: 700;
+  font-size: 0.78rem;
+  line-height: 1.7;
 }
 
-.pick-basket > p {
-  margin-top: 0.7rem;
+.pick-basket-head span {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  min-width: 2.6rem;
+  height: 2rem;
+  padding-inline: 0.55rem;
+  border-radius: 999px;
+  background: #e7f6f0;
+  color: #0b7a52;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.pick-basket-empty {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.7rem;
+  align-items: start;
+  margin-top: 0.85rem;
+  padding: 0.85rem 0.9rem;
+  border: 1px dashed #d7e3ee;
+  border-radius: 1rem;
+  background: #f7fbfe;
+}
+
+.pick-basket-empty span {
+  width: 0.7rem;
+  height: 0.7rem;
+  margin-top: 0.35rem;
+  border-radius: 999px;
+  background: #d7e3ee;
+}
+
+.pick-basket-empty p {
   color: #4e6578;
-  font-size: 0.88rem;
+  font-size: 0.86rem;
   line-height: 1.8;
 }
 
@@ -1932,40 +2095,84 @@ select.field {
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
-  margin-top: 0.75rem;
+  margin-top: 0.85rem;
   padding: 0;
   list-style: none;
 }
 
 .pick-basket li {
-  display: flex;
+  display: grid;
+  grid-template-columns: 3.4rem minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.75rem 0.8rem;
-  border: 1px solid #e3edf5;
-  border-radius: 0.95rem;
-  background: #f7fbfe;
+  padding: 0.55rem 0.55rem 0.55rem 0.55rem;
+  border: 1px solid #dceee5;
+  border-radius: 1.05rem;
+  background: #fff;
+}
+
+.pick-basket-thumb {
+  position: relative;
+  display: grid;
+  width: 3.4rem;
+  height: 3.4rem;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 0.9rem;
+  background: #eef5fb;
+  color: #0c4d86;
+}
+
+.pick-basket-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pick-basket-thumb em {
+  position: absolute;
+  inset-inline-start: 0.25rem;
+  bottom: 0.25rem;
+  display: grid;
+  width: 1.15rem;
+  height: 1.15rem;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(12, 77, 134, 0.92);
+  color: #fff;
+  font-size: 0.65rem;
+  font-style: normal;
+  font-weight: 800;
 }
 
 .pick-basket strong {
   display: block;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   font-weight: 800;
+  line-height: 1.45;
 }
 
 .pick-basket small {
   display: block;
-  margin-top: 0.2rem;
+  margin-top: 0.12rem;
   color: #4e6578;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 700;
+}
+
+.pick-basket b {
+  display: block;
+  margin-top: 0.22rem;
+  color: #0c4d86;
+  font-size: 0.8rem;
+  font-weight: 800;
 }
 
 .pick-basket button {
   flex: none;
+  align-self: center;
   height: 2.1rem;
-  padding-inline: 0.75rem;
+  padding-inline: 0.8rem;
   border-radius: 999px;
   background: #eef5fb;
   color: #0c4d86;
@@ -1973,60 +2180,119 @@ select.field {
   font-weight: 800;
 }
 
+.pick-alert {
+  padding: 0.75rem 0.85rem;
+  border: 1px solid #f0d3b0;
+  border-radius: 0.95rem;
+  background: #fff8ef;
+  color: #9a5408;
+  font-size: 0.86rem;
+  font-weight: 800;
+  line-height: 1.7;
+}
+
 .dash-picks {
-  padding: 0.95rem 1rem 0.85rem;
+  padding: 1rem;
   border: 1px solid #e3edf5;
-  border-radius: 1.2rem;
-  background: #fff;
+  border-radius: 1.3rem;
+  background:
+    linear-gradient(180deg, rgba(255, 248, 239, 0.9), transparent 46%),
+    #fff;
+  box-shadow: 0 10px 24px rgba(16, 41, 63, 0.04);
 }
 
 .dash-picks-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.85rem;
 }
 
-.dash-picks-head h2 {
-  font-size: 1.02rem;
+.dash-picks-kicker {
+  color: #9a5408;
+  font-size: 0.75rem;
   font-weight: 800;
 }
 
-.dash-picks-head a {
-  color: #0c4d86;
-  font-size: 0.84rem;
+.dash-picks-head h2 {
+  margin-top: 0.18rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.dash-picks-count {
+  margin-top: 0.25rem;
+  color: #4e6578;
+  font-size: 0.82rem;
+  line-height: 1.7;
+}
+
+.dash-picks-edit {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  height: 2.15rem;
+  padding-inline: 0.9rem;
+  border-radius: 999px;
+  background: #0c4d86;
+  color: #fff;
+  font-size: 0.82rem;
   font-weight: 800;
 }
 
 .dash-picks ul {
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
-  margin-top: 0.8rem;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
   padding: 0;
   list-style: none;
 }
 
 .dash-picks li {
   display: grid;
-  grid-template-columns: 1.85rem 1fr;
-  gap: 0.7rem;
-  align-items: start;
-  padding: 0.75rem 0.8rem;
+  grid-template-columns: 3.55rem minmax(0, 1fr);
+  gap: 0.8rem;
+  align-items: center;
+  padding: 0.55rem;
   border: 1px solid #e8f0f6;
-  border-radius: 0.95rem;
+  border-radius: 1.1rem;
   background: #f7fbfe;
 }
 
-.dash-picks-no {
+.dash-picks-thumb {
+  position: relative;
   display: grid;
-  width: 1.85rem;
-  height: 1.85rem;
+  width: 3.55rem;
+  height: 3.55rem;
   place-items: center;
-  border-radius: 999px;
+  overflow: hidden;
+  border-radius: 0.95rem;
   background: #eef5fb;
   color: #0c4d86;
-  font-size: 0.78rem;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.dash-picks-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dash-picks-thumb em {
+  position: absolute;
+  inset-inline-start: 0.25rem;
+  bottom: 0.25rem;
+  display: grid;
+  width: 1.15rem;
+  height: 1.15rem;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(12, 77, 134, 0.92);
+  color: #fff;
+  font-size: 0.65rem;
+  font-style: normal;
   font-weight: 800;
 }
 
@@ -2034,13 +2300,22 @@ select.field {
   display: block;
   font-size: 0.94rem;
   font-weight: 800;
+  line-height: 1.45;
 }
 
 .dash-picks p {
-  margin-top: 0.15rem;
+  margin-top: 0.12rem;
   color: #4e6578;
+  font-size: 0.82rem;
+  line-height: 1.65;
+}
+
+.dash-picks b {
+  display: block;
+  margin-top: 0.25rem;
+  color: #0c4d86;
   font-size: 0.84rem;
-  line-height: 1.7;
+  font-weight: 800;
 }
 
 @media (min-width: 640px) {
