@@ -413,19 +413,7 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
           <h2>مراحل همکاری</h2>
           <ol>
             {stages.map((step, index) => (
-              <li
-                key={step.title}
-                className={stageClass(
-                  index,
-                  ready,
-                  chosen,
-                  registered,
-                  insured,
-                  guaranteed,
-                  warehoused,
-                  shipped,
-                )}
-              >
+              <li key={step.title} className={step.tone}>
                 <span className="dash-no">{faDigits(String(index + 1))}</span>
                 <div>
                   <strong>{step.title}</strong>
@@ -755,6 +743,10 @@ function payStageText(
   return idle;
 }
 
+function payTone(status: PaymentStatus | "none") {
+  return status === "approved" ? ("is-done" as const) : ("is-open" as const);
+}
+
 function workStages(
   ready: boolean,
   choices: ChoiceItem[],
@@ -765,8 +757,17 @@ function workStages(
   shipStatus: PaymentStatus | "none",
 ) {
   const chosen = choices.length > 0;
-  return [
-    { title: "تکمیل ثبت‌نام", text: "نام، شماره شبا، تاریخ تولد و آدرس محل سکونت." },
+  const registered = regStatus === "approved";
+  const insured = insStatus === "approved";
+  const guaranteed = guaStatus === "approved";
+  const warehoused = wareStatus === "approved";
+  const shipped = shipStatus === "approved";
+  const stages: { title: string; text: string; tone: "is-done" | "is-open" | "is-wait" }[] = [
+    {
+      title: "تکمیل ثبت‌نام",
+      text: "نام، شماره شبا، تاریخ تولد و آدرس محل سکونت.",
+      tone: ready ? "is-done" : "is-open",
+    },
     {
       title: "انتخاب محصول",
       text: !ready
@@ -774,115 +775,95 @@ function workStages(
         : chosen
           ? `${faDigits(String(choices.length))} محصول با تعداد بسته ثبت شده است.`
           : "یک تا سه محصول را با تعداد بسته انتخاب کنید.",
+      tone: !ready ? "is-wait" : chosen ? "is-done" : "is-open",
     },
-    {
+  ];
+
+  if (chosen) {
+    stages.push({
       title: "واریز هزینهٔ ثبت‌نام",
       text: payStageText(
-        chosen,
+        true,
         regStatus,
-        "بعد از انتخاب محصول باز می‌شود.",
+        "",
         "واریز تأیید شده است.",
         "فیش در صف بررسی ادمین است؛ فعلاً صبر کنید.",
         "فیش رد شد؛ ارسال دوباره لازم است.",
         "مبلغ را واریز کنید و عکس فیش را بفرستید.",
       ),
-    },
-    {
+      tone: payTone(regStatus),
+    });
+  }
+  if (registered) {
+    stages.push({
       title: "واریز هزینهٔ بیمه",
       text: payStageText(
-        regStatus === "approved",
+        true,
         insStatus,
-        "بعد از تأیید واریز ثبت‌نام باز می‌شود.",
+        "",
         "واریز بیمه تأیید شده است.",
         "فیش بیمه در صف بررسی ادمین است؛ فعلاً صبر کنید.",
         "فیش بیمه رد شد؛ ارسال دوباره لازم است.",
         "مبلغ بیمه را واریز کنید و عکس فیش را بفرستید.",
       ),
-    },
-    {
+      tone: payTone(insStatus),
+    });
+  }
+  if (insured) {
+    stages.push({
       title: "واریز ضمانت کالا",
       text: payStageText(
-        insStatus === "approved",
+        true,
         guaStatus,
-        "بعد از تأیید واریز بیمه باز می‌شود.",
+        "",
         "واریز ضمانت تأیید شده است.",
         "فیش ضمانت در صف بررسی ادمین است؛ فعلاً صبر کنید.",
         "فیش ضمانت رد شد؛ ارسال دوباره لازم است.",
         "مبلغ ضمانت کالا را واریز کنید و عکس فیش را بفرستید.",
       ),
-    },
-    {
+      tone: payTone(guaStatus),
+    });
+  }
+  if (guaranteed) {
+    stages.push({
       title: "واریز هزینهٔ انبار",
       text: payStageText(
-        guaStatus === "approved",
+        true,
         wareStatus,
-        "بعد از تأیید ضمانت کالا باز می‌شود.",
+        "",
         "واریز انبار تأیید شده است.",
         "فیش انبار در صف بررسی ادمین است؛ فعلاً صبر کنید.",
         "فیش انبار رد شد؛ ارسال دوباره لازم است.",
         "مبلغ انبار را واریز کنید و عکس فیش را بفرستید.",
       ),
-    },
-    {
+      tone: payTone(wareStatus),
+    });
+  }
+  if (warehoused) {
+    stages.push({
       title: "واریز هزینهٔ باربری",
       text: payStageText(
-        wareStatus === "approved",
+        true,
         shipStatus,
-        "بعد از تأیید انبار باز می‌شود.",
+        "",
         "واریز باربری تأیید شده است.",
         "فیش باربری در صف بررسی ادمین است؛ فعلاً صبر کنید.",
         "فیش باربری رد شد؛ ارسال دوباره لازم است.",
         "مبلغ باربری را واریز کنید و عکس فیش را بفرستید.",
       ),
-    },
-    ...heroFlow.slice(1),
-  ];
-}
+      tone: payTone(shipStatus),
+    });
+  }
 
-function stageClass(
-  index: number,
-  ready: boolean,
-  chosen: boolean,
-  registered: boolean,
-  insured: boolean,
-  guaranteed: boolean,
-  warehoused: boolean,
-  shipped: boolean,
-) {
-  if (!ready) return index === 0 ? "is-open" : "is-wait";
-  if (!chosen) {
-    if (index === 0) return "is-done";
-    if (index === 1) return "is-open";
-    return "is-wait";
-  }
-  if (!registered) {
-    if (index <= 1) return "is-done";
-    if (index === 2) return "is-open";
-    return "is-wait";
-  }
-  if (!insured) {
-    if (index <= 2) return "is-done";
-    if (index === 3) return "is-open";
-    return "is-wait";
-  }
-  if (!guaranteed) {
-    if (index <= 3) return "is-done";
-    if (index === 4) return "is-open";
-    return "is-wait";
-  }
-  if (!warehoused) {
-    if (index <= 4) return "is-done";
-    if (index === 5) return "is-open";
-    return "is-wait";
-  }
-  if (!shipped) {
-    if (index <= 5) return "is-done";
-    if (index === 6) return "is-open";
-    return "is-wait";
-  }
-  if (index <= 6) return "is-done";
-  if (index === 7) return "is-open";
-  return "is-wait";
+  heroFlow.slice(1).forEach((step, index) => {
+    stages.push({
+      title: step.title,
+      text: step.text,
+      tone: !shipped ? "is-wait" : index === 0 ? "is-open" : "is-wait",
+    });
+  });
+
+  return stages;
 }
 
 function Chevron() {
