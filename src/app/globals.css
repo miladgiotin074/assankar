@@ -887,16 +887,23 @@ input[type="range"] {
 
 .app-stage {
   display: grid;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   min-height: 100dvh;
+  overflow-x: clip;
   background: #e7eef6;
 }
 
 .app-device {
   display: flex;
-  width: min(100%, 28rem);
+  width: 100%;
+  max-width: 28rem;
+  min-width: 0;
   min-height: 100dvh;
   flex-direction: column;
   justify-self: center;
+  overflow-x: clip;
   background: #fff;
 }
 
@@ -939,6 +946,9 @@ input[type="range"] {
 }
 
 .app-device.is-form {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
   background: #f3f7fb;
 }
 
@@ -1021,6 +1031,9 @@ input[type="range"] {
 
 .app-main {
   display: flex;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   min-height: 0;
   flex: 1;
   flex-direction: column;
@@ -1554,6 +1567,9 @@ select.field {
 .pick-form,
 .pick-empty {
   display: flex;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   min-height: 0;
   flex: 1;
   flex-direction: column;
@@ -1565,6 +1581,9 @@ select.field {
 
 .pick-scroll {
   display: flex;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   min-height: 0;
   flex: 1;
   flex-direction: column;
@@ -1573,12 +1592,22 @@ select.field {
 
 .pick-rail {
   display: flex;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   gap: 0.7rem;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
   scroll-snap-type: x mandatory;
   scroll-padding-inline: 11%;
-  padding: 0.2rem 11% 0.35rem;
+  padding-block: 0.2rem 0.35rem;
   scrollbar-width: none;
+}
+
+.pick-rail::before,
+.pick-rail::after {
+  content: "";
+  flex: 0 0 11%;
 }
 
 .pick-rail::-webkit-scrollbar {
@@ -1588,6 +1617,8 @@ select.field {
 .pick-card {
   display: flex;
   flex: 0 0 78%;
+  min-width: 0;
+  max-width: 78%;
   scroll-snap-align: center;
   scroll-snap-stop: always;
   flex-direction: column;
@@ -1661,6 +1692,8 @@ select.field {
 }
 
 .pick-panel {
+  min-width: 0;
+  max-width: 100%;
   padding: 0.9rem;
   border: 1px solid #e3edf5;
   border-radius: 1.15rem;
@@ -1778,6 +1811,8 @@ select.field {
 }
 
 .pick-note {
+  min-width: 0;
+  max-width: 100%;
   padding: 0.75rem 0.9rem;
   border: 1px solid #e3edf5;
   border-radius: 1rem;
@@ -1796,6 +1831,8 @@ select.field {
 
 .pick-wages button {
   display: grid;
+  min-width: 0;
+  max-width: 100%;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.75rem;
@@ -1830,5 +1867,10 @@ select.field {
     overflow: hidden;
     border-radius: 1.75rem;
     box-shadow: 0 18px 50px rgba(8, 44, 82, 0.12);
+  }
+
+  .app-device.is-form {
+    height: min(52rem, calc(100dvh - 3rem));
+    max-height: min(52rem, calc(100dvh - 3rem));
   }
 }

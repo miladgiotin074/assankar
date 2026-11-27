@@ -47,10 +47,8 @@ export function ProductPicker({
       frame = requestAnimationFrame(sync);
     };
     rail.addEventListener("scroll", onScroll, { passive: true });
-    rail.querySelector<HTMLElement>(`[data-id="${CSS.escape(openedOn.current)}"]`)?.scrollIntoView({
-      inline: "center",
-      block: "nearest",
-    });
+    const opened = rail.querySelector<HTMLElement>(`[data-id="${CSS.escape(openedOn.current)}"]`);
+    if (opened) centerCard(rail, opened);
     return () => {
       cancelAnimationFrame(frame);
       rail.removeEventListener("scroll", onScroll);
@@ -59,9 +57,9 @@ export function ProductPicker({
 
   function focusCard(id: string) {
     setSelected(id);
-    railRef.current
-      ?.querySelector<HTMLElement>(`[data-id="${CSS.escape(id)}"]`)
-      ?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+    const rail = railRef.current;
+    const card = rail?.querySelector<HTMLElement>(`[data-id="${CSS.escape(id)}"]`);
+    if (rail && card) centerCard(rail, card, "smooth");
   }
 
   function step(next: number) {
@@ -183,6 +181,21 @@ export function ProductPicker({
       </button>
     </form>
   );
+}
+
+function centerCard(rail: HTMLElement, card: HTMLElement, behavior: ScrollBehavior = "auto") {
+  const delta =
+    card.getBoundingClientRect().left +
+    card.offsetWidth / 2 -
+    (rail.getBoundingClientRect().left + rail.clientWidth / 2);
+  if (Math.abs(delta) < 2) return;
+  rail.style.scrollSnapType = "none";
+  rail.scrollBy({ left: delta, behavior });
+  const restore = () => {
+    rail.style.scrollSnapType = "";
+  };
+  if (behavior === "auto") restore();
+  else rail.addEventListener("scrollend", restore, { once: true });
 }
 
 function PhotoFallback() {
