@@ -282,7 +282,7 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
                 <small>
                   {regStatus === "rejected"
                     ? "فیش قبلی رد شد؛ دوباره واریز و ارسال کنید."
-                    : "مبلغ را واریز کنید و عکس فیش را بفرستید."}
+                    : "این هزینه ثبت‌نام یک سال شما در سیستم و سایت شرکت می‌باشد."}
                 </small>
               </span>
               <span className="dash-cta-go">
