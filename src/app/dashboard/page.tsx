@@ -68,7 +68,10 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
   const insurance = registered ? await readPayment(phoneRaw, "insurance") : null;
   const insStatus = insurance?.status ?? "none";
   const insured = insStatus === "approved";
-  const stages = workStages(ready, choices, regStatus, insStatus);
+  const guarantee = insured ? await readPayment(phoneRaw, "guarantee") : null;
+  const guaStatus = guarantee?.status ?? "none";
+  const guaranteed = guaStatus === "approved";
+  const stages = workStages(ready, choices, regStatus, insStatus, guaStatus);
 
   return (
     <div className="dash">
@@ -88,7 +91,16 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
             payment={insurance}
             href="/dashboard/insurance"
             label="بیمه"
-            nextText="بعد از تأیید فیش بیمه، مرحلهٔ بعد همکاری باز می‌شود."
+            nextText="بعد از تأیید فیش بیمه، مرحلهٔ ضمانت کالا باز می‌شود."
+          />
+        ) : null}
+
+        {chosen && insured && guaStatus === "pending" && guarantee ? (
+          <PayWait
+            payment={guarantee}
+            href="/dashboard/guarantee"
+            label="ضمانت کالا"
+            nextText="بعد از تأیید فیش ضمانت، مرحلهٔ بعد همکاری باز می‌شود."
           />
         ) : null}
 
@@ -112,6 +124,16 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
           />
         ) : null}
 
+        {chosen && insured && guaStatus === "rejected" ? (
+          <PayAlert
+            tone="bad"
+            title="نیاز به ارسال دوباره فیش ضمانت"
+            text="فیش ضمانت کالا تأیید نشد. لطفاً عکس واضح‌تری از واریز درست بفرستید."
+            href="/dashboard/guarantee"
+            link="ارسال فیش ضمانت"
+          />
+        ) : null}
+
         {chosen && registered && !insured && insStatus !== "pending" && insStatus !== "rejected" ? (
           <PayAlert
             tone="ok"
@@ -120,11 +142,19 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
           />
         ) : null}
 
-        {chosen && insured ? (
+        {chosen && insured && !guaranteed && guaStatus !== "pending" && guaStatus !== "rejected" ? (
           <PayAlert
             tone="ok"
             title="واریز بیمه تأیید شد"
-            text="هزینهٔ بیمه تأیید شده است و می‌توانید مرحلهٔ بعد را ادامه دهید."
+            text="هزینهٔ بیمه تأیید شده است. حالا ضمانت کالا را واریز کنید."
+          />
+        ) : null}
+
+        {chosen && guaranteed ? (
+          <PayAlert
+            tone="ok"
+            title="واریز ضمانت تأیید شد"
+            text="ضمانت کالا تأیید شده است و می‌توانید مرحلهٔ بعد را ادامه دهید."
           />
         ) : null}
 
@@ -204,6 +234,27 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
               </span>
             </Link>
           </div>
+        ) : insured && (guaStatus === "none" || guaStatus === "rejected") ? (
+          <div id={guaStatus === "none" ? "dash-next" : undefined} className="dash-cta-wrap is-violet">
+            <Link href="/dashboard/guarantee" className="dash-cta is-violet">
+              <span className="dash-cta-no" aria-hidden="true">
+                ۵
+              </span>
+              <span>
+                <span className="dash-cta-kicker">مرحله بعد</span>
+                <strong>واریز ضمانت کالا</strong>
+                <small>
+                  {guaStatus === "rejected"
+                    ? "فیش ضمانت رد شد؛ دوباره واریز و ارسال کنید."
+                    : "مبلغ ضمانت کالا را واریز کنید و عکس فیش را بفرستید."}
+                </small>
+              </span>
+              <span className="dash-cta-go">
+                واریز
+                <Chevron />
+              </span>
+            </Link>
+          </div>
         ) : null}
 
         {chosen ? (
@@ -242,7 +293,7 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
           <h2>مراحل همکاری</h2>
           <ol>
             {stages.map((step, index) => (
-              <li key={step.title} className={stageClass(index, ready, chosen, registered, insured)}>
+              <li key={step.title} className={stageClass(index, ready, chosen, registered, insured, guaranteed)}>
                 <span className="dash-no">{faDigits(String(index + 1))}</span>
                 <div>
                   <strong>{step.title}</strong>
@@ -382,11 +433,28 @@ function formatPayTime(value: Date | string) {
   }).format(date);
 }
 
+function payStageText(
+  open: boolean,
+  status: PaymentStatus | "none",
+  locked: string,
+  approved: string,
+  pending: string,
+  rejected: string,
+  idle: string,
+) {
+  if (!open) return locked;
+  if (status === "approved") return approved;
+  if (status === "pending") return pending;
+  if (status === "rejected") return rejected;
+  return idle;
+}
+
 function workStages(
   ready: boolean,
   choices: ChoiceItem[],
   regStatus: PaymentStatus | "none",
   insStatus: PaymentStatus | "none",
+  guaStatus: PaymentStatus | "none",
 ) {
   const chosen = choices.length > 0;
   return [
@@ -401,28 +469,39 @@ function workStages(
     },
     {
       title: "واریز هزینهٔ ثبت‌نام",
-      text: !chosen
-        ? "بعد از انتخاب محصول باز می‌شود."
-        : regStatus === "approved"
-          ? "واریز تأیید شده است."
-          : regStatus === "pending"
-            ? "فیش در صف بررسی ادمین است؛ فعلاً صبر کنید."
-            : regStatus === "rejected"
-              ? "فیش رد شد؛ ارسال دوباره لازم است."
-              : "مبلغ را واریز کنید و عکس فیش را بفرستید.",
+      text: payStageText(
+        chosen,
+        regStatus,
+        "بعد از انتخاب محصول باز می‌شود.",
+        "واریز تأیید شده است.",
+        "فیش در صف بررسی ادمین است؛ فعلاً صبر کنید.",
+        "فیش رد شد؛ ارسال دوباره لازم است.",
+        "مبلغ را واریز کنید و عکس فیش را بفرستید.",
+      ),
     },
     {
       title: "واریز هزینهٔ بیمه",
-      text:
-        regStatus !== "approved"
-          ? "بعد از تأیید واریز ثبت‌نام باز می‌شود."
-          : insStatus === "approved"
-            ? "واریز بیمه تأیید شده است."
-            : insStatus === "pending"
-              ? "فیش بیمه در صف بررسی ادمین است؛ فعلاً صبر کنید."
-              : insStatus === "rejected"
-                ? "فیش بیمه رد شد؛ ارسال دوباره لازم است."
-                : "مبلغ بیمه را واریز کنید و عکس فیش را بفرستید.",
+      text: payStageText(
+        regStatus === "approved",
+        insStatus,
+        "بعد از تأیید واریز ثبت‌نام باز می‌شود.",
+        "واریز بیمه تأیید شده است.",
+        "فیش بیمه در صف بررسی ادمین است؛ فعلاً صبر کنید.",
+        "فیش بیمه رد شد؛ ارسال دوباره لازم است.",
+        "مبلغ بیمه را واریز کنید و عکس فیش را بفرستید.",
+      ),
+    },
+    {
+      title: "واریز ضمانت کالا",
+      text: payStageText(
+        insStatus === "approved",
+        guaStatus,
+        "بعد از تأیید واریز بیمه باز می‌شود.",
+        "واریز ضمانت تأیید شده است.",
+        "فیش ضمانت در صف بررسی ادمین است؛ فعلاً صبر کنید.",
+        "فیش ضمانت رد شد؛ ارسال دوباره لازم است.",
+        "مبلغ ضمانت کالا را واریز کنید و عکس فیش را بفرستید.",
+      ),
     },
     ...heroFlow.slice(1),
   ];
@@ -434,6 +513,7 @@ function stageClass(
   chosen: boolean,
   registered: boolean,
   insured: boolean,
+  guaranteed: boolean,
 ) {
   if (!ready) return index === 0 ? "is-open" : "is-wait";
   if (!chosen) {
@@ -451,8 +531,13 @@ function stageClass(
     if (index === 3) return "is-open";
     return "is-wait";
   }
-  if (index <= 3) return "is-done";
-  if (index === 4) return "is-open";
+  if (!guaranteed) {
+    if (index <= 3) return "is-done";
+    if (index === 4) return "is-open";
+    return "is-wait";
+  }
+  if (index <= 4) return "is-done";
+  if (index === 5) return "is-open";
   return "is-wait";
 }
 

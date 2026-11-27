@@ -6,7 +6,15 @@ import { collection } from "@/lib/mongo";
 import { site } from "@/lib/site";
 
 export type PaymentStatus = "pending" | "approved" | "rejected";
-export type PaymentKind = "registration" | "insurance";
+export type PaymentKind = "registration" | "insurance" | "guarantee";
+
+const paymentKinds = new Set<PaymentKind>(["registration", "insurance", "guarantee"]);
+
+export function parsePaymentKind(value: unknown, fallback: PaymentKind = "registration"): PaymentKind {
+  return typeof value === "string" && paymentKinds.has(value as PaymentKind)
+    ? (value as PaymentKind)
+    : fallback;
+}
 
 export type PaymentRecord = {
   phone: string;
@@ -36,17 +44,15 @@ function rootDir() {
   return join(process.cwd(), "data", "receipts");
 }
 
-function asKind(value: unknown): PaymentKind {
-  return value === "insurance" ? "insurance" : "registration";
-}
-
 function normalize(doc: PaymentRecord | null) {
   if (!doc) return null;
-  return { ...doc, kind: asKind(doc.kind) };
+  return { ...doc, kind: parsePaymentKind(doc.kind) };
 }
 
 function amountFor(kind: PaymentKind) {
-  return kind === "insurance" ? site.insuranceFee : site.registrationFee;
+  if (kind === "insurance") return site.insuranceFee;
+  if (kind === "guarantee") return site.guaranteeFee;
+  return site.registrationFee;
 }
 
 function payments() {
@@ -76,7 +82,9 @@ function safeName(value: string) {
 }
 
 export function paymentKindLabel(kind: PaymentKind) {
-  return kind === "insurance" ? "بیمه" : "ثبت‌نام";
+  if (kind === "insurance") return "بیمه";
+  if (kind === "guarantee") return "ضمانت کالا";
+  return "ثبت‌نام";
 }
 
 export async function readPayment(phone: string, kind: PaymentKind = "registration") {
@@ -234,6 +242,12 @@ export async function saveReceipt(phone: string, file: File, kind: PaymentKind =
     const registration = await readPayment(phone, "registration");
     if (registration?.status !== "approved") {
       return { ok: false as const, error: "اول باید هزینهٔ ثبت‌نام تأیید شده باشد." };
+    }
+  }
+  if (kind === "guarantee") {
+    const insurance = await readPayment(phone, "insurance");
+    if (insurance?.status !== "approved") {
+      return { ok: false as const, error: "اول باید هزینهٔ بیمه تأیید شده باشد." };
     }
   }
 

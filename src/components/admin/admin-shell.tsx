@@ -99,7 +99,9 @@ function AdminFrame() {
   useTelegramBack();
   const query = new URLSearchParams(search);
   const paymentPhone = pathname === "/admin/payments/detail" ? query.get("phone") || "" : "";
-  const paymentKind = query.get("kind") === "insurance" ? "insurance" : "registration";
+  const paymentKindRaw = query.get("kind");
+  const paymentKind =
+    paymentKindRaw === "insurance" || paymentKindRaw === "guarantee" ? paymentKindRaw : "registration";
   const partnerPhone = pathname === "/admin/partners/detail" ? query.get("phone") || "" : "";
   const detail = Boolean(paymentPhone || partnerPhone);
   const tab = pathname.startsWith("/admin/partners")

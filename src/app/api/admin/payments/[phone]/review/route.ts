@@ -1,7 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
-import { reviewPayment, type PaymentKind } from "@/lib/payment";
+import { parsePaymentKind, reviewPayment } from "@/lib/payment";
 
 type Params = { params: Promise<{ phone: string }> };
 
@@ -21,7 +21,7 @@ export async function POST(request: Request, { params }: Params) {
   if (!status) {
     return NextResponse.json({ error: "وضعیت نامعتبر است." }, { status: 400 });
   }
-  const kind = (body?.kind === "insurance" ? "insurance" : "registration") as PaymentKind;
+  const kind = parsePaymentKind(body?.kind);
 
   const result = await reviewPayment(phone, status, admin.tgId, kind);
   if (!result.ok) {
@@ -31,6 +31,7 @@ export async function POST(request: Request, { params }: Params) {
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/payment");
   revalidatePath("/dashboard/insurance");
+  revalidatePath("/dashboard/guarantee");
   revalidatePath("/admin");
   revalidatePath("/admin/payments");
   return NextResponse.json({ ok: true, status, kind });

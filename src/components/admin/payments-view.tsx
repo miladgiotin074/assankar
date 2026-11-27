@@ -21,6 +21,7 @@ const kindFilters: { id: PaymentKind | "all"; label: string }[] = [
   { id: "all", label: "همه نوع" },
   { id: "registration", label: "ثبت‌نام" },
   { id: "insurance", label: "بیمه" },
+  { id: "guarantee", label: "ضمانت" },
 ];
 
 function chipClass(status: PaymentStatus) {

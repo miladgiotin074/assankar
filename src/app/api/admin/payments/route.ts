@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { adminListPayments } from "@/lib/admin";
 import { requireAdmin } from "@/lib/admin-auth";
-import type { PaymentKind, PaymentStatus } from "@/lib/payment";
+import { parsePaymentKind, type PaymentKind, type PaymentStatus } from "@/lib/payment";
 
 export async function GET(request: Request) {
   if (!(await requireAdmin())) {
@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     ? statusRaw
     : "pending") as PaymentStatus | "all";
   const kindRaw = searchParams.get("kind") || "all";
-  const kind = (["registration", "insurance", "all"].includes(kindRaw) ? kindRaw : "all") as PaymentKind | "all";
+  const kind = (kindRaw === "all" ? "all" : parsePaymentKind(kindRaw)) as PaymentKind | "all";
   const q = searchParams.get("q") || "";
   return NextResponse.json({ items: await adminListPayments(status, q, kind) });
 }

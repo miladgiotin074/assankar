@@ -31,8 +31,16 @@ type Detail = {
     at: string;
     reviewedAt: string;
   } | null;
+  guarantee: {
+    status: "pending" | "approved" | "rejected";
+    amountLabel: string;
+    phone: string;
+    at: string;
+    reviewedAt: string;
+  } | null;
   receiptUrl: string;
   insuranceReceiptUrl: string;
+  guaranteeReceiptUrl: string;
 };
 
 function cardText(card: string) {
@@ -77,6 +85,7 @@ export function AdminPartnerDetailView({ phone }: { phone: string }) {
           : "بدون فیش";
   const payWhen = detail.payment?.reviewedAt || detail.payment?.at || "";
   const insWhen = detail.insurance?.reviewedAt || detail.insurance?.at || "";
+  const guaWhen = detail.guarantee?.reviewedAt || detail.guarantee?.at || "";
 
   return (
     <div className="admin-stack">
@@ -181,6 +190,30 @@ export function AdminPartnerDetailView({ phone }: { phone: string }) {
             className="admin-link-row"
           >
             {detail.insurance.status === "pending" ? "بررسی و تصمیم" : "جزئیات فیش"}
+            <span aria-hidden="true">‹</span>
+          </Link>
+        ) : null}
+      </section>
+
+      <section className="admin-panel">
+        <div className="admin-panel-head">
+          <h2>واریز ضمانت کالا</h2>
+          <p>
+            {statusLabel(detail.guarantee?.status)}
+            {detail.guarantee ? ` · ${detail.guarantee.amountLabel}` : ""}
+            {guaWhen ? ` · ${relativeFa(guaWhen)}` : ""}
+          </p>
+        </div>
+        {detail.guaranteeReceiptUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img className="admin-receipt is-inline" src={detail.guaranteeReceiptUrl} alt="فیش ضمانت" />
+        ) : null}
+        {detail.guarantee ? (
+          <Link
+            href={`/admin/payments/detail?phone=${detail.guarantee.phone}&kind=guarantee`}
+            className="admin-link-row"
+          >
+            {detail.guarantee.status === "pending" ? "بررسی و تصمیم" : "جزئیات فیش"}
             <span aria-hidden="true">‹</span>
           </Link>
         ) : null}

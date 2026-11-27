@@ -58,7 +58,7 @@ async function InsuranceGate() {
         status={status}
         receiptUrl={receiptUrl}
         title="هزینه بیمه"
-        nextHint="بعد از تأیید فیش بیمه، مرحلهٔ بعد همکاری باز می‌شود."
+        nextHint="بعد از تأیید فیش بیمه، مرحلهٔ ضمانت کالا باز می‌شود."
         action={submitInsuranceReceipt}
       />
     </div>

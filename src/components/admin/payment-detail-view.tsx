@@ -103,7 +103,9 @@ export function AdminPaymentDetailView({
   if (!detail) return <div className="admin-empty">در حال بارگذاری فیش…</div>;
 
   const when = detail.payment.status === "pending" ? detail.payment.at : detail.payment.reviewedAt || detail.payment.at;
-  const kindLabel = detail.payment.kindLabel || (kind === "insurance" ? "بیمه" : "ثبت‌نام");
+  const kindLabel =
+    detail.payment.kindLabel ||
+    (kind === "insurance" ? "بیمه" : kind === "guarantee" ? "ضمانت کالا" : "ثبت‌نام");
 
   return (
     <div className="admin-stack">
