@@ -213,7 +213,7 @@ env_set() {
 }
 
 configure_telegram_bot() {
-  local token site_url webhook_url secret
+  local token site_url webhook_url
   token="$(env_get BOT_TOKEN)"
   site_url="$(env_get NEXT_PUBLIC_SITE_URL)"
   site_url="${site_url%/}"
@@ -222,24 +222,32 @@ configure_telegram_bot() {
     return
   fi
 
-  secret="$(env_get TELEGRAM_WEBHOOK_SECRET)"
-  if [[ -z "${secret}" ]]; then
-    secret="$(openssl rand -hex 24)"
-    env_set TELEGRAM_WEBHOOK_SECRET "${secret}"
+  # Avoid secret mismatches that silently drop every Telegram update.
+  if grep -qE '^TELEGRAM_WEBHOOK_SECRET=' "${ENV_FILE}"; then
+    tmp="$(mktemp)"
+    grep -vE '^TELEGRAM_WEBHOOK_SECRET=' "${ENV_FILE}" > "${tmp}"
+    mv "${tmp}" "${ENV_FILE}"
+    chown "${APP_USER}:${APP_USER}" "${ENV_FILE}"
+    chmod 600 "${ENV_FILE}"
   fi
 
   webhook_url="${site_url}/api/telegram/webhook"
   log "Configuring Telegram bot webhook"
 
-  # Ensure the app process sees the latest secret before Telegram starts posting.
   systemctl restart "${SERVICE_NAME}" || true
   sleep 2
 
-  local webhook_result
-  webhook_result="$(curl -fsS "https://api.telegram.org/bot${token}/setWebhook" \
+  echo "Deleting old webhook..."
+  curl -fsS "https://api.telegram.org/bot${token}/deleteWebhook" \
     -H "Content-Type: application/json" \
-    -d "{\"url\":\"${webhook_url}\",\"secret_token\":\"${secret}\",\"allowed_updates\":[\"message\"],\"drop_pending_updates\":true}")"
-  echo "${webhook_result}"
+    -d '{"drop_pending_updates":true}' || true
+  echo
+
+  echo "Setting webhook..."
+  curl -fsS "https://api.telegram.org/bot${token}/setWebhook" \
+    -H "Content-Type: application/json" \
+    -d "{\"url\":\"${webhook_url}\",\"allowed_updates\":[\"message\"],\"drop_pending_updates\":true}"
+  echo
 
   curl -fsS "https://api.telegram.org/bot${token}/setChatMenuButton" \
     -H "Content-Type: application/json" \
@@ -247,10 +255,10 @@ configure_telegram_bot() {
     >/dev/null || true
 
   echo "Telegram webhook info:"
-  curl -fsS "https://api.telegram.org/bot${token}/getWebhookInfo" || true
+  curl -fsS "https://api.telegram.org/bot${token}/getWebhookInfo"
   echo
-  echo "Webhook endpoint check:"
-  curl -fsS "${webhook_url}" || true
+  echo "Local webhook status:"
+  curl -fsS "${webhook_url}"
   echo
 }
 

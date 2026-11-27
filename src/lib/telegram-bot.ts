@@ -12,26 +12,40 @@ function adminUrl() {
   return `${raw.replace(/\/$/, "")}/admin`;
 }
 
-async function telegramApi(method: string, body: Record<string, unknown>) {
+export async function telegramApi(method: string, body?: Record<string, unknown>) {
   const token = botToken();
   if (!token) {
     console.error("[telegram] BOT_TOKEN is missing");
-    return { ok: false as const, error: "BOT_TOKEN missing" };
+    return { ok: false as const, error: "BOT_TOKEN missing", data: null };
   }
   const response = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSON.stringify(body ?? {}),
   });
-  const data = (await response.json().catch(() => null)) as
-    | { ok?: boolean; description?: string; error_code?: number }
-    | null;
-  if (!response.ok || !data?.ok) {
-    const error = data?.description || `Telegram ${method} failed`;
-    console.error(`[telegram] ${method}:`, error);
-    return { ok: false as const, error };
+  const data = (await response.json().catch(() => null)) as Record<string, unknown> | null;
+  if (!response.ok || !data || data.ok !== true) {
+    const error =
+      (typeof data?.description === "string" && data.description) || `Telegram ${method} failed`;
+    console.error(`[telegram] ${method}:`, error, data);
+    return { ok: false as const, error, data };
   }
-  return { ok: true as const };
+  return { ok: true as const, data };
+}
+
+export async function telegramWebhookStatus() {
+  const me = await telegramApi("getMe");
+  const hook = await telegramApi("getWebhookInfo");
+  return {
+    hasToken: Boolean(botToken()),
+    hasAdmins: Boolean(process.env.ADMIN_TELEGRAM_IDS?.trim()),
+    siteUrl: process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "",
+    adminUrl: adminUrl(),
+    bot: me.ok ? me.data?.result : null,
+    botError: me.ok ? null : me.error,
+    webhook: hook.ok ? hook.data?.result : null,
+    webhookError: hook.ok ? null : hook.error,
+  };
 }
 
 export type TelegramUpdate = {
@@ -49,6 +63,14 @@ export async function handleTelegramUpdate(update: TelegramUpdate) {
   const text = message?.text?.trim() || "";
   const chatId = message?.chat?.id;
   const fromId = message?.from?.id;
+
+  console.info("[telegram] update", {
+    update_id: update.update_id,
+    chatId,
+    fromId,
+    text,
+  });
+
   if (!chatId || !fromId) return;
 
   const isStart =
@@ -69,7 +91,7 @@ export async function handleTelegramUpdate(update: TelegramUpdate) {
   }
 
   const url = adminUrl();
-  if (!/^https:\/\/[^/]+\/admin$/.test(url)) {
+  if (!/^https:\/\/[^/\s]+\/admin\/?$/.test(url)) {
     console.error("[telegram] invalid admin url:", url);
     await telegramApi("sendMessage", {
       chat_id: chatId,
@@ -91,7 +113,6 @@ export async function handleTelegramUpdate(update: TelegramUpdate) {
         ],
       ],
       resize_keyboard: true,
-      is_persistent: true,
     },
   });
 
@@ -99,9 +120,9 @@ export async function handleTelegramUpdate(update: TelegramUpdate) {
 
   await telegramApi("sendMessage", {
     chat_id: chatId,
-    text: `پنل مدیریت:\n${url}\n\nدکمه شیشه‌ای ارسال نشد (${withButton.error}). لینک بالا را در تلگرام باز کنید.`,
+    text: `پنل مدیریت:\n${url}\n\nاگر دکمه شیشه‌ای نیامد، از لینک بالا وارد شوید.`,
     reply_markup: {
-      inline_keyboard: [[{ text: "باز کردن پنل", url }]],
+      inline_keyboard: [[{ text: "باز کردن پنل", web_app: { url } }]],
     },
   });
 }
