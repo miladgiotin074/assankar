@@ -29,9 +29,9 @@ export function AdminHomeView() {
 
   return (
     <div className="admin-stack">
-      <section className="admin-panel">
-        <h2>سلام{admin?.name ? ` ${admin.name}` : ""}</h2>
-        <p>صف فیش‌های در انتظار را بررسی کنید و وضعیت همکاران را ببینید.</p>
+      <section className="admin-hero">
+        <strong>سلام{admin?.name ? ` ${admin.name}` : ""}</strong>
+        <p>فیش‌های در انتظار را بررسی کنید و وضعیت همکاران را یک‌جا ببینید.</p>
       </section>
 
       {error ? <div className="admin-empty">{error}</div> : null}
@@ -51,7 +51,7 @@ export function AdminHomeView() {
             <strong>{faDigits(String(stats.partners))}</strong>
           </div>
           <div className="admin-stat">
-            <span>بدون انتخاب محصول</span>
+            <span>بدون محصول</span>
             <strong>{faDigits(String(stats.partnersWithoutChoices))}</strong>
           </div>
         </section>
@@ -59,20 +59,23 @@ export function AdminHomeView() {
         <div className="admin-empty">در حال بارگذاری آمار…</div>
       ) : null}
 
-      <Link href="/admin/payments" className="admin-row">
-        <span>
-          <strong>صف فیش‌ها</strong>
-          <small>تأیید یا رد واریز ثبت‌نام</small>
-        </span>
-        <span className="admin-chip is-wait">اولویت</span>
-      </Link>
-      <Link href="/admin/partners" className="admin-row">
-        <span>
-          <strong>همکاران</strong>
-          <small>پروفایل، محصول و وضعیت واریز</small>
-        </span>
-        <span className="admin-chip is-muted">فهرست</span>
-      </Link>
+      <p className="admin-section-title">میانبرها</p>
+      <div className="admin-list">
+        <Link href="/admin/payments" className="admin-row">
+          <span>
+            <strong>صف فیش‌ها</strong>
+            <small>تأیید یا رد واریز ثبت‌نام</small>
+          </span>
+          <span className="admin-chip is-wait">اولویت</span>
+        </Link>
+        <Link href="/admin/partners" className="admin-row">
+          <span>
+            <strong>همکاران</strong>
+            <small>پروفایل، محصول و وضعیت واریز</small>
+          </span>
+          <span className="admin-chip is-muted">فهرست</span>
+        </Link>
+      </div>
     </div>
   );
 }

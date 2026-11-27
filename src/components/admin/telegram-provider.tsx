@@ -9,6 +9,7 @@ import {
   themeParams,
   viewport,
   miniApp,
+  backButton,
 } from "@tma.js/sdk-react";
 
 type AdminUser = { tgId: number; name: string; username: string };
@@ -37,13 +38,31 @@ function applyTheme() {
   try {
     const state = themeParams.state();
     const root = document.documentElement;
-    if (state.bg_color) root.style.setProperty("--admin-bg", state.bg_color);
-    if (state.secondary_bg_color) root.style.setProperty("--admin-sheet", state.secondary_bg_color);
-    if (state.text_color) root.style.setProperty("--admin-text", state.text_color);
-    if (state.hint_color) root.style.setProperty("--admin-muted", state.hint_color);
-    if (state.button_color) root.style.setProperty("--admin-accent", state.button_color);
-    if (state.button_text_color) root.style.setProperty("--admin-accent-text", state.button_text_color);
-    if (state.destructive_text_color) root.style.setProperty("--admin-danger", state.destructive_text_color);
+    const bg = state.bg_color || "#f3f7fb";
+    const sheet = state.secondary_bg_color || "#ffffff";
+    const text = state.text_color || "#10293f";
+    const muted = state.hint_color || "#4e6578";
+    const accent = state.button_color || "#0c4d86";
+    const accentText = state.button_text_color || "#ffffff";
+    const danger = state.destructive_text_color || "#a33b3b";
+
+    root.style.setProperty("--admin-bg", bg);
+    root.style.setProperty("--admin-sheet", sheet);
+    root.style.setProperty("--admin-text", text);
+    root.style.setProperty("--admin-muted", muted);
+    root.style.setProperty("--admin-accent", accent);
+    root.style.setProperty("--admin-accent-text", accentText);
+    root.style.setProperty("--admin-danger", danger);
+    root.style.setProperty("--admin-ok", "#0b7a52");
+    root.style.setProperty("--admin-wait", "#9a5408");
+    root.style.setProperty("--admin-line", "color-mix(in srgb, var(--admin-muted) 18%, transparent)");
+
+    try {
+      if (miniApp.setHeaderColor.isAvailable()) miniApp.setHeaderColor(accent as `#${string}`);
+      if (miniApp.setBgColor.isAvailable()) miniApp.setBgColor(bg as `#${string}`);
+    } catch {
+      /* optional */
+    }
   } catch {
     /* theme optional */
   }
@@ -110,13 +129,14 @@ export function AdminTelegramProvider({ children }: { children: ReactNode }) {
                 tgWebAppPlatform: "web",
                 tgWebAppVersion: "8.0",
                 tgWebAppThemeParams: {
-                  bg_color: "#f3f7fb",
+                  bg_color: "#f2f5f8",
                   text_color: "#10293f",
-                  hint_color: "#4e6578",
+                  hint_color: "#6b7c8f",
                   link_color: "#0c4d86",
                   button_color: "#0c4d86",
                   button_text_color: "#ffffff",
                   secondary_bg_color: "#ffffff",
+                  destructive_text_color: "#a33b3b",
                 },
                 tgWebAppData: initData,
               },
@@ -136,19 +156,23 @@ export function AdminTelegramProvider({ children }: { children: ReactNode }) {
             if (viewport.expand.isAvailable?.()) viewport.expand();
           }
         } catch {
-          /* viewport optional */
+          /* optional */
         }
         try {
           if (miniApp.ready.isAvailable?.()) miniApp.ready();
         } catch {
-          /* ready optional */
+          /* optional */
         }
         try {
-          if (themeParams.mount.isAvailable?.()) themeParams.mount();
-          else themeParams.mount();
+          themeParams.mount();
           applyTheme();
         } catch {
-          /* theme optional */
+          /* optional */
+        }
+        try {
+          if (backButton.isSupported()) backButton.mount();
+        } catch {
+          /* optional */
         }
 
         if (cancelled) return;

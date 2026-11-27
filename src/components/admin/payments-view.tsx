@@ -5,8 +5,9 @@ import { useCallback, useEffect, useState } from "react";
 import { faDigits } from "@/lib/format";
 import type { AdminPaymentRow } from "@/lib/admin";
 import type { PaymentStatus } from "@/lib/payment";
+import { hapticFeedback } from "@tma.js/sdk-react";
 
-const filters: { id: PaymentStatus | "all"; label: string }[] = [
+const filters: { id: PaymentStatus; label: string }[] = [
   { id: "pending", label: "در انتظار" },
   { id: "approved", label: "تأیید" },
   { id: "rejected", label: "رد" },
@@ -36,8 +37,16 @@ function timeLabel(iso: string) {
   );
 }
 
+function tap() {
+  try {
+    if (hapticFeedback.selectionChanged.isAvailable()) hapticFeedback.selectionChanged();
+  } catch {
+    /* optional */
+  }
+}
+
 export function AdminPaymentsView() {
-  const [status, setStatus] = useState<PaymentStatus | "all">("pending");
+  const [status, setStatus] = useState<PaymentStatus>("pending");
   const [q, setQ] = useState("");
   const [items, setItems] = useState<AdminPaymentRow[]>([]);
   const [error, setError] = useState("");
@@ -76,7 +85,10 @@ export function AdminPaymentsView() {
             key={item.id}
             type="button"
             className={status === item.id ? "is-active" : undefined}
-            onClick={() => setStatus(item.id)}
+            onClick={() => {
+              tap();
+              setStatus(item.id);
+            }}
           >
             {item.label}
           </button>
@@ -93,23 +105,25 @@ export function AdminPaymentsView() {
 
       {loading ? <div className="admin-empty">در حال بارگذاری…</div> : null}
       {error ? <div className="admin-empty">{error}</div> : null}
-      {!loading && !error && !items.length ? <div className="admin-empty">موردی نیست.</div> : null}
+      {!loading && !error && !items.length ? <div className="admin-empty">موردی در این فیلتر نیست.</div> : null}
 
-      <div className="admin-list">
-        {items.map((item) => (
-          <Link key={item.phone} href={`/admin/payments/${item.phone}`} className="admin-row">
-            <span>
-              <strong>{item.name}</strong>
-              <small>
-                {item.phoneDisplay} · {item.amountLabel}
-                <br />
-                {timeLabel(item.at)}
-              </small>
-            </span>
-            <span className={chipClass(item.status)}>{chipLabel(item.status)}</span>
-          </Link>
-        ))}
-      </div>
+      {!loading && items.length ? (
+        <div className="admin-list">
+          {items.map((item) => (
+            <Link key={item.phone} href={`/admin/payments/${item.phone}`} className="admin-row">
+              <span>
+                <strong>{item.name}</strong>
+                <small>
+                  {item.phoneDisplay} · {item.amountLabel}
+                  <br />
+                  {timeLabel(item.at)}
+                </small>
+              </span>
+              <span className={chipClass(item.status)}>{chipLabel(item.status)}</span>
+            </Link>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

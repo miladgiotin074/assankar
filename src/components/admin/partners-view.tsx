@@ -12,6 +12,13 @@ function chipClass(status: PaymentStatus | "none") {
   return "admin-chip is-muted";
 }
 
+function chipLabel(status: PaymentStatus | "none") {
+  if (status === "approved") return "تأیید";
+  if (status === "rejected") return "رد";
+  if (status === "pending") return "انتظار";
+  return "بدون فیش";
+}
+
 export function AdminPartnersView() {
   const [q, setQ] = useState("");
   const [items, setItems] = useState<AdminPartnerRow[]>([]);
@@ -56,21 +63,23 @@ export function AdminPartnersView() {
       {error ? <div className="admin-empty">{error}</div> : null}
       {!loading && !error && !items.length ? <div className="admin-empty">همکاری پیدا نشد.</div> : null}
 
-      <div className="admin-list">
-        {items.map((item) => (
-          <Link key={item.phone} href={`/admin/partners/${item.phone}`} className="admin-row">
-            <span>
-              <strong>{item.name}</strong>
-              <small>
-                {item.phoneDisplay}
-                <br />
-                {item.stage}
-              </small>
-            </span>
-            <span className={chipClass(item.paymentStatus)}>{item.stage}</span>
-          </Link>
-        ))}
-      </div>
+      {!loading && items.length ? (
+        <div className="admin-list">
+          {items.map((item) => (
+            <Link key={item.phone} href={`/admin/partners/${item.phone}`} className="admin-row">
+              <span>
+                <strong>{item.name}</strong>
+                <small>
+                  {item.phoneDisplay}
+                  <br />
+                  {item.stage}
+                </small>
+              </span>
+              <span className={chipClass(item.paymentStatus)}>{chipLabel(item.paymentStatus)}</span>
+            </Link>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -47,14 +47,19 @@ export function AdminPartnerDetailView({ phone }: { phone: string }) {
   if (error) return <div className="admin-empty">{error}</div>;
   if (!detail) return <div className="admin-empty">در حال بارگذاری…</div>;
 
+  const payStatus =
+    detail.payment?.status === "approved"
+      ? "تأیید شده"
+      : detail.payment?.status === "rejected"
+        ? "رد شده"
+        : detail.payment?.status === "pending"
+          ? "در انتظار تأیید"
+          : "بدون فیش";
+
   return (
     <div className="admin-stack">
-      <Link href="/admin/partners" className="admin-back">
-        بازگشت به همکاران
-      </Link>
-
-      <section className="admin-panel">
-        <h2>{detail.name}</h2>
+      <section className="admin-hero">
+        <strong>{detail.name}</strong>
         <p dir="ltr">{detail.phoneDisplay}</p>
       </section>
 
@@ -74,7 +79,9 @@ export function AdminPartnerDetailView({ phone }: { phone: string }) {
       </div>
 
       <section className="admin-panel">
-        <h2>محصولات</h2>
+        <div className="admin-panel-head">
+          <h2>محصولات</h2>
+        </div>
         {detail.choices.length ? (
           detail.choices.map((item) => (
             <div key={item.productId} className="admin-choice">
@@ -98,32 +105,24 @@ export function AdminPartnerDetailView({ phone }: { phone: string }) {
       </section>
 
       <section className="admin-panel">
-        <h2>وضعیت واریز</h2>
-        {detail.payment ? (
-          <>
-            <p>
-              {detail.payment.status === "approved"
-                ? "تأیید شده"
-                : detail.payment.status === "rejected"
-                  ? "رد شده"
-                  : "در انتظار تأیید"}{" "}
-              · {detail.payment.amountLabel}
-            </p>
-            {detail.payment.status === "pending" ? (
-              <p>
-                <Link href={`/admin/payments/${detail.payment.phone}`}>مشاهده و بررسی فیش</Link>
-              </p>
-            ) : detail.receiptUrl ? (
-              <p>
-                <a href={detail.receiptUrl} target="_blank" rel="noopener noreferrer">
-                  مشاهده فیش
-                </a>
-              </p>
-            ) : null}
-          </>
-        ) : (
-          <p>هنوز فیشی ارسال نشده است.</p>
-        )}
+        <div className="admin-panel-head">
+          <h2>وضعیت واریز</h2>
+          <p>
+            {payStatus}
+            {detail.payment ? ` · ${detail.payment.amountLabel}` : ""}
+          </p>
+        </div>
+        {detail.payment?.status === "pending" ? (
+          <Link href={`/admin/payments/${detail.payment.phone}`} className="admin-link-row">
+            بررسی فیش
+            <span aria-hidden="true">‹</span>
+          </Link>
+        ) : detail.receiptUrl ? (
+          <a href={detail.receiptUrl} target="_blank" rel="noopener noreferrer" className="admin-link-row">
+            مشاهده فیش
+            <span aria-hidden="true">‹</span>
+          </a>
+        ) : null}
       </section>
     </div>
   );

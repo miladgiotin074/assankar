@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { faDigits } from "@/lib/format";
@@ -86,13 +85,11 @@ export function AdminPaymentDetailView({ phone }: { phone: string }) {
 
   return (
     <div className="admin-stack">
-      <Link href="/admin/payments" className="admin-back">
-        بازگشت به فیش‌ها
-      </Link>
-
       {detail.receiptUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img className="admin-receipt" src={detail.receiptUrl} alt="فیش واریزی" />
+        <div className="admin-receipt-wrap">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="admin-receipt" src={detail.receiptUrl} alt="فیش واریزی" />
+        </div>
       ) : (
         <div className="admin-empty">تصویر فیش موجود نیست.</div>
       )}
@@ -111,38 +108,40 @@ export function AdminPaymentDetailView({ phone }: { phone: string }) {
           <strong>{detail.payment.amountLabel}</strong>
         </div>
         {detail.profile ? (
-          <div>
-            <span>کارت و آدرس</span>
-            <strong>
-              <span dir="ltr">{faDigits(detail.profile.card.replace(/(\d{4})(?=\d)/g, "$1 "))}</span>
-              <br />
-              {detail.profile.address}
-            </strong>
-          </div>
+          <>
+            <div>
+              <span>شماره کارت</span>
+              <strong dir="ltr">{faDigits(detail.profile.card.replace(/(\d{4})(?=\d)/g, "$1 "))}</strong>
+            </div>
+            <div>
+              <span>آدرس</span>
+              <strong>{detail.profile.address}</strong>
+            </div>
+          </>
         ) : null}
       </div>
 
       {detail.choices.length ? (
         <section className="admin-panel">
-          <h2>محصولات انتخاب‌شده</h2>
-          <div>
-            {detail.choices.map((item) => (
-              <div key={item.productId} className="admin-choice">
-                {item.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={item.image} alt="" />
-                ) : (
-                  <span>کالا</span>
-                )}
-                <div>
-                  <strong>{item.title}</strong>
-                  <small>
-                    {item.label} · {item.amountLabel}
-                  </small>
-                </div>
-              </div>
-            ))}
+          <div className="admin-panel-head">
+            <h2>محصولات انتخاب‌شده</h2>
           </div>
+          {detail.choices.map((item) => (
+            <div key={item.productId} className="admin-choice">
+              {item.image ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={item.image} alt="" />
+              ) : (
+                <span>کالا</span>
+              )}
+              <div>
+                <strong>{item.title}</strong>
+                <small>
+                  {item.label} · {item.amountLabel}
+                </small>
+              </div>
+            </div>
+          ))}
         </section>
       ) : null}
 
@@ -158,8 +157,12 @@ export function AdminPaymentDetailView({ phone }: { phone: string }) {
           </button>
         </div>
       ) : (
-        <div className="admin-panel">
-          <h2>{detail.payment.status === "approved" ? "این فیش تأیید شده است" : "این فیش رد شده است"}</h2>
+        <div
+          className={
+            detail.payment.status === "approved" ? "admin-status-banner is-ok" : "admin-status-banner is-bad"
+          }
+        >
+          {detail.payment.status === "approved" ? "این فیش تأیید شده است." : "این فیش رد شده است."}
         </div>
       )}
     </div>
