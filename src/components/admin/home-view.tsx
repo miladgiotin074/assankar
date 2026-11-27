@@ -153,7 +153,7 @@ export function AdminHomeView() {
       {queue.length ? (
         <div className="admin-list">
           {queue.map((item: AdminPaymentRow) => (
-            <Link key={item.phone} href={`/admin/payments/${item.phone}`} className="admin-row is-person">
+            <Link key={item.phone} href={`/admin/payments/detail?phone=${item.phone}`} className="admin-row is-person">
               <AdminAvatar name={item.name} />
               <span>
                 <strong>{item.name}</strong>

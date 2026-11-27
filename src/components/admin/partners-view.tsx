@@ -119,7 +119,7 @@ export function AdminPartnersView({ stageQuery = "" }: { stageQuery?: string }) 
       {!loading && items.length ? (
         <div className="admin-list">
           {items.map((item) => (
-            <Link key={item.phone} href={`/admin/partners/${item.phone}`} className="admin-row is-person">
+            <Link key={item.phone} href={`/admin/partners/detail?phone=${item.phone}`} className="admin-row is-person">
               <AdminAvatar name={item.name} />
               <span>
                 <strong>{item.name}</strong>

@@ -111,7 +111,7 @@ export function AdminPaymentDetailView({ phone }: { phone: string }) {
             <span>همکار</span>
             <strong>{detail.payment.name}</strong>
           </div>
-          <Link href={`/admin/partners/${detail.payment.phone}`} className="admin-copy">
+          <Link href={`/admin/partners/detail?phone=${detail.payment.phone}`} className="admin-copy">
             پرونده
           </Link>
         </div>

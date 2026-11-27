@@ -114,7 +114,7 @@ export function AdminPaymentsView({ statusQuery = "" }: { statusQuery?: string }
       {!loading && items.length ? (
         <div className="admin-list">
           {items.map((item) => (
-            <Link key={item.phone} href={`/admin/payments/${item.phone}`} className="admin-row is-person">
+            <Link key={item.phone} href={`/admin/payments/detail?phone=${item.phone}`} className="admin-row is-person">
               <AdminAvatar name={item.name} />
               <span>
                 <strong>{item.name}</strong>

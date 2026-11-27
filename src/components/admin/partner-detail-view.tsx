@@ -143,7 +143,7 @@ export function AdminPartnerDetailView({ phone }: { phone: string }) {
           <img className="admin-receipt is-inline" src={detail.receiptUrl} alt="فیش واریزی" />
         ) : null}
         {detail.payment ? (
-          <Link href={`/admin/payments/${detail.payment.phone}`} className="admin-link-row">
+          <Link href={`/admin/payments/detail?phone=${detail.payment.phone}`} className="admin-link-row">
             {detail.payment.status === "pending" ? "بررسی و تصمیم" : "جزئیات فیش"}
             <span aria-hidden="true">‹</span>
           </Link>

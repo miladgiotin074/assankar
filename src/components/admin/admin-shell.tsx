@@ -63,9 +63,9 @@ const tabs = [
 ];
 
 function titleFor(path: string) {
-  if (path.startsWith("/admin/payments/")) return "بررسی فیش";
+  if (path === "/admin/payments/detail") return "بررسی فیش";
   if (path.startsWith("/admin/payments")) return "فیش‌ها";
-  if (path.startsWith("/admin/partners/")) return "پرونده همکار";
+  if (path === "/admin/partners/detail") return "پرونده همکار";
   if (path.startsWith("/admin/partners")) return "همکاران";
   return "مدیریت";
 }
@@ -97,15 +97,15 @@ function AdminFrame() {
   const { admin } = useAdminTelegram();
   const { pending, refresh } = useAdminLive();
   useTelegramBack();
-  const paymentPhone = pathname.match(/^\/admin\/payments\/([^/]+)$/)?.[1] || "";
-  const partnerPhone = pathname.match(/^\/admin\/partners\/([^/]+)$/)?.[1] || "";
+  const query = new URLSearchParams(search);
+  const paymentPhone = pathname === "/admin/payments/detail" ? query.get("phone") || "" : "";
+  const partnerPhone = pathname === "/admin/partners/detail" ? query.get("phone") || "" : "";
   const detail = Boolean(paymentPhone || partnerPhone);
   const tab = pathname.startsWith("/admin/partners")
     ? "partners"
     : pathname.startsWith("/admin/payments")
       ? "payments"
       : "home";
-  const query = new URLSearchParams(search);
   const badge = pending > 99 ? "۹۹+" : faDigits(String(pending));
 
   return (
@@ -136,12 +136,12 @@ function AdminFrame() {
         </section>
         {paymentPhone ? (
           <section className="admin-layer" key={paymentPhone}>
-            <AdminPaymentDetailView phone={decodeURIComponent(paymentPhone)} />
+            <AdminPaymentDetailView phone={paymentPhone} />
           </section>
         ) : null}
         {partnerPhone ? (
           <section className="admin-layer" key={partnerPhone}>
-            <AdminPartnerDetailView phone={decodeURIComponent(partnerPhone)} />
+            <AdminPartnerDetailView phone={partnerPhone} />
           </section>
         ) : null}
       </div>

@@ -6,8 +6,8 @@ import { backButton, hapticFeedback } from "@tma.js/sdk-react";
 import { useAdminLive } from "@/components/admin/admin-live";
 
 function parentPath(pathname: string) {
-  if (/^\/admin\/payments\/[^/]+$/.test(pathname)) return "/admin/payments";
-  if (/^\/admin\/partners\/[^/]+$/.test(pathname)) return "/admin/partners";
+  if (pathname === "/admin/payments/detail") return "/admin/payments";
+  if (pathname === "/admin/partners/detail") return "/admin/partners";
   if (pathname.startsWith("/admin/") && pathname !== "/admin") return "/admin";
   return "";
 }
