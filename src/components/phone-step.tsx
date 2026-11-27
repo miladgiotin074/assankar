@@ -11,7 +11,7 @@ export async function PhoneStep() {
       action={submitPhone}
       field="phone"
       label="شماره موبایل"
-      hint="با ۰۹ شروع می‌شود و یازده رقم است."
+      hint="نام کاربری شماست. با ۰۹ شروع می‌شود و یازده رقم است."
       autoComplete="tel"
       inputMode="tel"
       maxLength={16}

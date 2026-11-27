@@ -7,6 +7,7 @@ import { normalizePhone } from "@/lib/apply";
 import { isValidMobile, isValidNationalId, normalizeNationalId, type AuthState } from "@/lib/identity";
 import { checkProfile, saveProfile, type ProfileState } from "@/lib/profile";
 import { endSession, readPendingPhone, readSession, rememberPhone, startSession } from "@/lib/session";
+import { openAccount } from "@/lib/users";
 
 const hits = new Map<string, number[]>();
 
@@ -57,6 +58,9 @@ export async function submitNationalId(_prev: AuthState, formData: FormData): Pr
   if (!isValidNationalId(nationalId)) {
     return { error: "کد ملی ده رقمی معتبر بنویسید." };
   }
+
+  const account = await openAccount(phone, nationalId);
+  if (!account.ok) return { error: account.error };
 
   await startSession(phone);
   redirect("/dashboard");

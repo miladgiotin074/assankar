@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function RegisterPage() {
   return (
     <AppShell title="آسان‌کار">
-      <AuthCard title="ثبت‌نام و ورود" copy="شماره موبایل خود را بنویسید.">
+      <AuthCard title="ثبت‌نام و ورود" copy="شماره موبایل، نام کاربری شماست.">
         <Suspense fallback={<div className="h-40" />}>
           <PhoneStep />
         </Suspense>

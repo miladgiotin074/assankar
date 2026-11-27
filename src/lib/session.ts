@@ -60,14 +60,12 @@ export async function readPendingPhone() {
 }
 
 export async function rememberPhone(phone: string) {
-  await connection();
   const store = await cookies();
   const exp = Date.now() + pendingSeconds * 1000;
   store.set(pendingName, sealed(phone, exp), cookieOptions(pendingSeconds));
 }
 
 export async function startSession(phone: string) {
-  await connection();
   const store = await cookies();
   const exp = Date.now() + sessionSeconds * 1000;
   store.set(sessionName, sealed(phone, exp), cookieOptions(sessionSeconds));

@@ -7,6 +7,7 @@ import { AuthForm } from "@/components/auth-form";
 import { submitNationalId } from "@/app/account/actions";
 import { faDigits } from "@/lib/format";
 import { readPendingPhone, readSession } from "@/lib/session";
+import { hasAccount } from "@/lib/users";
 
 export const metadata: Metadata = {
   title: "کد ملی",
@@ -29,9 +30,13 @@ async function NationalIdStep() {
   if (!phone) redirect("/register");
 
   const shown = faDigits(phone.replace(/(\d{4})(\d{3})(\d{4})/, "$1 $2 $3"));
+  const known = await hasAccount(phone);
 
   return (
-    <AuthCard title="کد ملی" copy="کد ملی ده رقمی را بنویسید.">
+    <AuthCard
+      title="کد ملی"
+      copy={known ? "رمز ورود همین کد ملی است." : "برای ساخت حساب، کد ملی را به‌عنوان رمز بنویسید."}
+    >
       <p className="auth-phone-label">شماره واردشده</p>
       <p className="auth-phone" dir="ltr">
         {shown}
@@ -40,7 +45,7 @@ async function NationalIdStep() {
         action={submitNationalId}
         field="nationalId"
         label="کد ملی"
-        hint="ده رقم، بدون خط تیره."
+        hint="رمز ورود شماست. ده رقم، بدون خط تیره."
         autoComplete="off"
         inputMode="numeric"
         maxLength={10}
