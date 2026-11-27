@@ -57,26 +57,26 @@ export function PaymentForm({
   return (
     <form action={action} className="pay-form">
       <section className="pay-fee" aria-label="هزینه ثبت‌نام">
-        <div>
-          <p>هزینهٔ ثبت‌نام</p>
+        <div className="pay-fee-main">
+          <p>مبلغ قابل واریز</p>
           <strong>{toman(amount)}</strong>
         </div>
-        <small>مبلغ را دقیقاً به همین کارت واریز کنید.</small>
+        <p className="pay-fee-note">همین مبلغ را دقیقاً به شماره کارت بالا واریز کنید.</p>
       </section>
 
       <section className="pay-guide" aria-label="راهنمای فیش">
         <div className="pay-guide-head">
-          <h2>چطور واریز کنم؟</h2>
+          <h2>مراحل واریز</h2>
           <span>۳ قدم</span>
         </div>
         <ol>
           <li>
-            <strong>واریز مبلغ</strong>
-            <span>مبلغ {toman(amount)} را به کارت بالا واریز کنید.</span>
+            <strong>واریز به کارت</strong>
+            <span>مبلغ {toman(amount)} را به شمارهٔ کپی‌شده واریز کنید.</span>
           </li>
           <li>
             <strong>عکس از فیش</strong>
-            <span>از رسید بانکی یا فیش واریزی عکس واضح بگیرید.</span>
+            <span>از رسید بانکی عکس واضح و خوانا بگیرید.</span>
           </li>
           <li>
             <strong>ارسال برای تأیید</strong>
@@ -90,7 +90,7 @@ export function PaymentForm({
           <span className="pay-status-mark" aria-hidden="true" />
           <div>
             <strong>فیش دریافت شد</strong>
-            <p>عکس فیش روی سرور ذخیره شده و منتظر تأیید پشتیبانی است. در صورت نیاز عکس جدید بفرستید.</p>
+            <p>عکس فیش ذخیره شده و منتظر تأیید پشتیبانی است. در صورت نیاز عکس جدید بفرستید.</p>
             {receiptUrl ? (
               <a className="pay-receipt-link" href={receiptUrl} target="_blank" rel="noopener noreferrer">
                 مشاهدهٔ فیش فعلی
@@ -132,7 +132,11 @@ export function PaymentForm({
           )}
         </span>
         <span className="pay-upload-meta">
-          {fileName ? faDigits(fileName) : preview || status === "pending" ? "برای تعویض، عکس جدید انتخاب کنید" : "عکس را از گالری یا دوربین انتخاب کنید"}
+          {fileName
+            ? faDigits(fileName)
+            : preview || status === "pending"
+              ? "برای تعویض، عکس جدید انتخاب کنید"
+              : "عکس را از گالری یا دوربین انتخاب کنید"}
         </span>
       </label>
 
@@ -181,9 +185,9 @@ export function BankCard({
     }
   }
 
-  function replay() {
-    setSpin(false);
-    window.setTimeout(() => setSpin(true), 30);
+  function flipCard() {
+    if (spin) return;
+    setSpin(true);
   }
 
   return (
@@ -192,8 +196,8 @@ export function BankCard({
         <button
           type="button"
           className={spin ? "bank-flip is-spin" : "bank-flip"}
-          onClick={replay}
-          aria-label="چرخش دوباره کارت"
+          onClick={flipCard}
+          aria-label="برای چرخش کارت، روی کارت بزنید"
         >
           <span className="bank-face bank-face-front">
             <span className="bank-card-shine" aria-hidden="true" />
@@ -230,12 +234,18 @@ export function BankCard({
         </button>
       </div>
 
-      <div className="bank-actions">
+      <p className="bank-hint">برای دیدن پشت کارت، روی کارت بزنید</p>
+
+      <div className="bank-number-panel">
+        <div className="bank-number-copy">
+          <span>شماره کارت</span>
+          <strong dir="ltr">{faDigits(grouped)}</strong>
+          <small>
+            {bank} · {holder}
+          </small>
+        </div>
         <button type="button" className="bank-copy" onClick={copyNumber}>
-          {copied ? "کپی شد" : "کپی شماره کارت"}
-        </button>
-        <button type="button" className="bank-replay" onClick={replay}>
-          چرخش کارت
+          {copied ? "کپی شد" : "کپی شماره"}
         </button>
       </div>
     </div>

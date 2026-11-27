@@ -2363,41 +2363,50 @@ select.field {
   min-height: 0;
   flex: 1;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.05rem;
 }
 
 .pay-intro {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.35rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid #e3edf5;
+  border-radius: 1.25rem;
+  background:
+    linear-gradient(160deg, rgba(238, 245, 251, 0.95), rgba(255, 255, 255, 0.92) 55%),
+    #fff;
 }
 
 .pay-kicker {
   color: #0b7a52;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 800;
+  letter-spacing: 0.01em;
 }
 
 .pay-title {
-  font-size: 1.2rem;
+  color: #10293f;
+  font-size: 1.18rem;
   font-weight: 800;
+  line-height: 1.55;
 }
 
 .pay-lead {
   color: #4e6578;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   line-height: 1.85;
 }
 
 .bank-block {
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
+  gap: 0.55rem;
 }
 
 .bank-stage {
   perspective: 1200px;
-  padding: 0.2rem 0.1rem 0.15rem;
+  padding: 0.15rem 0.05rem 0.05rem;
 }
 
 .bank-flip {
@@ -2410,10 +2419,22 @@ select.field {
   background: transparent;
   transform-style: preserve-3d;
   cursor: pointer;
+  transition: transform 0.25s ease;
+}
+
+.bank-flip:not(.is-spin):hover {
+  transform: translateY(-2px);
+}
+
+.bank-flip:focus-visible {
+  outline: 2px solid #0c4d86;
+  outline-offset: 4px;
+  border-radius: 1.35rem;
 }
 
 .bank-flip.is-spin {
   animation: bank-flip-turn 4s ease-in-out 1;
+  pointer-events: none;
 }
 
 .bank-face {
@@ -2572,28 +2593,84 @@ select.field {
   line-height: 1.6;
 }
 
-.bank-actions {
-  display: grid;
-  grid-template-columns: 1.4fr 1fr;
-  gap: 0.55rem;
+.bank-hint {
+  margin: 0;
+  color: #4e6578;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.6;
+  text-align: center;
 }
 
-.bank-copy,
-.bank-replay {
+.bank-number-panel {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.9rem 0.95rem;
+  border: 1px solid #e3edf5;
+  border-radius: 1.2rem;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(8, 44, 82, 0.05);
+}
+
+.bank-number-copy {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.bank-number-copy > span {
+  color: #4e6578;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.bank-number-copy strong {
+  color: #10293f;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.bank-number-copy small {
+  color: #4e6578;
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.bank-copy {
+  flex-shrink: 0;
+  min-width: 5.8rem;
   height: 2.55rem;
+  padding-inline: 0.9rem;
   border-radius: 0.95rem;
+  background: #0c4d86;
+  color: #fff;
   font-size: 0.84rem;
   font-weight: 800;
 }
 
-.bank-copy {
-  background: #0c4d86;
-  color: #fff;
+.bank-copy:hover {
+  background: #0a4172;
 }
 
-.bank-replay {
-  background: #eef5fb;
-  color: #0c4d86;
+.bank-copy:focus-visible {
+  outline: 2px solid #0c4d86;
+  outline-offset: 2px;
+}
+
+@media (max-width: 380px) {
+  .bank-number-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .bank-copy {
+    width: 100%;
+  }
 }
 
 @keyframes bank-flip-turn {
@@ -2629,42 +2706,47 @@ select.field {
   min-height: 0;
   flex: 1;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 0.9rem;
 }
 
 .pay-fee {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.55rem;
   padding: 1rem 1.05rem;
-  border: 1px solid #e3edf5;
+  border: 1px solid #cfe8dc;
   border-radius: 1.25rem;
   background:
-    linear-gradient(180deg, rgba(231, 246, 240, 0.7), transparent 55%),
+    linear-gradient(145deg, rgba(231, 246, 240, 0.95), rgba(255, 255, 255, 0.9) 62%),
     #fff;
 }
 
-.pay-fee p {
-  color: #4e6578;
-  font-size: 0.8rem;
-  font-weight: 700;
-}
-
-.pay-fee strong {
-  display: block;
-  color: #0c4d86;
-  font-size: 1.55rem;
+.pay-fee-main p {
+  color: #0b7a52;
+  font-size: 0.78rem;
   font-weight: 800;
 }
 
-.pay-fee small {
+.pay-fee-main strong {
+  display: block;
+  margin-top: 0.2rem;
+  color: #0c4d86;
+  font-size: 1.65rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+}
+
+.pay-fee-note {
+  margin: 0;
   color: #4e6578;
-  font-size: 0.8rem;
+  font-size: 0.82rem;
+  font-weight: 700;
   line-height: 1.7;
 }
 
 .pay-guide {
-  padding: 0.95rem 1rem;
+  padding: 1rem 1.05rem;
   border: 1px solid #e3edf5;
   border-radius: 1.25rem;
   background: #fff;
@@ -2697,8 +2779,8 @@ select.field {
 .pay-guide ol {
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
-  margin: 0.85rem 0 0;
+  gap: 0.85rem;
+  margin: 0.95rem 0 0;
   padding: 0;
   list-style: none;
   counter-reset: pay-step;
@@ -2707,8 +2789,8 @@ select.field {
 .pay-guide li {
   position: relative;
   display: grid;
-  gap: 0.15rem;
-  padding-inline-start: 2.2rem;
+  gap: 0.18rem;
+  padding-inline-start: 2.35rem;
   counter-increment: pay-step;
 }
 
@@ -2716,16 +2798,17 @@ select.field {
   content: counter(pay-step);
   position: absolute;
   inset-inline-start: 0;
-  top: 0.1rem;
+  top: 0.05rem;
   display: grid;
-  width: 1.55rem;
-  height: 1.55rem;
+  width: 1.65rem;
+  height: 1.65rem;
   place-items: center;
   border-radius: 999px;
-  background: #eef5fb;
+  background: linear-gradient(145deg, #eef5fb, #e7f6f0);
   color: #0c4d86;
   font-size: 0.75rem;
   font-weight: 800;
+  box-shadow: inset 0 0 0 1px rgba(12, 77, 134, 0.08);
 }
 
 .pay-guide li strong {
@@ -2818,7 +2901,18 @@ select.field {
   overflow: hidden;
   border: 1.5px dashed #c7d7e6;
   border-radius: 1.25rem;
-  background: #f7fbfe;
+  background:
+    linear-gradient(180deg, rgba(247, 251, 254, 0.95), rgba(238, 245, 251, 0.55)),
+    #f7fbfe;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.pay-upload:hover .pay-upload-frame {
+  border-color: #9fbad0;
+  box-shadow: 0 8px 18px rgba(8, 44, 82, 0.05);
 }
 
 .pay-upload.is-ready .pay-upload-frame {
