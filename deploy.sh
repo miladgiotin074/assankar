@@ -176,22 +176,124 @@ ask_domain() {
   fi
 }
 
+env_get() {
+  local key="$1"
+  if [[ ! -f "${ENV_FILE}" ]]; then
+    return 0
+  fi
+  grep -E "^${key}=" "${ENV_FILE}" | head -n 1 | cut -d= -f2- || true
+}
+
+env_set() {
+  local key="$1"
+  local value="$2"
+  local tmp
+  touch "${ENV_FILE}"
+  tmp="$(mktemp)"
+  if grep -qE "^${key}=" "${ENV_FILE}"; then
+    awk -v key="${key}" -v value="${value}" '
+      BEGIN { found = 0 }
+      index($0, key "=") == 1 {
+        print key "=" value
+        found = 1
+        next
+      }
+      { print }
+      END {
+        if (!found) print key "=" value
+      }
+    ' "${ENV_FILE}" > "${tmp}"
+  else
+    cat "${ENV_FILE}" > "${tmp}"
+    printf '%s=%s\n' "${key}" "${value}" >> "${tmp}"
+  fi
+  mv "${tmp}" "${ENV_FILE}"
+  chown "${APP_USER}:${APP_USER}" "${ENV_FILE}"
+  chmod 600 "${ENV_FILE}"
+}
+
+ask_admin_telegram() {
+  local token=""
+  local admin_ids=""
+  local current_token current_ids
+
+  current_token="$(env_get BOT_TOKEN)"
+  current_ids="$(env_get ADMIN_TELEGRAM_IDS)"
+
+  if [[ -n "${current_token}" && -n "${current_ids}" ]]; then
+    if [[ -r /dev/tty ]]; then
+      echo "توکن بات و آی‌دی ادمین از قبل تنظیم شده‌اند."
+      read -r -p "می‌خواهید دوباره وارد کنید؟ (y/N): " redo < /dev/tty || true
+      if [[ ! "${redo:-}" =~ ^[Yy]$ ]]; then
+        return
+      fi
+    else
+      return
+    fi
+  fi
+
+  if [[ ! -r /dev/tty ]]; then
+    echo "برای ست کردن BOT_TOKEN و ADMIN_TELEGRAM_IDS ترمینال تعاملی لازم است."
+    exit 1
+  fi
+
+  echo
+  echo "تنظیم پنل مدیریت تلگرام (/admin)"
+  if [[ -n "${current_token}" ]]; then
+    read -r -p "توکن بات تلگرام [Enter = بدون تغییر]: " token < /dev/tty
+    if [[ -z "${token}" ]]; then
+      token="${current_token}"
+    fi
+  else
+    read -r -p "توکن بات تلگرام (BotFather): " token < /dev/tty
+  fi
+  token="$(printf '%s' "${token}" | tr -d '[:space:]')"
+  if [[ -z "${token}" || "${token}" != *:* ]]; then
+    echo "توکن بات معتبر نیست."
+    exit 1
+  fi
+
+  if [[ -n "${current_ids}" ]]; then
+    read -r -p "آی‌دی عددی ادمین(ها) [فعلی: ${current_ids}]: " admin_ids < /dev/tty
+    if [[ -z "${admin_ids}" ]]; then
+      admin_ids="${current_ids}"
+    fi
+  else
+    read -r -p "آی‌دی عددی تلگرام ادمین (چندتایی با کاما): " admin_ids < /dev/tty
+  fi
+  admin_ids="$(printf '%s' "${admin_ids}" | tr -d '[:space:]')"
+  if [[ ! "${admin_ids}" =~ ^[0-9]+(,[0-9]+)*$ ]]; then
+    echo "آی‌دی ادمین باید عددی باشد؛ چند ادمین را با کاما جدا کنید."
+    exit 1
+  fi
+
+  env_set BOT_TOKEN "${token}"
+  env_set ADMIN_TELEGRAM_IDS "${admin_ids}"
+  if [[ -z "$(env_get ADMIN_SESSION_SECRET)" ]]; then
+    env_set ADMIN_SESSION_SECRET "$(openssl rand -base64 32)"
+  fi
+}
+
 write_env() {
   if [[ -f "${ENV_FILE}" ]]; then
+    ask_admin_telegram
     return
   fi
-  local secret
+  local secret admin_secret
   secret="$(openssl rand -base64 32)"
+  admin_secret="$(openssl rand -base64 32)"
   install -d -o "${APP_USER}" -g "${APP_USER}" "${APP_DIR}"
   cat > "${ENV_FILE}" <<EOF
 NODE_ENV=production
 MONGODB_URI=mongodb://127.0.0.1:27017
 MONGODB_DB=assankar
 AUTH_SECRET=${secret}
+ADMIN_SESSION_SECRET=${admin_secret}
 NEXT_PUBLIC_SITE_URL=https://${DOMAIN}
 EOF
   chown "${APP_USER}:${APP_USER}" "${ENV_FILE}"
   chmod 600 "${ENV_FILE}"
+  ask_admin_telegram
 }
 
 read_domain() {
@@ -308,6 +410,8 @@ install_all() {
   systemctl reload nginx
   echo
   echo "آسان‌کار روی https://${DOMAIN} در حال اجراست."
+  echo "پنل ادمین Mini App: https://${DOMAIN}/admin"
+  echo "در BotFather آدرس Mini App را روی همان /admin بگذارید."
   echo "برای به‌روزرسانی بعدی همین دستور را دوباره بزنید: sudo bash deploy.sh"
 }
 
@@ -319,6 +423,7 @@ update_all() {
   install_mongo
   ensure_user
   sync_code
+  ask_admin_telegram
   build_app
   write_service
   write_nginx
@@ -327,6 +432,7 @@ update_all() {
   systemctl reload nginx
   echo
   echo "آسان‌کار به‌روز شد: https://${DOMAIN}"
+  echo "پنل ادمین: https://${DOMAIN}/admin"
 }
 
 if [[ -f "${ENV_FILE}" && -d "${APP_DIR}/.git" ]]; then
