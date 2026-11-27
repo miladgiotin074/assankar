@@ -28,7 +28,7 @@ const defaults: AppSettings = {
   payoutBank: site.payoutBank,
 };
 
-let cache: { value: AppSettings; at: number } | null = null;
+let cache: AppSettings | null = null;
 
 function money(value: unknown, fallback: number) {
   const n = typeof value === "number" ? value : Number(value);
@@ -76,14 +76,13 @@ export function clearSettingsCache() {
 }
 
 export async function getSettings(): Promise<AppSettings> {
-  if (cache && Date.now() - cache.at < 4_000) return cache.value;
+  if (cache) return cache;
   try {
     const doc = await (await collection<SettingsDoc>("settings")).findOne({ _id: SETTINGS_ID });
-    const value = normalize(doc);
-    cache = { value, at: Date.now() };
-    return value;
+    cache = normalize(doc);
+    return cache;
   } catch {
-    cache = { value: defaults, at: Date.now() };
+    cache = defaults;
     return defaults;
   }
 }
@@ -93,7 +92,7 @@ export async function saveSettings(input: Partial<AppSettings>) {
   const next = normalize({ ...current, ...input });
   await (
     await collection<SettingsDoc>("settings")
-  ).updateOne({ _id: SETTINGS_ID }, { $set: { ...next, at: new Date() } }, { upsert: true });
-  cache = { value: next, at: Date.now() };
+  ).updateOne({ _id: SETTINGS_ID }, { $set: { ...next, updatedAt: new Date() } }, { upsert: true });
+  cache = next;
   return next;
 }
