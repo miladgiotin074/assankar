@@ -58,7 +58,7 @@ async function GuaranteeGate() {
         status={status}
         receiptUrl={receiptUrl}
         title="ضمانت کالا"
-        nextHint="بعد از تأیید فیش ضمانت، مرحلهٔ هزینهٔ باربری باز می‌شود."
+        nextHint="بعد از تأیید فیش ضمانت، مرحلهٔ هزینهٔ انبار باز می‌شود."
         action={submitGuaranteeReceipt}
       />
     </div>

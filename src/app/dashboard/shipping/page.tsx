@@ -31,8 +31,8 @@ async function ShippingGate() {
   if (!(await hasProfile(session.phone))) redirect("/account/profile");
   if (!(await readChoices(session.phone)).length) redirect("/dashboard/products");
 
-  const guarantee = await readPayment(session.phone, "guarantee");
-  if (guarantee?.status !== "approved") redirect("/dashboard/guarantee");
+  const warehouse = await readPayment(session.phone, "warehouse");
+  if (warehouse?.status !== "approved") redirect("/dashboard/warehouse");
 
   const payment = await readPayment(session.phone, "shipping");
   const status = payment?.status ?? "none";
@@ -44,7 +44,7 @@ async function ShippingGate() {
         <p className="pay-kicker">مرحله باربری</p>
         <h2 className="pay-title">واریز هزینهٔ باربری</h2>
         <p className="pay-lead">
-          بعد از تأیید ضمانت کالا، هزینهٔ باربری را به همان کارت واریز کنید و عکس فیش را بفرستید.
+          بعد از تأیید انبار، هزینهٔ باربری را به همان کارت واریز کنید و عکس فیش را بفرستید.
         </p>
       </div>
       <BankCard
@@ -58,7 +58,7 @@ async function ShippingGate() {
         status={status}
         receiptUrl={receiptUrl}
         title="هزینه باربری"
-        nextHint="بعد از تأیید فیش باربری، مرحلهٔ هزینهٔ انبار باز می‌شود."
+        nextHint="بعد از تأیید فیش باربری، مرحلهٔ بعد همکاری باز می‌شود."
         action={submitShippingReceipt}
       />
     </div>

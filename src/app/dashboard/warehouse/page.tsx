@@ -31,8 +31,8 @@ async function WarehouseGate() {
   if (!(await hasProfile(session.phone))) redirect("/account/profile");
   if (!(await readChoices(session.phone)).length) redirect("/dashboard/products");
 
-  const shipping = await readPayment(session.phone, "shipping");
-  if (shipping?.status !== "approved") redirect("/dashboard/shipping");
+  const guarantee = await readPayment(session.phone, "guarantee");
+  if (guarantee?.status !== "approved") redirect("/dashboard/guarantee");
 
   const payment = await readPayment(session.phone, "warehouse");
   const status = payment?.status ?? "none";
@@ -44,7 +44,7 @@ async function WarehouseGate() {
         <p className="pay-kicker">مرحله انبار</p>
         <h2 className="pay-title">واریز هزینهٔ انبار</h2>
         <p className="pay-lead">
-          بعد از تأیید باربری، هزینهٔ انبار را به همان کارت واریز کنید و عکس فیش را بفرستید.
+          بعد از تأیید ضمانت کالا، هزینهٔ انبار را به همان کارت واریز کنید و عکس فیش را بفرستید.
         </p>
       </div>
       <BankCard
@@ -58,7 +58,7 @@ async function WarehouseGate() {
         status={status}
         receiptUrl={receiptUrl}
         title="هزینه انبار"
-        nextHint="بعد از تأیید فیش انبار، مرحلهٔ بعد همکاری باز می‌شود."
+        nextHint="بعد از تأیید فیش انبار، مرحلهٔ هزینهٔ باربری باز می‌شود."
         action={submitWarehouseReceipt}
       />
     </div>

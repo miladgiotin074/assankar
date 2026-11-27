@@ -195,12 +195,12 @@ export async function adminListPartners(q = "", stageFilter: PartnerFilter = "al
     const shippingStatus = shipping?.status ?? "none";
     const warehouseStatus = warehouse?.status ?? "none";
     let stage = "پروفایل";
-    if (warehouseStatus === "approved") stage = "انبار تأیید شده";
-    else if (warehouseStatus === "pending") stage = "منتظر تأیید انبار";
-    else if (warehouseStatus === "rejected") stage = "فیش انبار رد شده";
-    else if (shippingStatus === "approved") stage = "باربری تأیید شده";
+    if (shippingStatus === "approved") stage = "باربری تأیید شده";
     else if (shippingStatus === "pending") stage = "منتظر تأیید باربری";
     else if (shippingStatus === "rejected") stage = "فیش باربری رد شده";
+    else if (warehouseStatus === "approved") stage = "انبار تأیید شده";
+    else if (warehouseStatus === "pending") stage = "منتظر تأیید انبار";
+    else if (warehouseStatus === "rejected") stage = "فیش انبار رد شده";
     else if (guaranteeStatus === "approved") stage = "ضمانت تأیید شده";
     else if (guaranteeStatus === "pending") stage = "منتظر تأیید ضمانت";
     else if (guaranteeStatus === "rejected") stage = "فیش ضمانت رد شده";

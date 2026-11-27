@@ -71,13 +71,13 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
   const guarantee = insured ? await readPayment(phoneRaw, "guarantee") : null;
   const guaStatus = guarantee?.status ?? "none";
   const guaranteed = guaStatus === "approved";
-  const shipping = guaranteed ? await readPayment(phoneRaw, "shipping") : null;
-  const shipStatus = shipping?.status ?? "none";
-  const shipped = shipStatus === "approved";
-  const warehouse = shipped ? await readPayment(phoneRaw, "warehouse") : null;
+  const warehouse = guaranteed ? await readPayment(phoneRaw, "warehouse") : null;
   const wareStatus = warehouse?.status ?? "none";
   const warehoused = wareStatus === "approved";
-  const stages = workStages(ready, choices, regStatus, insStatus, guaStatus, shipStatus, wareStatus);
+  const shipping = warehoused ? await readPayment(phoneRaw, "shipping") : null;
+  const shipStatus = shipping?.status ?? "none";
+  const shipped = shipStatus === "approved";
+  const stages = workStages(ready, choices, regStatus, insStatus, guaStatus, wareStatus, shipStatus);
 
   return (
     <div className="dash">
@@ -106,25 +106,25 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
             payment={guarantee}
             href="/dashboard/guarantee"
             label="ضمانت کالا"
-            nextText="بعد از تأیید فیش ضمانت، مرحلهٔ هزینهٔ باربری باز می‌شود."
+            nextText="بعد از تأیید فیش ضمانت، مرحلهٔ هزینهٔ انبار باز می‌شود."
           />
         ) : null}
 
-        {chosen && guaranteed && shipStatus === "pending" && shipping ? (
-          <PayWait
-            payment={shipping}
-            href="/dashboard/shipping"
-            label="باربری"
-            nextText="بعد از تأیید فیش باربری، مرحلهٔ هزینهٔ انبار باز می‌شود."
-          />
-        ) : null}
-
-        {chosen && shipped && wareStatus === "pending" && warehouse ? (
+        {chosen && guaranteed && wareStatus === "pending" && warehouse ? (
           <PayWait
             payment={warehouse}
             href="/dashboard/warehouse"
             label="انبار"
-            nextText="بعد از تأیید فیش انبار، مرحلهٔ بعد همکاری باز می‌شود."
+            nextText="بعد از تأیید فیش انبار، مرحلهٔ هزینهٔ باربری باز می‌شود."
+          />
+        ) : null}
+
+        {chosen && warehoused && shipStatus === "pending" && shipping ? (
+          <PayWait
+            payment={shipping}
+            href="/dashboard/shipping"
+            label="باربری"
+            nextText="بعد از تأیید فیش باربری، مرحلهٔ بعد همکاری باز می‌شود."
           />
         ) : null}
 
@@ -158,23 +158,23 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
           />
         ) : null}
 
-        {chosen && guaranteed && shipStatus === "rejected" ? (
-          <PayAlert
-            tone="bad"
-            title="نیاز به ارسال دوباره فیش باربری"
-            text="فیش باربری تأیید نشد. لطفاً عکس واضح‌تری از واریز درست بفرستید."
-            href="/dashboard/shipping"
-            link="ارسال فیش باربری"
-          />
-        ) : null}
-
-        {chosen && shipped && wareStatus === "rejected" ? (
+        {chosen && guaranteed && wareStatus === "rejected" ? (
           <PayAlert
             tone="bad"
             title="نیاز به ارسال دوباره فیش انبار"
             text="فیش انبار تأیید نشد. لطفاً عکس واضح‌تری از واریز درست بفرستید."
             href="/dashboard/warehouse"
             link="ارسال فیش انبار"
+          />
+        ) : null}
+
+        {chosen && warehoused && shipStatus === "rejected" ? (
+          <PayAlert
+            tone="bad"
+            title="نیاز به ارسال دوباره فیش باربری"
+            text="فیش باربری تأیید نشد. لطفاً عکس واضح‌تری از واریز درست بفرستید."
+            href="/dashboard/shipping"
+            link="ارسال فیش باربری"
           />
         ) : null}
 
@@ -194,27 +194,27 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
           />
         ) : null}
 
-        {chosen && guaranteed && !shipped && shipStatus !== "pending" && shipStatus !== "rejected" ? (
+        {chosen && guaranteed && !warehoused && wareStatus !== "pending" && wareStatus !== "rejected" ? (
           <PayAlert
             tone="ok"
             title="واریز ضمانت تأیید شد"
-            text="ضمانت کالا تأیید شده است. حالا هزینهٔ باربری را واریز کنید."
+            text="ضمانت کالا تأیید شده است. حالا هزینهٔ انبار را واریز کنید."
           />
         ) : null}
 
-        {chosen && shipped && !warehoused && wareStatus !== "pending" && wareStatus !== "rejected" ? (
-          <PayAlert
-            tone="ok"
-            title="واریز باربری تأیید شد"
-            text="هزینهٔ باربری تأیید شده است. حالا هزینهٔ انبار را واریز کنید."
-          />
-        ) : null}
-
-        {chosen && warehoused ? (
+        {chosen && warehoused && !shipped && shipStatus !== "pending" && shipStatus !== "rejected" ? (
           <PayAlert
             tone="ok"
             title="واریز انبار تأیید شد"
-            text="هزینهٔ انبار تأیید شده است و می‌توانید مرحلهٔ بعد را ادامه دهید."
+            text="هزینهٔ انبار تأیید شده است. حالا هزینهٔ باربری را واریز کنید."
+          />
+        ) : null}
+
+        {chosen && shipped ? (
+          <PayAlert
+            tone="ok"
+            title="واریز باربری تأیید شد"
+            text="هزینهٔ باربری تأیید شده است و می‌توانید مرحلهٔ بعد را ادامه دهید."
           />
         ) : null}
 
@@ -315,32 +315,11 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
               </span>
             </Link>
           </div>
-        ) : guaranteed && (shipStatus === "none" || shipStatus === "rejected") ? (
-          <div id={shipStatus === "none" ? "dash-next" : undefined} className="dash-cta-wrap is-violet">
-            <Link href="/dashboard/shipping" className="dash-cta is-violet">
-              <span className="dash-cta-no" aria-hidden="true">
-                ۶
-              </span>
-              <span>
-                <span className="dash-cta-kicker">مرحله بعد</span>
-                <strong>واریز هزینهٔ باربری</strong>
-                <small>
-                  {shipStatus === "rejected"
-                    ? "فیش باربری رد شد؛ دوباره واریز و ارسال کنید."
-                    : "مبلغ باربری را واریز کنید و عکس فیش را بفرستید."}
-                </small>
-              </span>
-              <span className="dash-cta-go">
-                واریز
-                <Chevron />
-              </span>
-            </Link>
-          </div>
-        ) : shipped && (wareStatus === "none" || wareStatus === "rejected") ? (
+        ) : guaranteed && (wareStatus === "none" || wareStatus === "rejected") ? (
           <div id={wareStatus === "none" ? "dash-next" : undefined} className="dash-cta-wrap is-violet">
             <Link href="/dashboard/warehouse" className="dash-cta is-violet">
               <span className="dash-cta-no" aria-hidden="true">
-                ۷
+                ۶
               </span>
               <span>
                 <span className="dash-cta-kicker">مرحله بعد</span>
@@ -349,6 +328,27 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
                   {wareStatus === "rejected"
                     ? "فیش انبار رد شد؛ دوباره واریز و ارسال کنید."
                     : "مبلغ انبار را واریز کنید و عکس فیش را بفرستید."}
+                </small>
+              </span>
+              <span className="dash-cta-go">
+                واریز
+                <Chevron />
+              </span>
+            </Link>
+          </div>
+        ) : warehoused && (shipStatus === "none" || shipStatus === "rejected") ? (
+          <div id={shipStatus === "none" ? "dash-next" : undefined} className="dash-cta-wrap is-violet">
+            <Link href="/dashboard/shipping" className="dash-cta is-violet">
+              <span className="dash-cta-no" aria-hidden="true">
+                ۷
+              </span>
+              <span>
+                <span className="dash-cta-kicker">مرحله بعد</span>
+                <strong>واریز هزینهٔ باربری</strong>
+                <small>
+                  {shipStatus === "rejected"
+                    ? "فیش باربری رد شد؛ دوباره واریز و ارسال کنید."
+                    : "مبلغ باربری را واریز کنید و عکس فیش را بفرستید."}
                 </small>
               </span>
               <span className="dash-cta-go">
@@ -404,8 +404,8 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
                   registered,
                   insured,
                   guaranteed,
-                  shipped,
                   warehoused,
+                  shipped,
                 )}
               >
                 <span className="dash-no">{faDigits(String(index + 1))}</span>
@@ -569,8 +569,8 @@ function workStages(
   regStatus: PaymentStatus | "none",
   insStatus: PaymentStatus | "none",
   guaStatus: PaymentStatus | "none",
-  shipStatus: PaymentStatus | "none",
   wareStatus: PaymentStatus | "none",
+  shipStatus: PaymentStatus | "none",
 ) {
   const chosen = choices.length > 0;
   return [
@@ -620,27 +620,27 @@ function workStages(
       ),
     },
     {
-      title: "واریز هزینهٔ باربری",
-      text: payStageText(
-        guaStatus === "approved",
-        shipStatus,
-        "بعد از تأیید ضمانت کالا باز می‌شود.",
-        "واریز باربری تأیید شده است.",
-        "فیش باربری در صف بررسی ادمین است؛ فعلاً صبر کنید.",
-        "فیش باربری رد شد؛ ارسال دوباره لازم است.",
-        "مبلغ باربری را واریز کنید و عکس فیش را بفرستید.",
-      ),
-    },
-    {
       title: "واریز هزینهٔ انبار",
       text: payStageText(
-        shipStatus === "approved",
+        guaStatus === "approved",
         wareStatus,
-        "بعد از تأیید باربری باز می‌شود.",
+        "بعد از تأیید ضمانت کالا باز می‌شود.",
         "واریز انبار تأیید شده است.",
         "فیش انبار در صف بررسی ادمین است؛ فعلاً صبر کنید.",
         "فیش انبار رد شد؛ ارسال دوباره لازم است.",
         "مبلغ انبار را واریز کنید و عکس فیش را بفرستید.",
+      ),
+    },
+    {
+      title: "واریز هزینهٔ باربری",
+      text: payStageText(
+        wareStatus === "approved",
+        shipStatus,
+        "بعد از تأیید انبار باز می‌شود.",
+        "واریز باربری تأیید شده است.",
+        "فیش باربری در صف بررسی ادمین است؛ فعلاً صبر کنید.",
+        "فیش باربری رد شد؛ ارسال دوباره لازم است.",
+        "مبلغ باربری را واریز کنید و عکس فیش را بفرستید.",
       ),
     },
     ...heroFlow.slice(1),
@@ -654,8 +654,8 @@ function stageClass(
   registered: boolean,
   insured: boolean,
   guaranteed: boolean,
-  shipped: boolean,
   warehoused: boolean,
+  shipped: boolean,
 ) {
   if (!ready) return index === 0 ? "is-open" : "is-wait";
   if (!chosen) {
@@ -678,12 +678,12 @@ function stageClass(
     if (index === 4) return "is-open";
     return "is-wait";
   }
-  if (!shipped) {
+  if (!warehoused) {
     if (index <= 4) return "is-done";
     if (index === 5) return "is-open";
     return "is-wait";
   }
-  if (!warehoused) {
+  if (!shipped) {
     if (index <= 5) return "is-done";
     if (index === 6) return "is-open";
     return "is-wait";

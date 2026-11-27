@@ -6,9 +6,9 @@ import { collection } from "@/lib/mongo";
 import { site } from "@/lib/site";
 
 export type PaymentStatus = "pending" | "approved" | "rejected";
-export type PaymentKind = "registration" | "insurance" | "guarantee" | "shipping" | "warehouse";
+export type PaymentKind = "registration" | "insurance" | "guarantee" | "warehouse" | "shipping";
 
-const paymentKinds = new Set<PaymentKind>(["registration", "insurance", "guarantee", "shipping", "warehouse"]);
+const paymentKinds = new Set<PaymentKind>(["registration", "insurance", "guarantee", "warehouse", "shipping"]);
 
 export function parsePaymentKind(value: unknown, fallback: PaymentKind = "registration"): PaymentKind {
   return typeof value === "string" && paymentKinds.has(value as PaymentKind)
@@ -52,8 +52,8 @@ function normalize(doc: PaymentRecord | null) {
 function amountFor(kind: PaymentKind) {
   if (kind === "insurance") return site.insuranceFee;
   if (kind === "guarantee") return site.guaranteeFee;
-  if (kind === "shipping") return site.shippingFee;
   if (kind === "warehouse") return site.warehouseFee;
+  if (kind === "shipping") return site.shippingFee;
   return site.registrationFee;
 }
 
@@ -86,8 +86,8 @@ function safeName(value: string) {
 export function paymentKindLabel(kind: PaymentKind) {
   if (kind === "insurance") return "بیمه";
   if (kind === "guarantee") return "ضمانت کالا";
-  if (kind === "shipping") return "باربری";
   if (kind === "warehouse") return "انبار";
+  if (kind === "shipping") return "باربری";
   return "ثبت‌نام";
 }
 
@@ -254,16 +254,16 @@ export async function saveReceipt(phone: string, file: File, kind: PaymentKind =
       return { ok: false as const, error: "اول باید هزینهٔ بیمه تأیید شده باشد." };
     }
   }
-  if (kind === "shipping") {
+  if (kind === "warehouse") {
     const guarantee = await readPayment(phone, "guarantee");
     if (guarantee?.status !== "approved") {
       return { ok: false as const, error: "اول باید ضمانت کالا تأیید شده باشد." };
     }
   }
-  if (kind === "warehouse") {
-    const shipping = await readPayment(phone, "shipping");
-    if (shipping?.status !== "approved") {
-      return { ok: false as const, error: "اول باید هزینهٔ باربری تأیید شده باشد." };
+  if (kind === "shipping") {
+    const warehouse = await readPayment(phone, "warehouse");
+    if (warehouse?.status !== "approved") {
+      return { ok: false as const, error: "اول باید هزینهٔ انبار تأیید شده باشد." };
     }
   }
 
