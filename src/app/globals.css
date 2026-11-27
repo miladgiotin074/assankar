@@ -1680,6 +1680,51 @@ body:has(.app-device.is-home) {
   line-height: 1.45;
 }
 
+.dash-ledger-meta {
+  margin: 0.7rem 0.7rem 0.15rem;
+  padding: 0.85rem 0.9rem 0.75rem;
+  border: 1px solid #e3edf5;
+  border-radius: 1.05rem;
+  background: #f7fbfe;
+}
+
+.dash-ledger-meta-title {
+  margin: 0 0 0.55rem;
+  color: #0c4d86;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.dash-ledger-meta dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem 0.7rem;
+  margin: 0;
+}
+
+.dash-ledger-meta dl > div {
+  min-width: 0;
+}
+
+.dash-ledger-meta dl > div.is-wide {
+  grid-column: 1 / -1;
+}
+
+.dash-ledger-meta dt {
+  color: #4e6578;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.dash-ledger-meta dd {
+  margin: 0.18rem 0 0;
+  color: #10293f;
+  font-size: 0.86rem;
+  font-weight: 800;
+  line-height: 1.65;
+  word-break: break-word;
+}
+
 .dash-ledger-list {
   margin: 0.2rem 0 0;
   padding: 0.15rem 0.35rem 0;

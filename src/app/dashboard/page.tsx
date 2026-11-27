@@ -8,7 +8,7 @@ import Link from "next/link";
 import { readChoices, type ChoiceItem } from "@/lib/catalog";
 import { faDigits, faNum, toman } from "@/lib/format";
 import { readPayment, type PaymentRecord, type PaymentStatus } from "@/lib/payment";
-import { hasProfile } from "@/lib/profile";
+import { hasProfile, readProfile, type ProfileRecord } from "@/lib/profile";
 import { readSession } from "@/lib/session";
 import { heroFlow, site } from "@/lib/site";
 
@@ -77,6 +77,7 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
   const shipping = warehoused ? await readPayment(phoneRaw, "shipping") : null;
   const shipStatus = shipping?.status ?? "none";
   const shipped = shipStatus === "approved";
+  const profile = shipped ? await readProfile(phoneRaw) : null;
   const stages = workStages(ready, choices, regStatus, insStatus, guaStatus, wareStatus, shipStatus);
 
   return (
@@ -212,6 +213,9 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
 
         {chosen && shipped && registration && insurance && guarantee && warehouse && shipping ? (
           <PayLedger
+            phone={phoneRaw}
+            profile={profile}
+            invoiceAt={shipping.reviewedAt || shipping.at}
             registration={registration.amount}
             wage={choices.reduce((sum, item) => sum + item.amount, 0)}
             rows={[
@@ -555,15 +559,31 @@ function PayLedger({
   rows,
   registration,
   wage,
+  phone,
+  profile,
+  invoiceAt,
 }: {
   rows: { label: string; amount: number }[];
   registration: number;
   wage: number;
+  phone: string;
+  profile: ProfileRecord | null;
+  invoiceAt: Date | string;
 }) {
   const total = rows.reduce((sum, row) => sum + (Number.isFinite(row.amount) ? row.amount : 0), 0);
   const safeWage = Number.isFinite(wage) ? wage : 0;
   const halfWage = Math.round(safeWage / 2);
   const balance = total - (Number.isFinite(registration) ? registration : 0) + halfWage;
+  const invoice = invoiceCode(phone, invoiceAt);
+  const fullName = profile ? `${profile.firstName} ${profile.lastName}`.trim() : "—";
+  const phoneLabel = faDigits(phone.replace(/(\d{4})(\d{3})(\d{4})/, "$1 $2 $3"));
+  const cardLabel = profile?.card
+    ? faDigits(profile.card.replace(/(\d{4})(?=\d)/g, "$1 ").trim())
+    : "—";
+  const birthLabel = profile
+    ? faDigits(`${profile.birthYear}/${String(profile.birthMonth).padStart(2, "0")}/${String(profile.birthDay).padStart(2, "0")}`)
+    : "—";
+  const addressLabel = profile?.address?.trim() || "—";
 
   return (
     <section id="dash-next" className="dash-ledger" aria-label="خلاصه مبالغ واریزی و دستمزد">
@@ -585,6 +605,35 @@ function PayLedger({
           <h2>خلاصه مبالغ واریزی</h2>
         </div>
       </header>
+      <div className="dash-ledger-meta">
+        <p className="dash-ledger-meta-title">مشخصات کاربر</p>
+        <dl>
+          <div>
+            <dt>نام و نام خانوادگی</dt>
+            <dd>{fullName}</dd>
+          </div>
+          <div>
+            <dt>شماره موبایل</dt>
+            <dd dir="ltr">{phoneLabel}</dd>
+          </div>
+          <div>
+            <dt>شماره کارت</dt>
+            <dd dir="ltr">{cardLabel}</dd>
+          </div>
+          <div>
+            <dt>تاریخ تولد</dt>
+            <dd dir="ltr">{birthLabel}</dd>
+          </div>
+          <div className="is-wide">
+            <dt>آدرس</dt>
+            <dd>{addressLabel}</dd>
+          </div>
+          <div className="is-wide">
+            <dt>شماره فاکتور</dt>
+            <dd dir="ltr">{invoice}</dd>
+          </div>
+        </dl>
+      </div>
       <ul className="dash-ledger-list">
         {rows.map((row, index) => (
           <li key={row.label} className="dash-ledger-row">
@@ -647,7 +696,7 @@ function PayLedger({
         <a
           className="dash-ledger-ready-cta"
           href={`https://t.me/${site.telegramUser}?text=${encodeURIComponent(
-            `سلام، محصولم ارسال شده است. مبلغ آماده واریز من ${faNum(balance)} تومان است. لطفاً واریز را تأیید کنید.`,
+            `سلام، محصولم ارسال شده است.\nشماره فاکتور: ${invoice}\nنام: ${fullName}\nموبایل: ${phone}\nمبلغ آماده واریز: ${faNum(balance)} تومان\nلطفاً واریز را تأیید کنید.`,
           )}`}
           target="_blank"
           rel="noopener noreferrer"
@@ -669,6 +718,15 @@ function formatPayTime(value: Date | string) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
+}
+
+function invoiceCode(phone: string, value: Date | string) {
+  const date = value instanceof Date ? value : new Date(value);
+  const safe = Number.isNaN(date.getTime()) ? new Date() : date;
+  const day = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tehran" }).format(safe).replace(/-/g, "");
+  const tail = phone.replace(/\D/g, "").slice(-4).padStart(4, "0");
+  const stamp = String(safe.getTime()).slice(-4);
+  return faDigits(`AK-${day}-${tail}${stamp}`);
 }
 
 function payStageText(
