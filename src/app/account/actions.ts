@@ -6,6 +6,7 @@ import { redirect, RedirectType } from "next/navigation";
 import { normalizePhone } from "@/lib/apply";
 import { isValidMobile, isValidNationalId, normalizeNationalId, type AuthState } from "@/lib/identity";
 import { clearChoice } from "@/lib/catalog";
+import { clearPayment } from "@/lib/payment";
 import { checkProfile, clearProfile, saveProfile, type ProfileState } from "@/lib/profile";
 import { endSession, readPendingPhone, readSession, rememberPhone, startSession } from "@/lib/session";
 import { openAccount } from "@/lib/users";
@@ -106,8 +107,10 @@ export async function resetAccount() {
   if (!session) redirect("/register");
   await clearProfile(session.phone);
   await clearChoice(session.phone);
+  await clearPayment(session.phone);
   revalidatePath("/dashboard");
   revalidatePath("/account/profile");
   revalidatePath("/dashboard/products");
+  revalidatePath("/dashboard/payment");
   redirect("/dashboard", RedirectType.replace);
 }

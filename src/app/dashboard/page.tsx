@@ -6,6 +6,7 @@ import { logout, resetAccount } from "@/app/account/actions";
 import Link from "next/link";
 import { readChoices, type ChoiceItem } from "@/lib/catalog";
 import { faDigits, toman } from "@/lib/format";
+import { readPayment, type PaymentStatus } from "@/lib/payment";
 import { hasProfile } from "@/lib/profile";
 import { readSession } from "@/lib/session";
 import { heroFlow, site } from "@/lib/site";
@@ -67,7 +68,10 @@ async function DashboardHome() {
   const ready = await hasProfile(session.phone);
   const choices = ready ? await readChoices(session.phone) : [];
   const chosen = choices.length > 0;
-  const stages = workStages(ready, choices);
+  const payment = chosen ? await readPayment(session.phone) : null;
+  const payStatus = payment?.status ?? "none";
+  const paid = payStatus === "approved";
+  const stages = workStages(ready, choices, payStatus);
 
   return (
     <div className="dash">
@@ -82,20 +86,26 @@ async function DashboardHome() {
       <div className="dash-sheet">
         {chosen ? (
           <div className="dash-cta-wrap is-violet">
-            <section className="dash-cta is-violet" aria-label="مرحله باز">
+            <Link href="/dashboard/payment" className="dash-cta is-violet">
               <span className="dash-cta-no" aria-hidden="true">
                 ۳
               </span>
               <span>
                 <span className="dash-cta-kicker">مرحله بعد</span>
                 <strong>واریز هزینهٔ ثبت‌نام</strong>
-                <small>هزینهٔ ثبت‌نام را در این مرحله واریز می‌کنید.</small>
+                <small>
+                  {paid
+                    ? "واریز تأیید شده است."
+                    : payStatus === "pending"
+                      ? "فیش ارسال شده و منتظر تأیید است."
+                      : "مبلغ را واریز کنید و عکس فیش را بفرستید."}
+                </small>
               </span>
               <span className="dash-cta-go">
-                باز شد
+                {paid ? "مشاهده" : payStatus === "pending" ? "پیگیری" : "واریز"}
                 <Chevron />
               </span>
-            </section>
+            </Link>
           </div>
         ) : ready ? (
           <div className="dash-cta-wrap is-amber">
@@ -169,7 +179,7 @@ async function DashboardHome() {
           <h2>مراحل همکاری</h2>
           <ol>
             {stages.map((step, index) => (
-              <li key={step.title} className={stageClass(index, ready, chosen)}>
+              <li key={step.title} className={stageClass(index, ready, chosen, paid)}>
                 <span className="dash-no">{faDigits(String(index + 1))}</span>
                 <div>
                   <strong>{step.title}</strong>
@@ -192,7 +202,7 @@ async function DashboardHome() {
   );
 }
 
-function workStages(ready: boolean, choices: ChoiceItem[]) {
+function workStages(ready: boolean, choices: ChoiceItem[], payStatus: PaymentStatus | "none") {
   const chosen = choices.length > 0;
   return [
     { title: "تکمیل ثبت‌نام", text: "نام، شماره کارت، تاریخ تولد و آدرس محل سکونت." },
@@ -206,21 +216,32 @@ function workStages(ready: boolean, choices: ChoiceItem[]) {
     },
     {
       title: "واریز هزینهٔ ثبت‌نام",
-      text: chosen ? "این مرحله برای شما باز است." : "بعد از انتخاب محصول باز می‌شود.",
+      text: !chosen
+        ? "بعد از انتخاب محصول باز می‌شود."
+        : payStatus === "approved"
+          ? "واریز تأیید شده است."
+          : payStatus === "pending"
+            ? "فیش ارسال شده و منتظر تأیید پشتیبانی است."
+            : "مبلغ را واریز کنید و عکس فیش را بفرستید.",
     },
     ...heroFlow.slice(1),
   ];
 }
 
-function stageClass(index: number, ready: boolean, chosen: boolean) {
+function stageClass(index: number, ready: boolean, chosen: boolean, paid: boolean) {
   if (!ready) return index === 0 ? "is-open" : "is-wait";
   if (!chosen) {
     if (index === 0) return "is-done";
     if (index === 1) return "is-open";
     return "is-wait";
   }
-  if (index <= 1) return "is-done";
-  if (index === 2) return "is-open";
+  if (!paid) {
+    if (index <= 1) return "is-done";
+    if (index === 2) return "is-open";
+    return "is-wait";
+  }
+  if (index <= 2) return "is-done";
+  if (index === 3) return "is-open";
   return "is-wait";
 }
 
