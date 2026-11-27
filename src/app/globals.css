@@ -1283,6 +1283,22 @@ input[type="range"] {
   color: #9a5408;
 }
 
+.dash-cta-wrap.is-violet {
+  animation-name: cta-glow-violet;
+}
+
+.dash-cta.is-violet {
+  background:
+    radial-gradient(70% 120% at 0% 0%, rgba(255, 255, 255, 0.24), transparent 42%),
+    linear-gradient(145deg, #8b6cff 0%, #5a33d6 100%);
+  box-shadow: 0 14px 28px rgba(90, 51, 214, 0.34);
+}
+
+.dash-cta.is-violet .dash-cta-no,
+.dash-cta.is-violet .dash-cta-go {
+  color: #4326b8;
+}
+
 .dash-cta {
   position: relative;
   display: grid;
@@ -1384,6 +1400,16 @@ input[type="range"] {
 
   100% {
     box-shadow: 0 0 0 12px rgba(232, 146, 26, 0);
+  }
+}
+
+@keyframes cta-glow-violet {
+  0% {
+    box-shadow: 0 0 0 0 rgba(122, 86, 240, 0.55);
+  }
+
+  100% {
+    box-shadow: 0 0 0 12px rgba(122, 86, 240, 0);
   }
 }
 
