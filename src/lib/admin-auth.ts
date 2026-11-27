@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
-import { adminTelegramIds, isAdminTelegramId } from "@/lib/admin-ids";
+import { adminTelegramIds } from "@/lib/admin-ids";
 
 export { isAdminTelegramId } from "@/lib/admin-ids";
 
@@ -81,10 +81,6 @@ function cookieOptionsDev(maxAge: number) {
   };
 }
 
-export function isAdminTelegramId(tgId: number) {
-  return adminIds().includes(tgId);
-}
-
 export type TelegramWebAppUser = {
   id: number;
   first_name?: string;
@@ -125,7 +121,7 @@ export function verifyTelegramInitData(initData: string): VerifiedInitData | nul
     return null;
   }
   if (!user || !Number.isFinite(user.id) || user.id <= 0) return null;
-  if (!isAdminTelegramId(user.id)) return null;
+  if (!adminIds().includes(user.id)) return null;
 
   const token = botToken();
   if (!token) {
@@ -151,7 +147,7 @@ export async function readAdminSession() {
 }
 
 export async function startAdminSession(user: TelegramWebAppUser) {
-  if (!isAdminTelegramId(user.id)) {
+  if (!adminIds().includes(user.id)) {
     return { ok: false as const, error: "دسترسی ادمین ندارید." };
   }
   const store = await cookies();
