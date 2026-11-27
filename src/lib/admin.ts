@@ -38,6 +38,7 @@ export type AdminPartnerRow = {
   insuranceStatus: PaymentStatus | "none";
   guaranteeStatus: PaymentStatus | "none";
   shippingStatus: PaymentStatus | "none";
+  warehouseStatus: PaymentStatus | "none";
   stage: string;
 };
 
@@ -187,12 +188,17 @@ export async function adminListPartners(q = "", stageFilter: PartnerFilter = "al
     const insurance = await readPayment(profile.phone, "insurance");
     const guarantee = await readPayment(profile.phone, "guarantee");
     const shipping = await readPayment(profile.phone, "shipping");
+    const warehouse = await readPayment(profile.phone, "warehouse");
     const paymentStatus = payment?.status ?? "none";
     const insuranceStatus = insurance?.status ?? "none";
     const guaranteeStatus = guarantee?.status ?? "none";
     const shippingStatus = shipping?.status ?? "none";
+    const warehouseStatus = warehouse?.status ?? "none";
     let stage = "پروفایل";
-    if (shippingStatus === "approved") stage = "باربری تأیید شده";
+    if (warehouseStatus === "approved") stage = "انبار تأیید شده";
+    else if (warehouseStatus === "pending") stage = "منتظر تأیید انبار";
+    else if (warehouseStatus === "rejected") stage = "فیش انبار رد شده";
+    else if (shippingStatus === "approved") stage = "باربری تأیید شده";
     else if (shippingStatus === "pending") stage = "منتظر تأیید باربری";
     else if (shippingStatus === "rejected") stage = "فیش باربری رد شده";
     else if (guaranteeStatus === "approved") stage = "ضمانت تأیید شده";
@@ -217,6 +223,7 @@ export async function adminListPartners(q = "", stageFilter: PartnerFilter = "al
       insuranceStatus,
       guaranteeStatus,
       shippingStatus,
+      warehouseStatus,
       stage,
     });
   }
@@ -233,6 +240,7 @@ export async function adminPartnerDetail(phone: string) {
   const insurance = await readPayment(phone, "insurance");
   const guarantee = await readPayment(phone, "guarantee");
   const shipping = await readPayment(phone, "shipping");
+  const warehouse = await readPayment(phone, "warehouse");
   return {
     phone: profile.phone,
     phoneDisplay: phoneDisplay(profile.phone),
@@ -255,9 +263,11 @@ export async function adminPartnerDetail(phone: string) {
     insurance: insurance ? toPaymentRow(insurance, profile, choices.length) : null,
     guarantee: guarantee ? toPaymentRow(guarantee, profile, choices.length) : null,
     shipping: shipping ? toPaymentRow(shipping, profile, choices.length) : null,
+    warehouse: warehouse ? toPaymentRow(warehouse, profile, choices.length) : null,
     receiptUrl: payment?.fileId ? `/api/admin/receipts/${payment.fileId}` : "",
     insuranceReceiptUrl: insurance?.fileId ? `/api/admin/receipts/${insurance.fileId}` : "",
     guaranteeReceiptUrl: guarantee?.fileId ? `/api/admin/receipts/${guarantee.fileId}` : "",
     shippingReceiptUrl: shipping?.fileId ? `/api/admin/receipts/${shipping.fileId}` : "",
+    warehouseReceiptUrl: warehouse?.fileId ? `/api/admin/receipts/${warehouse.fileId}` : "",
   };
 }

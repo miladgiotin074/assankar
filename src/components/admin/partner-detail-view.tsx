@@ -45,10 +45,18 @@ type Detail = {
     at: string;
     reviewedAt: string;
   } | null;
+  warehouse: {
+    status: "pending" | "approved" | "rejected";
+    amountLabel: string;
+    phone: string;
+    at: string;
+    reviewedAt: string;
+  } | null;
   receiptUrl: string;
   insuranceReceiptUrl: string;
   guaranteeReceiptUrl: string;
   shippingReceiptUrl: string;
+  warehouseReceiptUrl: string;
 };
 
 function cardText(card: string) {
@@ -95,6 +103,7 @@ export function AdminPartnerDetailView({ phone }: { phone: string }) {
   const insWhen = detail.insurance?.reviewedAt || detail.insurance?.at || "";
   const guaWhen = detail.guarantee?.reviewedAt || detail.guarantee?.at || "";
   const shipWhen = detail.shipping?.reviewedAt || detail.shipping?.at || "";
+  const wareWhen = detail.warehouse?.reviewedAt || detail.warehouse?.at || "";
 
   return (
     <div className="admin-stack">
@@ -247,6 +256,30 @@ export function AdminPartnerDetailView({ phone }: { phone: string }) {
             className="admin-link-row"
           >
             {detail.shipping.status === "pending" ? "بررسی و تصمیم" : "جزئیات فیش"}
+            <span aria-hidden="true">‹</span>
+          </Link>
+        ) : null}
+      </section>
+
+      <section className="admin-panel">
+        <div className="admin-panel-head">
+          <h2>واریز انبار</h2>
+          <p>
+            {statusLabel(detail.warehouse?.status)}
+            {detail.warehouse ? ` · ${detail.warehouse.amountLabel}` : ""}
+            {wareWhen ? ` · ${relativeFa(wareWhen)}` : ""}
+          </p>
+        </div>
+        {detail.warehouseReceiptUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img className="admin-receipt is-inline" src={detail.warehouseReceiptUrl} alt="فیش انبار" />
+        ) : null}
+        {detail.warehouse ? (
+          <Link
+            href={`/admin/payments/detail?phone=${detail.warehouse.phone}&kind=warehouse`}
+            className="admin-link-row"
+          >
+            {detail.warehouse.status === "pending" ? "بررسی و تصمیم" : "جزئیات فیش"}
             <span aria-hidden="true">‹</span>
           </Link>
         ) : null}

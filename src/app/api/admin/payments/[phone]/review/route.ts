@@ -33,6 +33,7 @@ export async function POST(request: Request, { params }: Params) {
   revalidatePath("/dashboard/insurance");
   revalidatePath("/dashboard/guarantee");
   revalidatePath("/dashboard/shipping");
+  revalidatePath("/dashboard/warehouse");
   revalidatePath("/admin");
   revalidatePath("/admin/payments");
   return NextResponse.json({ ok: true, status, kind });

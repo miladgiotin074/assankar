@@ -101,7 +101,10 @@ function AdminFrame() {
   const paymentPhone = pathname === "/admin/payments/detail" ? query.get("phone") || "" : "";
   const paymentKindRaw = query.get("kind");
   const paymentKind =
-    paymentKindRaw === "insurance" || paymentKindRaw === "guarantee" || paymentKindRaw === "shipping"
+    paymentKindRaw === "insurance" ||
+    paymentKindRaw === "guarantee" ||
+    paymentKindRaw === "shipping" ||
+    paymentKindRaw === "warehouse"
       ? paymentKindRaw
       : "registration";
   const partnerPhone = pathname === "/admin/partners/detail" ? query.get("phone") || "" : "";

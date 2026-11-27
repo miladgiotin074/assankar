@@ -111,7 +111,9 @@ export function AdminPaymentDetailView({
         ? "ضمانت کالا"
         : kind === "shipping"
           ? "باربری"
-          : "ثبت‌نام");
+          : kind === "warehouse"
+            ? "انبار"
+            : "ثبت‌نام");
 
   return (
     <div className="admin-stack">
