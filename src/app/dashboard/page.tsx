@@ -84,29 +84,65 @@ async function DashboardHome() {
       </section>
 
       <div className="dash-sheet">
+        {chosen && payStatus === "pending" ? (
+          <section className="dash-pay-status is-wait" aria-label="وضعیت پرداخت">
+            <span className="dash-pay-status-mark" aria-hidden="true" />
+            <div>
+              <strong>منتظر تأیید ادمین</strong>
+              <p>فیش واریزی شما دریافت شد و در صف بررسی است. بعد از تأیید پشتیبانی، مرحلهٔ بعد باز می‌شود.</p>
+              <Link href="/dashboard/payment" className="dash-pay-status-link">
+                مشاهدهٔ فیش ارسال‌شده
+              </Link>
+            </div>
+          </section>
+        ) : null}
+
+        {chosen && payStatus === "rejected" ? (
+          <section className="dash-pay-status is-bad" aria-label="وضعیت پرداخت">
+            <span className="dash-pay-status-mark" aria-hidden="true" />
+            <div>
+              <strong>نیاز به ارسال دوباره فیش</strong>
+              <p>فیش قبلی تأیید نشد. لطفاً عکس واضح‌تری از واریز درست بفرستید.</p>
+              <Link href="/dashboard/payment" className="dash-pay-status-link">
+                ارسال فیش جدید
+              </Link>
+            </div>
+          </section>
+        ) : null}
+
+        {chosen && paid ? (
+          <section className="dash-pay-status is-ok" aria-label="وضعیت پرداخت">
+            <span className="dash-pay-status-mark" aria-hidden="true" />
+            <div>
+              <strong>واریز تأیید شد</strong>
+              <p>هزینهٔ ثبت‌نام تأیید شده است و می‌توانید مرحلهٔ بعد را ادامه دهید.</p>
+            </div>
+          </section>
+        ) : null}
+
         {chosen ? (
-          <div className="dash-cta-wrap is-violet">
-            <Link href="/dashboard/payment" className="dash-cta is-violet">
-              <span className="dash-cta-no" aria-hidden="true">
-                ۳
-              </span>
-              <span>
-                <span className="dash-cta-kicker">مرحله بعد</span>
-                <strong>واریز هزینهٔ ثبت‌نام</strong>
-                <small>
-                  {paid
-                    ? "واریز تأیید شده است."
-                    : payStatus === "pending"
-                      ? "فیش ارسال شده و منتظر تأیید است."
+          payStatus === "none" || payStatus === "rejected" ? (
+            <div className="dash-cta-wrap is-violet">
+              <Link href="/dashboard/payment" className="dash-cta is-violet">
+                <span className="dash-cta-no" aria-hidden="true">
+                  ۳
+                </span>
+                <span>
+                  <span className="dash-cta-kicker">مرحله بعد</span>
+                  <strong>واریز هزینهٔ ثبت‌نام</strong>
+                  <small>
+                    {payStatus === "rejected"
+                      ? "فیش قبلی رد شد؛ دوباره واریز و ارسال کنید."
                       : "مبلغ را واریز کنید و عکس فیش را بفرستید."}
-                </small>
-              </span>
-              <span className="dash-cta-go">
-                {paid ? "مشاهده" : payStatus === "pending" ? "پیگیری" : "واریز"}
-                <Chevron />
-              </span>
-            </Link>
-          </div>
+                  </small>
+                </span>
+                <span className="dash-cta-go">
+                  واریز
+                  <Chevron />
+                </span>
+              </Link>
+            </div>
+          ) : null
         ) : ready ? (
           <div className="dash-cta-wrap is-amber">
             <Link href="/dashboard/products" className="dash-cta is-amber">
@@ -221,8 +257,10 @@ function workStages(ready: boolean, choices: ChoiceItem[], payStatus: PaymentSta
         : payStatus === "approved"
           ? "واریز تأیید شده است."
           : payStatus === "pending"
-            ? "فیش ارسال شده و منتظر تأیید پشتیبانی است."
-            : "مبلغ را واریز کنید و عکس فیش را بفرستید.",
+            ? "فیش ارسال شده؛ منتظر تأیید ادمین باشید."
+            : payStatus === "rejected"
+              ? "فیش رد شد؛ ارسال دوباره لازم است."
+              : "مبلغ را واریز کنید و عکس فیش را بفرستید.",
     },
     ...heroFlow.slice(1),
   ];

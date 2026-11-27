@@ -25,5 +25,5 @@ export async function submitReceipt(_prev: PaymentState, formData: FormData): Pr
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/payment");
-  redirect("/dashboard/payment", RedirectType.replace);
+  redirect("/dashboard", RedirectType.replace);
 }

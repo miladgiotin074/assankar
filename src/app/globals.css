@@ -1297,6 +1297,63 @@ body:has(.app-device.is-form) {
   line-height: 1.75;
 }
 
+.dash-pay-status {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.75rem;
+  padding: 0.95rem 1rem;
+  border-radius: 1.2rem;
+}
+
+.dash-pay-status-mark {
+  width: 0.7rem;
+  height: 0.7rem;
+  margin-top: 0.4rem;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 0 0 5px color-mix(in srgb, currentColor 16%, transparent);
+}
+
+.dash-pay-status strong {
+  display: block;
+  font-size: 0.98rem;
+  font-weight: 800;
+}
+
+.dash-pay-status p {
+  margin-top: 0.3rem;
+  font-size: 0.86rem;
+  line-height: 1.8;
+}
+
+.dash-pay-status-link {
+  display: inline-flex;
+  margin-top: 0.65rem;
+  color: inherit;
+  font-size: 0.84rem;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.dash-pay-status.is-wait {
+  border: 1px solid #f0d3b0;
+  background: #fff8ef;
+  color: #9a5408;
+}
+
+.dash-pay-status.is-ok {
+  border: 1px solid #cfe8dc;
+  background: #f4fbf7;
+  color: #0b7a52;
+}
+
+.dash-pay-status.is-bad {
+  border: 1px solid #f0c3c3;
+  background: #fff5f5;
+  color: #a33b3b;
+}
+
 .dash-cta-wrap {
   border-radius: 1.35rem;
   animation: cta-glow 1.8s ease-out infinite;
