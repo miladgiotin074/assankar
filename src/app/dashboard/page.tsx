@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { logout, resetAccount } from "@/app/account/actions";
 import Link from "next/link";
-import { readChoice } from "@/lib/catalog";
+import { readChoices, type ChoiceItem } from "@/lib/catalog";
 import { faDigits } from "@/lib/format";
 import { hasProfile } from "@/lib/profile";
 import { readSession } from "@/lib/session";
@@ -65,8 +65,9 @@ async function DashboardHome() {
 
   const phone = faDigits(session.phone.replace(/(\d{4})(\d{3})(\d{4})/, "$1 $2 $3"));
   const ready = await hasProfile(session.phone);
-  const choice = ready ? await readChoice(session.phone) : null;
-  const stages = workStages(ready, Boolean(choice));
+  const choices = ready ? await readChoices(session.phone) : [];
+  const chosen = choices.length > 0;
+  const stages = workStages(ready, choices);
 
   return (
     <div className="dash">
@@ -79,7 +80,7 @@ async function DashboardHome() {
       </section>
 
       <div className="dash-sheet">
-        {choice ? (
+        {chosen ? (
           <div className="dash-cta-wrap is-violet">
             <section className="dash-cta is-violet" aria-label="مرحله باز">
               <span className="dash-cta-no" aria-hidden="true">
@@ -105,7 +106,7 @@ async function DashboardHome() {
               <span>
                 <span className="dash-cta-kicker">مرحله بعد</span>
                 <strong>انتخاب محصول</strong>
-                <small>تعداد بسته را از جدول دستمزد انتخاب می‌کنید.</small>
+                <small>یک تا سه محصول را با تعداد بسته انتخاب کنید.</small>
               </span>
               <span className="dash-cta-go">
                 انتخاب
@@ -132,11 +133,33 @@ async function DashboardHome() {
           </div>
         )}
 
+        {chosen ? (
+          <section className="dash-picks" aria-label="محصولات انتخاب‌شده">
+            <div className="dash-picks-head">
+              <h2>محصولات انتخاب‌شده</h2>
+              <Link href="/dashboard/products">ویرایش</Link>
+            </div>
+            <ul>
+              {choices.map((item, index) => (
+                <li key={item.productId}>
+                  <span className="dash-picks-no" aria-hidden="true">
+                    {faDigits(String(index + 1))}
+                  </span>
+                  <div>
+                    <strong>{item.title}</strong>
+                    <p>{item.label}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
         <section className="dash-flow" aria-label="مراحل همکاری">
           <h2>مراحل همکاری</h2>
           <ol>
             {stages.map((step, index) => (
-              <li key={step.title} className={stageClass(index, ready, Boolean(choice))}>
+              <li key={step.title} className={stageClass(index, ready, chosen)}>
                 <span className="dash-no">{faDigits(String(index + 1))}</span>
                 <div>
                   <strong>{step.title}</strong>
@@ -159,7 +182,8 @@ async function DashboardHome() {
   );
 }
 
-function workStages(ready: boolean, chosen: boolean) {
+function workStages(ready: boolean, choices: ChoiceItem[]) {
+  const chosen = choices.length > 0;
   return [
     { title: "تکمیل ثبت‌نام", text: "نام، شماره کارت، تاریخ تولد و آدرس محل سکونت." },
     {
@@ -167,8 +191,8 @@ function workStages(ready: boolean, chosen: boolean) {
       text: !ready
         ? "بعد از تکمیل ثبت‌نام باز می‌شود."
         : chosen
-          ? "محصول و تعداد بسته انتخاب شده است."
-          : "تعداد بسته را از جدول دستمزد انتخاب می‌کنید.",
+          ? `${faDigits(String(choices.length))} محصول با تعداد بسته ثبت شده است.`
+          : "یک تا سه محصول را با تعداد بسته انتخاب کنید.",
     },
     {
       title: "واریز هزینهٔ ثبت‌نام",

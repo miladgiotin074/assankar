@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ProductPicker } from "@/components/product-picker";
-import { listProducts, readChoice } from "@/lib/catalog";
+import { listProducts, readChoices } from "@/lib/catalog";
 import { hasProfile } from "@/lib/profile";
 import { readSession } from "@/lib/session";
 
@@ -27,7 +27,7 @@ async function ProductGate() {
   if (!session) redirect("/register");
   if (!(await hasProfile(session.phone))) redirect("/account/profile");
 
-  const [products, choice] = await Promise.all([listProducts(), readChoice(session.phone)]);
+  const [products, choices] = await Promise.all([listProducts(), readChoices(session.phone)]);
 
   if (!products.length) {
     return (
@@ -49,12 +49,5 @@ async function ProductGate() {
     );
   }
 
-  const first = products[0];
-  return (
-    <ProductPicker
-      products={products}
-      initialId={choice?.productId ?? first.id}
-      initialQuantity={choice?.quantity ?? first.wages[0]?.packs ?? 0}
-    />
-  );
+  return <ProductPicker products={products} initial={choices} />;
 }

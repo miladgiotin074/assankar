@@ -105,12 +105,27 @@ type ProductDoc = {
   wages?: unknown;
 };
 
-type ChoiceDoc = {
-  phone: string;
+export type ChoiceItem = {
+  productId: string;
+  title: string;
+  quantity: number;
+  label: string;
+};
+
+type ChoiceLine = {
   productId: string;
   quantity: number;
+};
+
+type ChoiceDoc = {
+  phone: string;
+  items: ChoiceLine[];
+  productId?: string;
+  quantity?: number;
   at: Date;
 };
+
+export const maxChoices = 3;
 
 const choicesReady = collectionReady();
 
@@ -130,6 +145,19 @@ function collectionReady() {
     await ready;
     return col;
   };
+}
+
+function linesFromDoc(doc: ChoiceDoc | null): ChoiceLine[] {
+  if (!doc) return [];
+  if (Array.isArray(doc.items) && doc.items.length) {
+    return doc.items
+      .filter((item) => item && typeof item.productId === "string" && Number.isInteger(item.quantity) && item.quantity > 0)
+      .slice(0, maxChoices);
+  }
+  if (typeof doc.productId === "string" && Number.isInteger(doc.quantity) && (doc.quantity ?? 0) > 0) {
+    return [{ productId: doc.productId, quantity: doc.quantity as number }];
+  }
+  return [];
 }
 
 function text(value: unknown, max: number) {
@@ -198,27 +226,52 @@ async function productById(id: string) {
   return (await listProducts()).find((item) => item.id === id) ?? null;
 }
 
-export async function readChoice(phone: string) {
-  const choice = await (await choicesReady()).findOne({ phone });
-  if (!choice) return null;
-  const item = await productById(choice.productId);
-  const row = item?.wages.find((wage) => wage.packs === choice.quantity);
-  if (!item || !row) return null;
-  return { productId: item.id, title: item.title, quantity: row.packs, label: row.label };
+export async function readChoices(phone: string): Promise<ChoiceItem[]> {
+  const doc = await (await choicesReady()).findOne({ phone });
+  const lines = linesFromDoc(doc);
+  if (!lines.length) return [];
+
+  const resolved = await Promise.all(
+    lines.map(async (line) => {
+      const item = await productById(line.productId);
+      const row = item?.wages.find((wage) => wage.packs === line.quantity);
+      if (!item || !row) return null;
+      return { productId: item.id, title: item.title, quantity: row.packs, label: row.label } satisfies ChoiceItem;
+    }),
+  );
+  return resolved.filter((item): item is ChoiceItem => Boolean(item));
 }
 
 export async function clearChoice(phone: string) {
   await (await choicesReady()).deleteOne({ phone });
 }
 
-export async function saveChoice(phone: string, productId: string, quantity: number) {
-  const item = await productById(productId);
-  const row = item?.wages.find((wage) => wage.packs === quantity);
-  if (!item || !row) {
-    return { ok: false as const, error: "محصول و تعداد بسته را دوباره انتخاب کنید." };
+export async function saveChoices(phone: string, picks: ChoiceLine[]) {
+  if (!picks.length || picks.length > maxChoices) {
+    return { ok: false as const, error: "بین یک تا سه محصول انتخاب کنید." };
   }
+
+  const seen = new Set<string>();
+  const items: ChoiceLine[] = [];
+  for (const pick of picks) {
+    if (seen.has(pick.productId)) {
+      return { ok: false as const, error: "هر محصول را فقط یک‌بار انتخاب کنید." };
+    }
+    seen.add(pick.productId);
+    const item = await productById(pick.productId);
+    const row = item?.wages.find((wage) => wage.packs === pick.quantity);
+    if (!item || !row) {
+      return { ok: false as const, error: "محصول و تعداد بسته را دوباره انتخاب کنید." };
+    }
+    items.push({ productId: item.id, quantity: row.packs });
+  }
+
   await (
     await choicesReady()
-  ).updateOne({ phone }, { $set: { phone, productId, quantity: row.packs, at: new Date() } }, { upsert: true });
+  ).updateOne(
+    { phone },
+    { $set: { phone, items, at: new Date() }, $unset: { productId: "", quantity: "" } },
+    { upsert: true },
+  );
   return { ok: true as const };
 }
