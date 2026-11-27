@@ -84,15 +84,69 @@ async function DashboardHome() {
       </section>
 
       <div className="dash-sheet">
-        {chosen && payStatus === "pending" ? (
-          <section className="dash-pay-status is-wait" aria-label="وضعیت پرداخت">
-            <span className="dash-pay-status-mark" aria-hidden="true" />
-            <div>
-              <strong>منتظر تأیید ادمین</strong>
-              <p>فیش واریزی شما دریافت شد و در صف بررسی است. بعد از تأیید پشتیبانی، مرحلهٔ بعد باز می‌شود.</p>
-              <Link href="/dashboard/payment" className="dash-pay-status-link">
-                مشاهدهٔ فیش ارسال‌شده
+        {chosen && payStatus === "pending" && payment ? (
+          <section className="dash-wait" aria-label="وضعیت پرداخت">
+            <div className="dash-wait-head">
+              <span className="dash-wait-icon" aria-hidden="true">
+                <span className="dash-wait-pulse" />
+              </span>
+              <div className="dash-wait-copy">
+                <p className="dash-wait-kicker">وضعیت واریز</p>
+                <strong>منتظر تأیید ادمین</strong>
+                <p>
+                  فیش شما دریافت شد و در صف بررسی پشتیبانی است. تا تأیید نهایی لازم نیست دوباره واریز کنید.
+                </p>
+              </div>
+              <span className="dash-wait-badge">در صف بررسی</span>
+            </div>
+
+            <ol className="dash-wait-track" aria-label="مراحل بررسی فیش">
+              <li className="is-done">
+                <span aria-hidden="true" />
+                <div>
+                  <strong>فیش ارسال شد</strong>
+                  <small>عکس واریز روی سرور ذخیره شده است.</small>
+                </div>
+              </li>
+              <li className="is-now">
+                <span aria-hidden="true" />
+                <div>
+                  <strong>بررسی ادمین</strong>
+                  <small>پشتیبانی فیش و مبلغ را چک می‌کند.</small>
+                </div>
+              </li>
+              <li>
+                <span aria-hidden="true" />
+                <div>
+                  <strong>تأیید و ادامه</strong>
+                  <small>بعد از تأیید، مرحلهٔ بعد باز می‌شود.</small>
+                </div>
+              </li>
+            </ol>
+
+            <div className="dash-wait-meta">
+              <div>
+                <span>مبلغ ثبت‌شده</span>
+                <strong>{toman(payment.amount)}</strong>
+              </div>
+              <div>
+                <span>زمان ارسال</span>
+                <strong>{faDigits(formatPayTime(payment.at))}</strong>
+              </div>
+            </div>
+
+            <div className="dash-wait-actions">
+              <Link href="/dashboard/payment" className="dash-wait-primary">
+                مشاهدهٔ فیش
               </Link>
+              <a
+                className="dash-wait-secondary"
+                href={`https://t.me/${site.telegramUser}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                پیام به پشتیبانی
+              </a>
             </div>
           </section>
         ) : null}
@@ -238,6 +292,17 @@ async function DashboardHome() {
   );
 }
 
+function formatPayTime(value: Date | string) {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat("fa-IR", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
 function workStages(ready: boolean, choices: ChoiceItem[], payStatus: PaymentStatus | "none") {
   const chosen = choices.length > 0;
   return [
@@ -257,7 +322,7 @@ function workStages(ready: boolean, choices: ChoiceItem[], payStatus: PaymentSta
         : payStatus === "approved"
           ? "واریز تأیید شده است."
           : payStatus === "pending"
-            ? "فیش ارسال شده؛ منتظر تأیید ادمین باشید."
+            ? "فیش در صف بررسی ادمین است؛ فعلاً صبر کنید."
             : payStatus === "rejected"
               ? "فیش رد شد؛ ارسال دوباره لازم است."
               : "مبلغ را واریز کنید و عکس فیش را بفرستید.",
