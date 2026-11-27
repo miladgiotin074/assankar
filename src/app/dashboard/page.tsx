@@ -19,17 +19,18 @@ export const metadata: Metadata = {
 
 export default function DashboardPage() {
   return (
-    <AppShell variant="home" title="داشبورد" end={<AccountTools />}>
-      <Suspense fallback={<div className="dash-fallback" />}>
-        <DashboardHome />
-      </Suspense>
-    </AppShell>
+    <Suspense fallback={<div className="dash-fallback" />}>
+      <DashboardGate />
+    </Suspense>
   );
 }
 
-function AccountTools() {
+function AccountTools({ phone }: { phone: string }) {
   return (
     <div className="dash-tools">
+      <p className="dash-bar-phone" dir="ltr">
+        {phone}
+      </p>
       <form action={resetAccount}>
         <button type="submit" className="dash-reset">
           ریست
@@ -44,15 +45,24 @@ function AccountTools() {
   );
 }
 
-async function DashboardHome() {
+async function DashboardGate() {
   const session = await readSession();
   if (!session) redirect("/register");
 
   const phone = faDigits(session.phone.replace(/(\d{4})(\d{3})(\d{4})/, "$1 $2 $3"));
-  const ready = await hasProfile(session.phone);
-  const choices = ready ? await readChoices(session.phone) : [];
+
+  return (
+    <AppShell variant="home" title="داشبورد" end={<AccountTools phone={phone} />}>
+      <DashboardHome phoneRaw={session.phone} />
+    </AppShell>
+  );
+}
+
+async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
+  const ready = await hasProfile(phoneRaw);
+  const choices = ready ? await readChoices(phoneRaw) : [];
   const chosen = choices.length > 0;
-  const payment = chosen ? await readPayment(session.phone) : null;
+  const payment = chosen ? await readPayment(phoneRaw) : null;
   const payStatus = payment?.status ?? "none";
   const paid = payStatus === "approved";
   const stages = workStages(ready, choices, payStatus);
@@ -60,14 +70,6 @@ async function DashboardHome() {
   return (
     <div className="dash">
       <DashScroll />
-      <section className="dash-hero">
-        <p className="dash-kicker">حساب همکاری</p>
-        <h1>داشبورد</h1>
-        <p className="dash-phone" dir="ltr">
-          {phone}
-        </p>
-      </section>
-
       <div className="dash-sheet">
         {chosen && payStatus === "pending" && payment ? (
           <section id="dash-next" className="dash-wait" aria-label="وضعیت پرداخت">

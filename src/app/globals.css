@@ -1166,49 +1166,16 @@ body:has(.app-device.is-home) {
   background: #0c4d86;
 }
 
-.dash-hero {
-  padding: 0.15rem 1.25rem 1.7rem;
-  background:
-    radial-gradient(90% 90% at 100% 0%, rgba(61, 190, 139, 0.28), transparent 56%),
-    #0c4d86;
-  color: #fff;
-}
-
-.dash-kicker {
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: #b7ead4;
-}
-
-.dash-hero h1 {
-  margin-top: 0.15rem;
-  font-size: 1.7rem;
-  font-weight: 800;
-  line-height: 1.3;
-}
-
-.dash-phone {
-  display: inline-block;
-  margin-top: 0.7rem;
-  padding: 0.35rem 0.8rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14);
-  font-size: 0.95rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-}
-
 .dash-sheet {
   display: flex;
   min-height: 0;
   flex: 1;
   flex-direction: column;
   gap: 0.75rem;
-  margin-top: -0.85rem;
   overflow-x: clip;
   overflow-y: auto;
   overscroll-behavior: contain;
-  border-radius: 1.45rem 1.45rem 0 0;
+  border-radius: 1.25rem 1.25rem 0 0;
   background: #f3f7fb;
   padding: 1rem 1rem calc(1.1rem + env(safe-area-inset-bottom));
   scrollbar-width: none;
@@ -1890,7 +1857,32 @@ select.field {
 .dash-tools {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.2rem;
+}
+
+.dash-bar-phone {
+  margin: 0 0.2rem 0 0;
+  padding: 0.2rem 0.55rem;
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+@media (max-width: 360px) {
+  .dash-bar-phone {
+    padding-inline: 0.4rem;
+    font-size: 0.7rem;
+  }
+
+  .dash-reset,
+  .dash-logout {
+    padding-inline: 0.5rem;
+  }
 }
 
 .dash-reset,
