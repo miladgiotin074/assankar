@@ -9,6 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@tma.js/sdk": "^3.3.0",
+    "@tma.js/sdk-react": "^3.0.23",
     "mongodb": "^7.9.1",
     "next": "16.4.6",
     "react": "19.3.0",

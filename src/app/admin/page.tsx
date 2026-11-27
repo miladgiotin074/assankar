@@ -1,0 +1,5 @@
+import { AdminHomeView } from "@/components/admin/home-view";
+
+export default function AdminHomePage() {
+  return <AdminHomeView />;
+}

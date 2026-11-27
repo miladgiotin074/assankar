@@ -1,0 +1,430 @@
+.admin-root {
+  --admin-bg: #f3f7fb;
+  --admin-sheet: #ffffff;
+  --admin-text: #10293f;
+  --admin-muted: #4e6578;
+  --admin-accent: #0c4d86;
+  --admin-accent-text: #ffffff;
+  --admin-danger: #a33b3b;
+  --admin-ok: #0b7a52;
+  --admin-wait: #9a5408;
+  --admin-line: #e3edf5;
+  min-height: 100svh;
+  background: var(--admin-bg);
+  color: var(--admin-text);
+  font-family: var(--font-vazir), tahoma, sans-serif;
+}
+
+.admin-boot {
+  display: grid;
+  min-height: 100svh;
+  place-items: center;
+  padding: 1.25rem;
+  background: var(--admin-bg);
+}
+
+.admin-boot-card {
+  width: min(100%, 22rem);
+  padding: 1.2rem 1.15rem;
+  border-radius: 1.2rem;
+  background: var(--admin-sheet);
+  border: 1px solid var(--admin-line);
+  text-align: center;
+}
+
+.admin-boot-card strong {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.admin-boot-card p {
+  margin-top: 0.45rem;
+  color: var(--admin-muted);
+  font-size: 0.9rem;
+  line-height: 1.8;
+}
+
+.admin-boot-card small {
+  display: block;
+  margin-top: 0.75rem;
+  color: var(--admin-muted);
+  font-size: 0.76rem;
+  line-height: 1.7;
+}
+
+.admin-app {
+  display: flex;
+  min-height: 100svh;
+  max-width: 28rem;
+  margin-inline: auto;
+  flex-direction: column;
+  background: var(--admin-bg);
+}
+
+.admin-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: calc(0.7rem + env(safe-area-inset-top)) 1rem 0.75rem;
+  background: var(--admin-accent);
+  color: #fff;
+}
+
+.admin-top-kicker {
+  margin: 0;
+  opacity: 0.78;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.admin-top h1 {
+  margin: 0.1rem 0 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.admin-top-user {
+  margin: 0;
+  padding: 0.28rem 0.55rem;
+  border-radius: 0.6rem;
+  background: rgba(255, 255, 255, 0.14);
+  font-size: 0.74rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.admin-main {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.85rem 0.9rem calc(4.8rem + env(safe-area-inset-bottom));
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-main.is-detail {
+  padding-bottom: calc(1.2rem + env(safe-area-inset-bottom));
+}
+
+.admin-tabs {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.25rem;
+  max-width: 28rem;
+  margin-inline: auto;
+  padding: 0.45rem 0.7rem calc(0.45rem + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--admin-line);
+  background: color-mix(in srgb, var(--admin-sheet) 92%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.admin-tabs a {
+  display: grid;
+  place-items: center;
+  min-height: 2.55rem;
+  border-radius: 0.85rem;
+  color: var(--admin-muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.admin-tabs a.is-active {
+  background: color-mix(in srgb, var(--admin-accent) 12%, transparent);
+  color: var(--admin-accent);
+}
+
+.admin-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.admin-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+}
+
+.admin-stat {
+  padding: 0.85rem 0.9rem;
+  border-radius: 1rem;
+  background: var(--admin-sheet);
+  border: 1px solid var(--admin-line);
+}
+
+.admin-stat span {
+  display: block;
+  color: var(--admin-muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.admin-stat strong {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.admin-panel {
+  padding: 0.9rem;
+  border-radius: 1.1rem;
+  background: var(--admin-sheet);
+  border: 1px solid var(--admin-line);
+}
+
+.admin-panel h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.admin-panel p {
+  margin: 0.35rem 0 0;
+  color: var(--admin-muted);
+  font-size: 0.84rem;
+  line-height: 1.75;
+}
+
+.admin-filters {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+}
+
+.admin-filters button {
+  min-height: 2.3rem;
+  border: 1px solid var(--admin-line);
+  border-radius: 0.8rem;
+  background: var(--admin-sheet);
+  color: var(--admin-muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.admin-filters button.is-active {
+  border-color: color-mix(in srgb, var(--admin-accent) 35%, var(--admin-line));
+  background: color-mix(in srgb, var(--admin-accent) 10%, #fff);
+  color: var(--admin-accent);
+}
+
+.admin-search {
+  width: 100%;
+  min-height: 2.6rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--admin-line);
+  border-radius: 0.9rem;
+  background: var(--admin-sheet);
+  color: var(--admin-text);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.admin-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.55rem;
+  align-items: center;
+  padding: 0.85rem 0.9rem;
+  border-radius: 1rem;
+  background: var(--admin-sheet);
+  border: 1px solid var(--admin-line);
+  color: inherit;
+  text-decoration: none;
+}
+
+.admin-row strong {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.admin-row small {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--admin-muted);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.admin-chip {
+  display: inline-grid;
+  place-items: center;
+  min-height: 1.55rem;
+  padding-inline: 0.5rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.admin-chip.is-wait {
+  background: #fff8ef;
+  color: var(--admin-wait);
+}
+
+.admin-chip.is-ok {
+  background: #f4fbf7;
+  color: var(--admin-ok);
+}
+
+.admin-chip.is-bad {
+  background: #fff5f5;
+  color: var(--admin-danger);
+}
+
+.admin-chip.is-muted {
+  background: #eef5fb;
+  color: var(--admin-accent);
+}
+
+.admin-empty {
+  padding: 1.4rem 1rem;
+  border-radius: 1rem;
+  background: var(--admin-sheet);
+  border: 1px dashed var(--admin-line);
+  color: var(--admin-muted);
+  text-align: center;
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.8;
+}
+
+.admin-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.35rem;
+  color: var(--admin-accent);
+  font-size: 0.84rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.admin-receipt {
+  width: 100%;
+  max-height: 22rem;
+  object-fit: contain;
+  border-radius: 1rem;
+  background: #0b1520;
+  border: 1px solid var(--admin-line);
+}
+
+.admin-meta {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.admin-meta div {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 0.9rem;
+  background: var(--admin-sheet);
+  border: 1px solid var(--admin-line);
+}
+
+.admin-meta span {
+  color: var(--admin-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.admin-meta strong {
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.admin-actions {
+  position: sticky;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+  margin-top: 0.5rem;
+  padding-top: 0.65rem;
+  background: linear-gradient(180deg, transparent, var(--admin-bg) 30%);
+}
+
+.admin-actions button {
+  min-height: 2.8rem;
+  border: 0;
+  border-radius: 0.95rem;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.admin-actions .is-ok {
+  background: var(--admin-ok);
+  color: #fff;
+}
+
+.admin-actions .is-bad {
+  background: var(--admin-danger);
+  color: #fff;
+}
+
+.admin-actions button:disabled {
+  opacity: 0.55;
+}
+
+.admin-choice {
+  display: grid;
+  grid-template-columns: 3rem 1fr;
+  gap: 0.7rem;
+  align-items: center;
+  padding: 0.65rem 0;
+  border-top: 1px solid var(--admin-line);
+}
+
+.admin-choice:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.admin-choice img,
+.admin-choice span {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+  object-fit: cover;
+  background: #eef5fb;
+}
+
+.admin-choice span {
+  display: grid;
+  place-items: center;
+  color: var(--admin-accent);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.admin-choice strong {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.admin-choice small {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--admin-muted);
+  font-size: 0.76rem;
+}

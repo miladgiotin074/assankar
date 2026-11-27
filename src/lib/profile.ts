@@ -165,9 +165,39 @@ function isComplete(profile: ProfileRecord | null) {
   );
 }
 
+export async function readProfile(phone: string) {
+  return (await profiles()).findOne({ phone });
+}
+
 export async function hasProfile(phone: string) {
-  const profile = await (await profiles()).findOne({ phone });
+  const profile = await readProfile(phone);
   return isComplete(profile);
+}
+
+export async function listProfiles(limit = 80) {
+  return (await profiles()).find({}).sort({ at: -1 }).limit(limit).toArray();
+}
+
+export async function searchProfiles(query: string, limit = 40) {
+  const q = query.trim();
+  if (!q) return listProfiles(limit);
+  const digits = q.replace(/\D/g, "");
+  const filter =
+    digits.length >= 3
+      ? {
+          $or: [
+            { phone: { $regex: digits } },
+            { firstName: { $regex: q, $options: "i" } },
+            { lastName: { $regex: q, $options: "i" } },
+          ],
+        }
+      : {
+          $or: [
+            { firstName: { $regex: q, $options: "i" } },
+            { lastName: { $regex: q, $options: "i" } },
+          ],
+        };
+  return (await profiles()).find(filter).sort({ at: -1 }).limit(limit).toArray();
 }
 
 export async function saveProfile(phone: string, value: Omit<ProfileRecord, "phone" | "at">) {

@@ -18,6 +18,7 @@ export type PaymentRecord = {
   originalName: string;
   at: Date;
   reviewedAt?: Date;
+  reviewedBy?: number;
 };
 
 const allowed = new Map([
@@ -55,6 +56,57 @@ function safeName(value: string) {
 
 export async function readPayment(phone: string) {
   return (await payments()).findOne({ phone });
+}
+
+export async function listPayments(filter: {
+  status?: PaymentStatus | "all";
+  q?: string;
+  limit?: number;
+}) {
+  const limit = Math.min(100, Math.max(1, filter.limit ?? 40));
+  const query: Record<string, unknown> = {};
+  if (filter.status && filter.status !== "all") query.status = filter.status;
+  const q = filter.q?.trim() || "";
+  if (q) {
+    const digits = q.replace(/\D/g, "");
+    if (digits) query.phone = { $regex: digits };
+  }
+  return (await payments()).find(query).sort({ at: -1 }).limit(limit).toArray();
+}
+
+export async function countPaymentsByStatus() {
+  const col = await payments();
+  const [pending, approved, rejected] = await Promise.all([
+    col.countDocuments({ status: "pending" }),
+    col.countDocuments({ status: "approved" }),
+    col.countDocuments({ status: "rejected" }),
+  ]);
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  const approvedToday = await col.countDocuments({ status: "approved", reviewedAt: { $gte: start } });
+  return { pending, approved, rejected, approvedToday };
+}
+
+export async function reviewPayment(phone: string, status: "approved" | "rejected", adminTgId: number) {
+  if (!/^09\d{9}$/.test(phone)) {
+    return { ok: false as const, error: "شماره معتبر نیست." };
+  }
+  const col = await payments();
+  const current = await col.findOne({ phone });
+  if (!current) return { ok: false as const, error: "فیشی برای این شماره نیست." };
+  if (!current.fileId) return { ok: false as const, error: "فایل فیش پیدا نشد." };
+
+  await col.updateOne(
+    { phone },
+    {
+      $set: {
+        status,
+        reviewedAt: new Date(),
+        reviewedBy: adminTgId,
+      },
+    },
+  );
+  return { ok: true as const };
 }
 
 export async function clearPayment(phone: string) {
