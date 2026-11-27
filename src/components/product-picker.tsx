@@ -141,6 +141,13 @@ export function ProductPicker({
               {faDigits(String(basket.length))} از {faDigits(String(maxChoices))}
             </strong>
           </div>
+          <section className="pick-rules" aria-label="نکات تحویل و آماده‌سازی">
+            <h2>نکات مهم</h2>
+            <ul>
+              <li>همکار گرامی باید حداکثر طی ۳۰ روز، محصولات تحویل‌گرفته را بسته‌بندی و آمادهٔ تحویل کند.</li>
+              <li>اگر زودتر از این مدت محصولات را آماده کنید، می‌توانید محصولات جدید دریافت کنید.</li>
+            </ul>
+          </section>
         </div>
 
         <div

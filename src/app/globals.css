@@ -1672,6 +1672,46 @@ select.field {
   font-weight: 800;
 }
 
+.pick-rules {
+  padding: 0.85rem 0.95rem;
+  border: 1px solid #e3edf5;
+  border-radius: 1.15rem;
+  background: #fff;
+}
+
+.pick-rules h2 {
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.pick-rules ul {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin: 0.7rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pick-rules li {
+  position: relative;
+  padding-inline-start: 1rem;
+  color: #4e6578;
+  font-size: 0.86rem;
+  line-height: 1.85;
+}
+
+.pick-rules li::before {
+  content: "";
+  position: absolute;
+  top: 0.7rem;
+  inset-inline-start: 0;
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: 999px;
+  background: #0c4d86;
+}
+
 .pick-card {
   display: flex;
   flex: 0 0 100%;
