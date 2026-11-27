@@ -212,6 +212,8 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
 
         {chosen && shipped && registration && insurance && guarantee && warehouse && shipping ? (
           <PayLedger
+            registration={registration.amount}
+            wage={choices.reduce((sum, item) => sum + item.amount, 0)}
             rows={[
               { label: "هزینهٔ ثبت‌نام", amount: registration.amount },
               { label: "هزینهٔ بیمه", amount: insurance.amount },
@@ -540,11 +542,22 @@ function PayAlert({
   );
 }
 
-function PayLedger({ rows }: { rows: { label: string; amount: number }[] }) {
+function PayLedger({
+  rows,
+  registration,
+  wage,
+}: {
+  rows: { label: string; amount: number }[];
+  registration: number;
+  wage: number;
+}) {
   const total = rows.reduce((sum, row) => sum + (Number.isFinite(row.amount) ? row.amount : 0), 0);
+  const safeWage = Number.isFinite(wage) ? wage : 0;
+  const halfWage = Math.round(safeWage / 2);
+  const balance = total - (Number.isFinite(registration) ? registration : 0) + halfWage;
 
   return (
-    <section id="dash-next" className="dash-ledger" aria-label="خلاصه مبالغ واریزی">
+    <section id="dash-next" className="dash-ledger" aria-label="خلاصه مبالغ واریزی و دستمزد">
       <header className="dash-ledger-hero">
         <span className="dash-ledger-mark" aria-hidden="true">
           <svg viewBox="0 0 24 24">
@@ -574,10 +587,28 @@ function PayLedger({ rows }: { rows: { label: string; amount: number }[] }) {
           </li>
         ))}
       </ul>
-      <footer className="dash-ledger-total">
+      <div className="dash-ledger-total">
         <span>مجموع واریزی</span>
         <strong className="dash-ledger-sum">
           <b>{faNum(total)}</b>
+          <small>تومان</small>
+        </strong>
+      </div>
+      <div className="dash-ledger-wage">
+        <p className="dash-ledger-wage-kicker">دستمزد انتخاب شما</p>
+        <div className="dash-ledger-wage-row">
+          <span>مجموع دستمزد</span>
+          <strong>{toman(safeWage)}</strong>
+        </div>
+        <div className="dash-ledger-wage-row">
+          <span>نصف دستمزد</span>
+          <strong>{toman(halfWage)}</strong>
+        </div>
+      </div>
+      <footer className="dash-ledger-result">
+        <span>مجموع واریزی منهای ثبت‌نام، به‌اضافهٔ نصف دستمزد</span>
+        <strong className="dash-ledger-sum">
+          <b>{faNum(balance)}</b>
           <small>تومان</small>
         </strong>
       </footer>

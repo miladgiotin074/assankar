@@ -1726,6 +1726,75 @@ body:has(.app-device.is-home) {
   font-weight: 800;
 }
 
+.dash-ledger-wage {
+  margin: 0 0.7rem 0.6rem;
+  padding: 0.7rem 0.85rem 0.2rem;
+  border: 1px solid #e3edf5;
+  border-radius: 1.05rem;
+  background: #f7fbfe;
+}
+
+.dash-ledger-wage-kicker {
+  color: #0c4d86;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.dash-ledger-wage-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  padding: 0.72rem 0;
+}
+
+.dash-ledger-wage-row + .dash-ledger-wage-row {
+  border-top: 1px solid #e6eef5;
+}
+
+.dash-ledger-wage-row span {
+  color: #10293f;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.dash-ledger-wage-row strong {
+  color: #0c4d86;
+  font-size: 0.9rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.dash-ledger-result {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  margin: 0 0.7rem 0.75rem;
+  padding: 0.95rem 0.95rem 0.9rem;
+  border-radius: 1.05rem;
+  background:
+    radial-gradient(80% 140% at 100% 0%, rgba(255, 255, 255, 0.16), transparent 46%),
+    linear-gradient(135deg, #0c4d86 0%, #0a6288 100%);
+  color: #fff;
+}
+
+.dash-ledger-result > span {
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.75;
+}
+
+.dash-ledger-result .dash-ledger-sum {
+  color: #fff;
+}
+
+.dash-ledger-result .dash-ledger-sum b {
+  font-size: 1.28rem;
+}
+
 .dash-cta-wrap {
   border-radius: 1.35rem;
   animation: cta-glow 1.8s ease-out infinite;
