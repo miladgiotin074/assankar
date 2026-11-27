@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# نصب، گواهی SSL و به‌روزرسانی آسان‌کار روی اوبونتو.
+# Install, SSL certificate, and update AssanKar on Ubuntu.
 #
-# پیش از اجرا، رکورد A دامنه باید به IP همین سرور اشاره کند.
+# Before running, point the domain A record to this server's IP.
 #
-# نصب اول:
+# First install:
 #   curl -fsSL https://raw.githubusercontent.com/miladgiotin074/assankar/main/deploy.sh -o deploy.sh
 #   sudo bash deploy.sh
 #   sudo bash deploy.sh example.com
 #
-# به‌روزرسانی، با همین فایل:
+# Later updates with the same file:
 #   sudo bash deploy.sh
 
 set -euo pipefail
@@ -25,19 +25,19 @@ NGINX_SITE=/etc/nginx/sites-available/assankar
 NODE_MAJOR=22
 
 if [[ "${EUID}" -ne 0 ]]; then
-  echo "این اسکریپت را با sudo اجرا کنید."
+  echo "Run this script with sudo."
   exit 1
 fi
 
 if [[ ! -f /etc/os-release ]]; then
-  echo "این اسکریپت فقط برای اوبونتو است."
+  echo "This script supports Ubuntu only."
   exit 1
 fi
 
 # shellcheck disable=SC1091
 . /etc/os-release
 if [[ "${ID:-}" != "ubuntu" ]]; then
-  echo "این اسکریپت فقط برای اوبونتو است."
+  echo "This script supports Ubuntu only."
   exit 1
 fi
 
@@ -55,7 +55,7 @@ case "${VERSION_CODENAME:-}" in
     MONGO_KEYRING=/usr/share/keyrings/mongodb-server-9.gpg
     ;;
   *)
-    echo "اوبونتو ${VERSION_ID:-ناشناخته} پشتیبانی نمی‌شود. نسخه‌های ۲۰.۰۴، ۲۲.۰۴، ۲۴.۰۴ یا ۲۶.۰۴ لازم است."
+    echo "Ubuntu ${VERSION_ID:-unknown} is not supported. Use 20.04, 22.04, 24.04, or 26.04."
     exit 1
     ;;
 esac
@@ -91,7 +91,7 @@ ensure_swap() {
   if [[ "${available}" -ge 1500000 || -n "$(swapon --noheadings)" ]]; then
     return
   fi
-  log "افزودن فضای swap برای ساخت اپ"
+  log "Adding swap space for the build"
   fallocate -l 2G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=2048 status=none
   chmod 600 /swapfile
   mkswap /swapfile >/dev/null
@@ -100,7 +100,7 @@ ensure_swap() {
 }
 
 install_base() {
-  log "نصب پیش‌نیازها"
+  log "Installing system packages"
   apt-get update
   apt-get install -y ca-certificates curl gnupg git nginx certbot python3-certbot-nginx ufw openssl
 }
@@ -113,7 +113,7 @@ install_node() {
       return
     fi
   fi
-  log "نصب Node.js ${NODE_MAJOR}"
+  log "Installing Node.js ${NODE_MAJOR}"
   curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash -
   apt-get install -y nodejs
 }
@@ -123,7 +123,7 @@ install_mongo() {
     systemctl enable mongod
     return
   fi
-  log "نصب MongoDB"
+  log "Installing MongoDB"
   apt-get remove -y mongodb mongodb-server >/dev/null 2>&1 || true
   install -d -m 0755 /usr/share/keyrings
   if [[ ! -f "${MONGO_KEYRING}" ]]; then
@@ -145,13 +145,13 @@ ensure_user() {
 }
 
 sync_code() {
-  log "گرفتن کد از گیت‌هاب"
+  log "Syncing code from GitHub"
   if [[ -d "${APP_DIR}/.git" ]]; then
     git_app fetch origin "${BRANCH}"
     git_app checkout "${BRANCH}"
     git_app pull --ff-only origin "${BRANCH}"
   elif [[ -e "${APP_DIR}" ]]; then
-    echo "${APP_DIR} وجود دارد ولی مخزن گیت نیست."
+    echo "${APP_DIR} exists but is not a git repository."
     exit 1
   else
     git clone --branch "${BRANCH}" "${REPO}" "${APP_DIR}"
@@ -164,14 +164,14 @@ ask_domain() {
   if [[ "${1:-}" != "" ]]; then
     raw="$1"
   elif [[ -r /dev/tty ]]; then
-    read -r -p "آدرس دامنه را وارد کنید: " raw < /dev/tty
+    read -r -p "Enter domain name: " raw < /dev/tty
   else
-    echo "دامنه را به‌صورت آرگومان بدهید: sudo bash deploy.sh example.com"
+    echo "Pass the domain as an argument: sudo bash deploy.sh example.com"
     exit 1
   fi
   DOMAIN="$(normalize_domain "${raw}")"
   if ! valid_domain "${DOMAIN}"; then
-    echo "دامنه معتبر نیست: ${raw}"
+    echo "Invalid domain: ${raw}"
     exit 1
   fi
 }
@@ -222,8 +222,8 @@ ask_admin_telegram() {
 
   if [[ -n "${current_token}" && -n "${current_ids}" ]]; then
     if [[ -r /dev/tty ]]; then
-      echo "توکن بات و آی‌دی ادمین از قبل تنظیم شده‌اند."
-      read -r -p "می‌خواهید دوباره وارد کنید؟ (y/N): " redo < /dev/tty || true
+      echo "Bot token and admin ID are already configured."
+      read -r -p "Enter them again? (y/N): " redo < /dev/tty || true
       if [[ ! "${redo:-}" =~ ^[Yy]$ ]]; then
         return
       fi
@@ -233,37 +233,37 @@ ask_admin_telegram() {
   fi
 
   if [[ ! -r /dev/tty ]]; then
-    echo "برای ست کردن BOT_TOKEN و ADMIN_TELEGRAM_IDS ترمینال تعاملی لازم است."
+    echo "An interactive terminal is required to set BOT_TOKEN and ADMIN_TELEGRAM_IDS."
     exit 1
   fi
 
   echo
-  echo "تنظیم پنل مدیریت تلگرام (/admin)"
+  echo "Telegram admin Mini App settings (/admin)"
   if [[ -n "${current_token}" ]]; then
-    read -r -p "توکن بات تلگرام [Enter = بدون تغییر]: " token < /dev/tty
+    read -r -p "Telegram bot token [Enter = keep current]: " token < /dev/tty
     if [[ -z "${token}" ]]; then
       token="${current_token}"
     fi
   else
-    read -r -p "توکن بات تلگرام (BotFather): " token < /dev/tty
+    read -r -p "Telegram bot token (from BotFather): " token < /dev/tty
   fi
   token="$(printf '%s' "${token}" | tr -d '[:space:]')"
   if [[ -z "${token}" || "${token}" != *:* ]]; then
-    echo "توکن بات معتبر نیست."
+    echo "Invalid bot token."
     exit 1
   fi
 
   if [[ -n "${current_ids}" ]]; then
-    read -r -p "آی‌دی عددی ادمین(ها) [فعلی: ${current_ids}]: " admin_ids < /dev/tty
+    read -r -p "Admin Telegram numeric ID(s) [current: ${current_ids}]: " admin_ids < /dev/tty
     if [[ -z "${admin_ids}" ]]; then
       admin_ids="${current_ids}"
     fi
   else
-    read -r -p "آی‌دی عددی تلگرام ادمین (چندتایی با کاما): " admin_ids < /dev/tty
+    read -r -p "Admin Telegram numeric ID (comma-separated for multiple): " admin_ids < /dev/tty
   fi
   admin_ids="$(printf '%s' "${admin_ids}" | tr -d '[:space:]')"
   if [[ ! "${admin_ids}" =~ ^[0-9]+(,[0-9]+)*$ ]]; then
-    echo "آی‌دی ادمین باید عددی باشد؛ چند ادمین را با کاما جدا کنید."
+    echo "Admin IDs must be numeric. Separate multiple IDs with commas."
     exit 1
   fi
 
@@ -301,13 +301,13 @@ read_domain() {
   site="$(grep -E '^NEXT_PUBLIC_SITE_URL=' "${ENV_FILE}" | head -n 1 | cut -d= -f2-)"
   DOMAIN="$(normalize_domain "${site}")"
   if ! valid_domain "${DOMAIN}"; then
-    echo "دامنه در ${ENV_FILE} پیدا نشد."
+    echo "Domain not found in ${ENV_FILE}."
     exit 1
   fi
 }
 
 build_app() {
-  log "ساخت اپ"
+  log "Building the app"
   as_app npm --prefix "${APP_DIR}" ci
   as_app npm --prefix "${APP_DIR}" run build
 }
@@ -383,7 +383,7 @@ obtain_cert() {
     certbot renew --quiet || true
     return
   fi
-  log "دریافت گواهی SSL برای ${DOMAIN}"
+  log "Requesting SSL certificate for ${DOMAIN}"
   certbot --nginx -d "${DOMAIN}" --non-interactive --agree-tos --register-unsafely-without-email --redirect
 }
 
@@ -409,10 +409,10 @@ install_all() {
   obtain_cert
   systemctl reload nginx
   echo
-  echo "آسان‌کار روی https://${DOMAIN} در حال اجراست."
-  echo "پنل ادمین Mini App: https://${DOMAIN}/admin"
-  echo "در BotFather آدرس Mini App را روی همان /admin بگذارید."
-  echo "برای به‌روزرسانی بعدی همین دستور را دوباره بزنید: sudo bash deploy.sh"
+  echo "AssanKar is running at https://${DOMAIN}"
+  echo "Admin Mini App: https://${DOMAIN}/admin"
+  echo "In BotFather, set the Mini App URL to that /admin path."
+  echo "For later updates, run: sudo bash deploy.sh"
 }
 
 update_all() {
@@ -431,8 +431,8 @@ update_all() {
   obtain_cert
   systemctl reload nginx
   echo
-  echo "آسان‌کار به‌روز شد: https://${DOMAIN}"
-  echo "پنل ادمین: https://${DOMAIN}/admin"
+  echo "AssanKar updated: https://${DOMAIN}"
+  echo "Admin panel: https://${DOMAIN}/admin"
 }
 
 if [[ -f "${ENV_FILE}" && -d "${APP_DIR}/.git" ]]; then
