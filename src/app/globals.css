@@ -1163,9 +1163,9 @@ body:has(.app-device.is-home) {
 }
 
 .dash-support-fab {
-  position: absolute;
-  z-index: 30;
-  right: 1rem;
+  position: fixed;
+  z-index: 40;
+  right: calc(1rem + max(0px, (100% - 28rem) / 2));
   left: auto;
   bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
   display: grid;
@@ -3710,6 +3710,10 @@ select.field {
   .app-device.is-home {
     height: min(52rem, calc(100svh - 3rem));
     max-height: min(52rem, calc(100svh - 3rem));
+  }
+
+  .dash-support-fab {
+    bottom: calc(2.5rem + env(safe-area-inset-bottom, 0px));
   }
 }
 
