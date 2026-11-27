@@ -82,9 +82,7 @@ async function DashboardHome() {
                 <span className="dash-cta-kicker">مرحله بعد</span>
                 <strong>انتخاب محصول</strong>
                 <small>
-                  {choice
-                    ? `${faDigits(String(choice.quantity))} قلم، ${choice.title}`
-                    : "از ۱ تا ۳ قلم کالا را خودتان انتخاب می‌کنید."}
+                  {choice ? `${choice.label}، ${choice.title}` : "تعداد بسته را از جدول دستمزد انتخاب می‌کنید."}
                 </small>
               </span>
               <span className="dash-cta-go">
@@ -144,7 +142,7 @@ function workStages(ready: boolean) {
     { title: "تکمیل ثبت‌نام", text: "نام، شماره کارت، تاریخ تولد و آدرس محل سکونت." },
     {
       title: "انتخاب محصول",
-      text: ready ? "از ۱ تا ۳ قلم کالا را خودتان انتخاب می‌کنید." : "بعد از تکمیل ثبت‌نام باز می‌شود.",
+      text: ready ? "تعداد بسته را از جدول دستمزد انتخاب می‌کنید." : "بعد از تکمیل ثبت‌نام باز می‌شود.",
     },
     ...heroFlow.slice(1),
   ];

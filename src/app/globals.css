@@ -1576,13 +1576,11 @@ select.field {
 
 .pick-photo {
   display: grid;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 16 / 10;
   place-items: center;
   overflow: hidden;
   border-radius: 0.95rem;
-  background:
-    radial-gradient(80% 80% at 100% 0%, rgba(240, 162, 58, 0.28), transparent 55%),
-    #eef5fb;
+  background: #fff;
   color: #0c4d86;
 }
 
@@ -1590,6 +1588,7 @@ select.field {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
 }
 
 .pick-photo svg,
@@ -1731,6 +1730,49 @@ select.field {
   color: #4e6578;
   font-size: 0.9rem;
   line-height: 1.85;
+}
+
+.pick-note {
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #e3edf5;
+  border-radius: 1rem;
+  background: #fff;
+  color: #4e6578;
+  font-size: 0.88rem;
+  line-height: 1.8;
+}
+
+.pick-wages {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.pick-wages button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 0.8rem;
+  border: 1px solid #e3edf5;
+  border-radius: 0.9rem;
+  background: #f7fbfe;
+  color: #10293f;
+  text-align: start;
+}
+
+.pick-wages button strong {
+  color: #0c4d86;
+  font-size: 0.84rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.pick-wages button.is-on {
+  border-color: #f0a23a;
+  background: #fff8ef;
 }
 
 @media (min-width: 640px) {

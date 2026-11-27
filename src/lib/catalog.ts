@@ -1,8 +1,10 @@
-import { ObjectId } from "mongodb";
+import { toEnglishDigits } from "@/lib/apply";
+import { faNum } from "@/lib/format";
 import { collection } from "@/lib/mongo";
 
 export type WageRow = {
   label: string;
+  packs: number;
   amount: number;
 };
 
@@ -10,12 +12,94 @@ export type CatalogCard = {
   id: string;
   title: string;
   image: string;
+  note: string;
   wages: WageRow[];
 };
+
+const packNote = "وسایل موردنیاز آماده است و کار شما صرفاً بسته‌بندی می‌باشد.";
+
+function packRows(rows: [number, number][]): WageRow[] {
+  return rows.map(([packs, amount]) => ({
+    label: `هر ${faNum(packs)} بسته`,
+    packs,
+    amount,
+  }));
+}
+
+export const defaultProducts: CatalogCard[] = [
+  {
+    id: "safety-pin",
+    title: "بسته‌بندی سوزن قفلی",
+    image: "/products/safety-pin.jpg",
+    note: packNote,
+    wages: packRows([
+      [100, 850_000],
+      [1000, 8_500_000],
+      [10_000, 85_000_000],
+    ]),
+  },
+  {
+    id: "socks",
+    title: "بسته‌بندی جوراب صادراتی",
+    image: "/products/socks.jpg",
+    note: packNote,
+    wages: packRows([
+      [100, 4_000_000],
+      [200, 8_000_000],
+    ]),
+  },
+  {
+    id: "barbie",
+    title: "بسته‌بندی عروسک باربی صادراتی",
+    image: "/products/barbie.jpg",
+    note: packNote,
+    wages: packRows([
+      [1, 20_000],
+      [10, 200_000],
+      [100, 2_000_000],
+      [400, 8_000_000],
+    ]),
+  },
+  {
+    id: "foundation",
+    title: "بسته‌بندی کرم پودر لورآل اصلی",
+    image: "/products/foundation.jpg",
+    note: packNote,
+    wages: packRows([
+      [10, 400_000],
+      [100, 4_000_000],
+      [200, 8_000_000],
+      [400, 16_000_000],
+    ]),
+  },
+  {
+    id: "match-pencil",
+    title: "بسته‌بندی کبریت مدل مداد",
+    image: "/products/match-pencil.jpg",
+    note: packNote,
+    wages: packRows([
+      [500, 1_500_000],
+      [1000, 2_500_000],
+      [3000, 5_000_000],
+    ]),
+  },
+  {
+    id: "lip-tint",
+    title: "بسته‌بندی تینت لب بستنی مجیک",
+    image: "/products/lip-tint.jpg",
+    note: packNote,
+    wages: packRows([
+      [10, 400_000],
+      [100, 4_000_000],
+      [1000, 40_000_000],
+    ]),
+  },
+];
 
 type ProductDoc = {
   title?: unknown;
   image?: unknown;
+  note?: unknown;
   active?: unknown;
   order?: unknown;
   wages?: unknown;
@@ -65,63 +149,72 @@ function imageUrl(value: unknown) {
   return "";
 }
 
+function packCount(value: unknown, label: string, index: number) {
+  const direct = Number(value);
+  if (Number.isInteger(direct) && direct > 0) return direct;
+  const digits = toEnglishDigits(label).replace(/[^\d]/g, "");
+  const parsed = Number(digits);
+  if (Number.isInteger(parsed) && parsed > 0) return parsed;
+  return index + 1;
+}
+
 function wages(value: unknown): WageRow[] {
   if (!Array.isArray(value)) return [];
-  return value.flatMap((row) => {
+  return value.flatMap((row, index) => {
     if (!row || typeof row !== "object") return [];
-    const record = row as { label?: unknown; amount?: unknown };
+    const record = row as { label?: unknown; amount?: unknown; packs?: unknown };
     const label = text(record.label, 80);
     const amount = Number(record.amount);
     if (!label || !Number.isFinite(amount) || amount < 0 || amount > 1_000_000_000) return [];
-    return [{ label, amount: Math.round(amount) }];
+    return [{ label, amount: Math.round(amount), packs: packCount(record.packs, label, index) }];
   }).slice(0, 12);
 }
 
 function card(id: string, doc: ProductDoc): CatalogCard | null {
   const title = text(doc.title, 80);
   if (!title || doc.active === false) return null;
-  return { id, title, image: imageUrl(doc.image), wages: wages(doc.wages) };
+  return { id, title, image: imageUrl(doc.image), note: text(doc.note, 180), wages: wages(doc.wages) };
 }
 
 export async function listProducts(): Promise<CatalogCard[]> {
-  const docs = await (await collection<ProductDoc>("products"))
-    .find({ active: { $ne: false } })
-    .sort({ order: 1, title: 1 })
-    .limit(40)
-    .toArray();
+  try {
+    const docs = await (await collection<ProductDoc>("products"))
+      .find({ active: { $ne: false } })
+      .sort({ order: 1, title: 1 })
+      .limit(40)
+      .toArray();
+    const items = docs.flatMap((doc) => {
+      const item = card(String(doc._id), doc);
+      return item ? [item] : [];
+    });
+    if (items.length) return items;
+  } catch {
+    return defaultProducts;
+  }
+  return defaultProducts;
+}
 
-  return docs.flatMap((doc) => {
-    const item = card(String(doc._id), doc);
-    return item ? [item] : [];
-  });
+async function productById(id: string) {
+  return (await listProducts()).find((item) => item.id === id) ?? null;
 }
 
 export async function readChoice(phone: string) {
   const choice = await (await choicesReady()).findOne({ phone });
-  if (!choice || !ObjectId.isValid(choice.productId)) return null;
-  if (choice.quantity < 1 || choice.quantity > 3) return null;
-  const doc = await (await collection<ProductDoc>("products")).findOne({
-    _id: new ObjectId(choice.productId),
-    active: { $ne: false },
-  });
-  const item = doc ? card(choice.productId, doc) : null;
-  if (!item) return null;
-  return { productId: item.id, title: item.title, quantity: choice.quantity };
+  if (!choice) return null;
+  const item = await productById(choice.productId);
+  const row = item?.wages.find((wage) => wage.packs === choice.quantity);
+  if (!item || !row) return null;
+  return { productId: item.id, title: item.title, quantity: row.packs, label: row.label };
 }
 
 export async function saveChoice(phone: string, productId: string, quantity: number) {
-  if (!ObjectId.isValid(productId) || !Number.isInteger(quantity) || quantity < 1 || quantity > 3) {
-    return { ok: false as const, error: "محصول و تعداد را دوباره انتخاب کنید." };
-  }
-  const doc = await (await collection<ProductDoc>("products")).findOne({
-    _id: new ObjectId(productId),
-    active: { $ne: false },
-  });
-  if (!doc || !card(productId, doc)) {
-    return { ok: false as const, error: "این محصول برای انتخاب باز نیست." };
+  const item = await productById(productId);
+  const row = item?.wages.find((wage) => wage.packs === quantity);
+  if (!item || !row) {
+    return { ok: false as const, error: "محصول و تعداد بسته را دوباره انتخاب کنید." };
   }
   await (
     await choicesReady()
-  ).updateOne({ phone }, { $set: { phone, productId, quantity, at: new Date() } }, { upsert: true });
+  ).updateOne({ phone }, { $set: { phone, productId, quantity: row.packs, at: new Date() } }, { upsert: true });
   return { ok: true as const };
 }

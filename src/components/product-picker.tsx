@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { submitChoice, type ChoiceState } from "@/app/dashboard/products/actions";
-import { faDigits, toman } from "@/lib/format";
+import { toman } from "@/lib/format";
 import type { CatalogCard } from "@/lib/catalog";
 
 const empty: ChoiceState = { error: "" };
@@ -18,7 +18,7 @@ export function ProductPicker({
 }) {
   const [state, action, pending] = useActionState(submitChoice, empty);
   const [selected, setSelected] = useState(initialId || products[0]?.id || "");
-  const [quantity, setQuantity] = useState(initialQuantity >= 1 && initialQuantity <= 3 ? initialQuantity : 1);
+  const [quantity, setQuantity] = useState(initialQuantity);
   const [broken, setBroken] = useState<Record<string, true>>({});
   const railRef = useRef<HTMLDivElement>(null);
   const openedOn = useRef(selected);
@@ -70,12 +70,18 @@ export function ProductPicker({
     if (item) focusCard(item.id);
   }
 
+  useEffect(() => {
+    if (!product || product.wages.some((row) => row.packs === quantity)) return;
+    setQuantity(product.wages[0]?.packs ?? 0);
+  }, [product, quantity]);
+
   if (!product) return null;
+  const wage = product.wages.find((row) => row.packs === quantity) ?? product.wages[0];
 
   return (
     <form action={action} className="pick-form">
       <div className="pick-scroll">
-        <p className="profile-lead">محصول را بکشید تا وسط بیاید، بعد تعداد را از ۱ تا ۳ انتخاب کنید.</p>
+        <p className="profile-lead">محصول را بکشید تا وسط بیاید، بعد تعداد بسته را از جدول دستمزد انتخاب کنید.</p>
 
         <div
           ref={railRef}
@@ -135,44 +141,32 @@ export function ProductPicker({
           ))}
         </div>
 
+        {product.note ? <p className="pick-note">{product.note}</p> : null}
+
         <section className="pick-panel" aria-label="جدول دستمزد">
-          <h2>جدول دستمزد</h2>
+          <h2>تعداد و دستمزد</h2>
           {product.wages.length ? (
-            <table>
-              <thead>
-                <tr>
-                  <th>شرح</th>
-                  <th>دستمزد</th>
-                </tr>
-              </thead>
-              <tbody>
-                {product.wages.map((row, index) => (
-                  <tr key={`${index}-${row.label}`}>
-                    <td>{row.label}</td>
-                    <td>{toman(row.amount)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="pick-wages" role="radiogroup" aria-label="تعداد بسته">
+              {product.wages.map((row) => {
+                const on = row.packs === wage?.packs;
+                return (
+                  <button
+                    key={row.packs}
+                    type="button"
+                    className={on ? "is-on" : undefined}
+                    role="radio"
+                    aria-checked={on}
+                    onClick={() => setQuantity(row.packs)}
+                  >
+                    <span>{row.label}</span>
+                    <strong>{toman(row.amount)}</strong>
+                  </button>
+                );
+              })}
+            </div>
           ) : (
             <p>برای این محصول هنوز جدول دستمزد ثبت نشده است.</p>
           )}
-        </section>
-
-        <section className="pick-panel" aria-label="تعداد">
-          <h2>تعداد</h2>
-          <div className="pick-qty">
-            <button type="button" aria-label="بیشتر" disabled={pending || quantity >= 3} onClick={() => setQuantity((value) => Math.min(3, value + 1))}>
-              +
-            </button>
-            <strong>
-              {faDigits(String(quantity))}
-              <small>قلم</small>
-            </strong>
-            <button type="button" aria-label="کمتر" disabled={pending || quantity <= 1} onClick={() => setQuantity((value) => Math.max(1, value - 1))}>
-              −
-            </button>
-          </div>
         </section>
 
         {state.error ? (
@@ -183,8 +177,8 @@ export function ProductPicker({
       </div>
 
       <input type="hidden" name="productId" value={product.id} />
-      <input type="hidden" name="quantity" value={quantity} />
-      <button className="btn w-full" type="submit" disabled={pending}>
+      <input type="hidden" name="quantity" value={wage?.packs ?? ""} />
+      <button className="btn w-full" type="submit" disabled={pending || !wage}>
         {pending ? "در حال ثبت" : "ادامه"}
       </button>
     </form>

@@ -49,5 +49,12 @@ async function ProductGate() {
     );
   }
 
-  return <ProductPicker products={products} initialId={choice?.productId ?? products[0].id} initialQuantity={choice?.quantity ?? 1} />;
+  const first = products[0];
+  return (
+    <ProductPicker
+      products={products}
+      initialId={choice?.productId ?? first.id}
+      initialQuantity={choice?.quantity ?? first.wages[0]?.packs ?? 0}
+    />
+  );
 }
