@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { logout } from "@/app/account/actions";
 import Link from "next/link";
+import { readChoice } from "@/lib/catalog";
 import { faDigits } from "@/lib/format";
 import { hasProfile } from "@/lib/profile";
 import { readSession } from "@/lib/session";
@@ -57,6 +58,7 @@ async function DashboardHome() {
 
   const phone = faDigits(session.phone.replace(/(\d{4})(\d{3})(\d{4})/, "$1 $2 $3"));
   const ready = await hasProfile(session.phone);
+  const choice = ready ? await readChoice(session.phone) : null;
   const stages = workStages(ready);
 
   return (
@@ -72,20 +74,24 @@ async function DashboardHome() {
       <div className="dash-sheet">
         {ready ? (
           <div className="dash-cta-wrap is-amber">
-            <section className="dash-cta is-amber" aria-label="مرحله باز">
+            <Link href="/dashboard/products" className="dash-cta is-amber">
               <span className="dash-cta-no" aria-hidden="true">
                 ۲
               </span>
               <span>
                 <span className="dash-cta-kicker">مرحله بعد</span>
                 <strong>انتخاب محصول</strong>
-                <small>از ۱ تا ۳ قلم کالا را خودتان انتخاب می‌کنید.</small>
+                <small>
+                  {choice
+                    ? `${faDigits(String(choice.quantity))} قلم، ${choice.title}`
+                    : "از ۱ تا ۳ قلم کالا را خودتان انتخاب می‌کنید."}
+                </small>
               </span>
               <span className="dash-cta-go">
-                باز شد
+                {choice ? "تغییر" : "انتخاب"}
                 <Chevron />
               </span>
-            </section>
+            </Link>
           </div>
         ) : (
           <div className="dash-cta-wrap">

@@ -947,6 +947,7 @@ input[type="range"] {
 }
 
 .app-device.is-form .app-main {
+  overflow: auto;
   background: transparent;
 }
 
@@ -1503,6 +1504,233 @@ select.field {
 
 .dash-logout:focus-visible {
   outline-color: #fff;
+}
+
+.pick-form,
+.pick-empty {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.pick-form {
+  gap: 0.85rem;
+}
+
+.pick-scroll {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.pick-rail {
+  display: flex;
+  gap: 0.7rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 11%;
+  padding: 0.2rem 11% 0.35rem;
+  scrollbar-width: none;
+}
+
+.pick-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.pick-card {
+  display: flex;
+  flex: 0 0 78%;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.55rem 0.55rem 0.8rem;
+  border: 1px solid #e3edf5;
+  border-radius: 1.25rem;
+  background: #fff;
+  color: #10293f;
+  text-align: start;
+  box-shadow: 0 8px 20px rgba(16, 41, 63, 0.04);
+}
+
+.pick-card.is-on {
+  border-color: #f0a23a;
+  box-shadow: 0 12px 26px rgba(212, 114, 10, 0.18);
+}
+
+.pick-card strong {
+  padding-inline: 0.35rem;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.pick-card small {
+  padding-inline: 0.35rem;
+  color: #0b6e50;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.pick-photo {
+  display: grid;
+  aspect-ratio: 4 / 3;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 0.95rem;
+  background:
+    radial-gradient(80% 80% at 100% 0%, rgba(240, 162, 58, 0.28), transparent 55%),
+    #eef5fb;
+  color: #0c4d86;
+}
+
+.pick-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pick-photo svg,
+.pick-empty-mark svg {
+  width: 2.4rem;
+  height: 2.4rem;
+}
+
+.pick-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.pick-dots button {
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 999px;
+  background: #d7e3ee;
+}
+
+.pick-dots button.is-on {
+  width: 1.15rem;
+  background: #d4720a;
+}
+
+.pick-panel {
+  padding: 0.9rem;
+  border: 1px solid #e3edf5;
+  border-radius: 1.15rem;
+  background: #fff;
+}
+
+.pick-panel h2 {
+  font-size: 0.98rem;
+  font-weight: 800;
+}
+
+.pick-panel p {
+  margin-top: 0.45rem;
+  color: #4e6578;
+  font-size: 0.88rem;
+  line-height: 1.8;
+}
+
+.pick-panel table {
+  width: 100%;
+  margin-top: 0.7rem;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.pick-panel th,
+.pick-panel td {
+  padding: 0.55rem 0.15rem;
+  border-bottom: 1px solid #e8f0f6;
+  text-align: start;
+}
+
+.pick-panel th {
+  color: #4e6578;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.pick-panel td:last-child,
+.pick-panel th:last-child {
+  text-align: end;
+  font-weight: 800;
+}
+
+.pick-panel tr:last-child td {
+  border-bottom: 0;
+}
+
+.pick-qty {
+  display: grid;
+  grid-template-columns: 2.7rem 1fr 2.7rem;
+  align-items: center;
+  margin-top: 0.75rem;
+}
+
+.pick-qty button {
+  display: grid;
+  width: 2.7rem;
+  height: 2.7rem;
+  place-items: center;
+  border-radius: 999px;
+  background: #eef5fb;
+  color: #0c4d86;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.pick-qty button:disabled {
+  opacity: 0.4;
+}
+
+.pick-qty strong {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.35rem;
+  font-size: 1.7rem;
+  font-weight: 800;
+}
+
+.pick-qty strong small {
+  color: #4e6578;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.pick-empty {
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  text-align: center;
+}
+
+.pick-empty-mark {
+  display: grid;
+  width: 4.2rem;
+  height: 4.2rem;
+  place-items: center;
+  margin-bottom: 0.4rem;
+  border-radius: 1.3rem;
+  background: #fff;
+  color: #0c4d86;
+}
+
+.pick-empty strong {
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.pick-empty p {
+  max-width: 18rem;
+  color: #4e6578;
+  font-size: 0.9rem;
+  line-height: 1.85;
 }
 
 @media (min-width: 640px) {
