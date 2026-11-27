@@ -39,3 +39,5 @@ NEXT_PUBLIC_ADMIN_MOCK_ID=111111111
 - `ADMIN_TELEGRAM_IDS`: آی‌دی عددی تلگرام ادمین‌ها (با کاما)
 - در development بدون توکن، با `ADMIN_DEV_BYPASS=1` و mock می‌توان پنل را در مرورگر تست کرد؛ آی‌دی mock باید داخل وایت‌لیست باشد
 - در BotFather آدرس Mini App را روی `https://your-domain/admin` بگذارید
+- بعد از نصب، `deploy.sh` وب‌هوک ربات را روی `/api/telegram/webhook` ست می‌کند
+- با `/start` ربات دکمه شیشه‌ای Web App «پنل مدیریت آسان‌کار» می‌فرستد

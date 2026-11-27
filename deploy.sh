@@ -212,6 +212,38 @@ env_set() {
   chmod 600 "${ENV_FILE}"
 }
 
+configure_telegram_bot() {
+  local token site_url webhook_url secret
+  token="$(env_get BOT_TOKEN)"
+  site_url="$(env_get NEXT_PUBLIC_SITE_URL)"
+  site_url="${site_url%/}"
+  if [[ -z "${token}" || -z "${site_url}" ]]; then
+    echo "Skip Telegram webhook: BOT_TOKEN or NEXT_PUBLIC_SITE_URL is missing."
+    return
+  fi
+
+  secret="$(env_get TELEGRAM_WEBHOOK_SECRET)"
+  if [[ -z "${secret}" ]]; then
+    secret="$(openssl rand -hex 24)"
+    env_set TELEGRAM_WEBHOOK_SECRET "${secret}"
+  fi
+
+  webhook_url="${site_url}/api/telegram/webhook"
+  log "Configuring Telegram bot webhook"
+  curl -fsS "https://api.telegram.org/bot${token}/setWebhook" \
+    --data-urlencode "url=${webhook_url}" \
+    --data-urlencode "secret_token=${secret}" \
+    --data-urlencode 'allowed_updates=["message"]' \
+    >/dev/null
+
+  curl -fsS "https://api.telegram.org/bot${token}/setChatMenuButton" \
+    -H "Content-Type: application/json" \
+    -d "{\"menu_button\":{\"type\":\"web_app\",\"text\":\"Admin\",\"web_app\":{\"url\":\"${site_url}/admin\"}}}" \
+    >/dev/null || true
+
+  echo "Telegram webhook set to ${webhook_url}"
+}
+
 ask_admin_telegram() {
   local token=""
   local admin_ids=""
@@ -408,10 +440,12 @@ install_all() {
   start_app
   obtain_cert
   systemctl reload nginx
+  configure_telegram_bot
+  systemctl restart "${SERVICE_NAME}"
   echo
   echo "AssanKar is running at https://${DOMAIN}"
   echo "Admin Mini App: https://${DOMAIN}/admin"
-  echo "In BotFather, set the Mini App URL to that /admin path."
+  echo "Open the bot in Telegram and send /start to get the Mini App button."
   echo "For later updates, run: sudo bash deploy.sh"
 }
 
@@ -430,9 +464,12 @@ update_all() {
   start_app
   obtain_cert
   systemctl reload nginx
+  configure_telegram_bot
+  systemctl restart "${SERVICE_NAME}"
   echo
   echo "AssanKar updated: https://${DOMAIN}"
   echo "Admin panel: https://${DOMAIN}/admin"
+  echo "Send /start to the bot to open the Mini App button."
 }
 
 if [[ -f "${ENV_FILE}" && -d "${APP_DIR}/.git" ]]; then
