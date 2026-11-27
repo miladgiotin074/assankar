@@ -6,9 +6,9 @@ import { collection } from "@/lib/mongo";
 import { site } from "@/lib/site";
 
 export type PaymentStatus = "pending" | "approved" | "rejected";
-export type PaymentKind = "registration" | "insurance" | "guarantee";
+export type PaymentKind = "registration" | "insurance" | "guarantee" | "shipping";
 
-const paymentKinds = new Set<PaymentKind>(["registration", "insurance", "guarantee"]);
+const paymentKinds = new Set<PaymentKind>(["registration", "insurance", "guarantee", "shipping"]);
 
 export function parsePaymentKind(value: unknown, fallback: PaymentKind = "registration"): PaymentKind {
   return typeof value === "string" && paymentKinds.has(value as PaymentKind)
@@ -52,6 +52,7 @@ function normalize(doc: PaymentRecord | null) {
 function amountFor(kind: PaymentKind) {
   if (kind === "insurance") return site.insuranceFee;
   if (kind === "guarantee") return site.guaranteeFee;
+  if (kind === "shipping") return site.shippingFee;
   return site.registrationFee;
 }
 
@@ -84,6 +85,7 @@ function safeName(value: string) {
 export function paymentKindLabel(kind: PaymentKind) {
   if (kind === "insurance") return "بیمه";
   if (kind === "guarantee") return "ضمانت کالا";
+  if (kind === "shipping") return "باربری";
   return "ثبت‌نام";
 }
 
@@ -248,6 +250,12 @@ export async function saveReceipt(phone: string, file: File, kind: PaymentKind =
     const insurance = await readPayment(phone, "insurance");
     if (insurance?.status !== "approved") {
       return { ok: false as const, error: "اول باید هزینهٔ بیمه تأیید شده باشد." };
+    }
+  }
+  if (kind === "shipping") {
+    const guarantee = await readPayment(phone, "guarantee");
+    if (guarantee?.status !== "approved") {
+      return { ok: false as const, error: "اول باید ضمانت کالا تأیید شده باشد." };
     }
   }
 

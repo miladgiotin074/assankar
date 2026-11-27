@@ -37,6 +37,7 @@ export type AdminPartnerRow = {
   paymentStatus: PaymentStatus | "none";
   insuranceStatus: PaymentStatus | "none";
   guaranteeStatus: PaymentStatus | "none";
+  shippingStatus: PaymentStatus | "none";
   stage: string;
 };
 
@@ -185,11 +186,16 @@ export async function adminListPartners(q = "", stageFilter: PartnerFilter = "al
     const payment = await readPayment(profile.phone, "registration");
     const insurance = await readPayment(profile.phone, "insurance");
     const guarantee = await readPayment(profile.phone, "guarantee");
+    const shipping = await readPayment(profile.phone, "shipping");
     const paymentStatus = payment?.status ?? "none";
     const insuranceStatus = insurance?.status ?? "none";
     const guaranteeStatus = guarantee?.status ?? "none";
+    const shippingStatus = shipping?.status ?? "none";
     let stage = "پروفایل";
-    if (guaranteeStatus === "approved") stage = "ضمانت تأیید شده";
+    if (shippingStatus === "approved") stage = "باربری تأیید شده";
+    else if (shippingStatus === "pending") stage = "منتظر تأیید باربری";
+    else if (shippingStatus === "rejected") stage = "فیش باربری رد شده";
+    else if (guaranteeStatus === "approved") stage = "ضمانت تأیید شده";
     else if (guaranteeStatus === "pending") stage = "منتظر تأیید ضمانت";
     else if (guaranteeStatus === "rejected") stage = "فیش ضمانت رد شده";
     else if (insuranceStatus === "approved") stage = "بیمه تأیید شده";
@@ -210,6 +216,7 @@ export async function adminListPartners(q = "", stageFilter: PartnerFilter = "al
       paymentStatus,
       insuranceStatus,
       guaranteeStatus,
+      shippingStatus,
       stage,
     });
   }
@@ -225,6 +232,7 @@ export async function adminPartnerDetail(phone: string) {
   const payment = await readPayment(phone, "registration");
   const insurance = await readPayment(phone, "insurance");
   const guarantee = await readPayment(phone, "guarantee");
+  const shipping = await readPayment(phone, "shipping");
   return {
     phone: profile.phone,
     phoneDisplay: phoneDisplay(profile.phone),
@@ -246,8 +254,10 @@ export async function adminPartnerDetail(phone: string) {
     payment: payment ? toPaymentRow(payment, profile, choices.length) : null,
     insurance: insurance ? toPaymentRow(insurance, profile, choices.length) : null,
     guarantee: guarantee ? toPaymentRow(guarantee, profile, choices.length) : null,
+    shipping: shipping ? toPaymentRow(shipping, profile, choices.length) : null,
     receiptUrl: payment?.fileId ? `/api/admin/receipts/${payment.fileId}` : "",
     insuranceReceiptUrl: insurance?.fileId ? `/api/admin/receipts/${insurance.fileId}` : "",
     guaranteeReceiptUrl: guarantee?.fileId ? `/api/admin/receipts/${guarantee.fileId}` : "",
+    shippingReceiptUrl: shipping?.fileId ? `/api/admin/receipts/${shipping.fileId}` : "",
   };
 }

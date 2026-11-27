@@ -71,7 +71,10 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
   const guarantee = insured ? await readPayment(phoneRaw, "guarantee") : null;
   const guaStatus = guarantee?.status ?? "none";
   const guaranteed = guaStatus === "approved";
-  const stages = workStages(ready, choices, regStatus, insStatus, guaStatus);
+  const shipping = guaranteed ? await readPayment(phoneRaw, "shipping") : null;
+  const shipStatus = shipping?.status ?? "none";
+  const shipped = shipStatus === "approved";
+  const stages = workStages(ready, choices, regStatus, insStatus, guaStatus, shipStatus);
 
   return (
     <div className="dash">
@@ -100,7 +103,16 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
             payment={guarantee}
             href="/dashboard/guarantee"
             label="ضمانت کالا"
-            nextText="بعد از تأیید فیش ضمانت، مرحلهٔ بعد همکاری باز می‌شود."
+            nextText="بعد از تأیید فیش ضمانت، مرحلهٔ هزینهٔ باربری باز می‌شود."
+          />
+        ) : null}
+
+        {chosen && guaranteed && shipStatus === "pending" && shipping ? (
+          <PayWait
+            payment={shipping}
+            href="/dashboard/shipping"
+            label="باربری"
+            nextText="بعد از تأیید فیش باربری، مرحلهٔ بعد همکاری باز می‌شود."
           />
         ) : null}
 
@@ -134,6 +146,16 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
           />
         ) : null}
 
+        {chosen && guaranteed && shipStatus === "rejected" ? (
+          <PayAlert
+            tone="bad"
+            title="نیاز به ارسال دوباره فیش باربری"
+            text="فیش باربری تأیید نشد. لطفاً عکس واضح‌تری از واریز درست بفرستید."
+            href="/dashboard/shipping"
+            link="ارسال فیش باربری"
+          />
+        ) : null}
+
         {chosen && registered && !insured && insStatus !== "pending" && insStatus !== "rejected" ? (
           <PayAlert
             tone="ok"
@@ -150,11 +172,19 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
           />
         ) : null}
 
-        {chosen && guaranteed ? (
+        {chosen && guaranteed && !shipped && shipStatus !== "pending" && shipStatus !== "rejected" ? (
           <PayAlert
             tone="ok"
             title="واریز ضمانت تأیید شد"
-            text="ضمانت کالا تأیید شده است و می‌توانید مرحلهٔ بعد را ادامه دهید."
+            text="ضمانت کالا تأیید شده است. حالا هزینهٔ باربری را واریز کنید."
+          />
+        ) : null}
+
+        {chosen && shipped ? (
+          <PayAlert
+            tone="ok"
+            title="واریز باربری تأیید شد"
+            text="هزینهٔ باربری تأیید شده است و می‌توانید مرحلهٔ بعد را ادامه دهید."
           />
         ) : null}
 
@@ -255,6 +285,27 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
               </span>
             </Link>
           </div>
+        ) : guaranteed && (shipStatus === "none" || shipStatus === "rejected") ? (
+          <div id={shipStatus === "none" ? "dash-next" : undefined} className="dash-cta-wrap is-violet">
+            <Link href="/dashboard/shipping" className="dash-cta is-violet">
+              <span className="dash-cta-no" aria-hidden="true">
+                ۶
+              </span>
+              <span>
+                <span className="dash-cta-kicker">مرحله بعد</span>
+                <strong>واریز هزینهٔ باربری</strong>
+                <small>
+                  {shipStatus === "rejected"
+                    ? "فیش باربری رد شد؛ دوباره واریز و ارسال کنید."
+                    : "مبلغ باربری را واریز کنید و عکس فیش را بفرستید."}
+                </small>
+              </span>
+              <span className="dash-cta-go">
+                واریز
+                <Chevron />
+              </span>
+            </Link>
+          </div>
         ) : null}
 
         {chosen ? (
@@ -293,7 +344,10 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
           <h2>مراحل همکاری</h2>
           <ol>
             {stages.map((step, index) => (
-              <li key={step.title} className={stageClass(index, ready, chosen, registered, insured, guaranteed)}>
+              <li
+                key={step.title}
+                className={stageClass(index, ready, chosen, registered, insured, guaranteed, shipped)}
+              >
                 <span className="dash-no">{faDigits(String(index + 1))}</span>
                 <div>
                   <strong>{step.title}</strong>
@@ -455,6 +509,7 @@ function workStages(
   regStatus: PaymentStatus | "none",
   insStatus: PaymentStatus | "none",
   guaStatus: PaymentStatus | "none",
+  shipStatus: PaymentStatus | "none",
 ) {
   const chosen = choices.length > 0;
   return [
@@ -503,6 +558,18 @@ function workStages(
         "مبلغ ضمانت کالا را واریز کنید و عکس فیش را بفرستید.",
       ),
     },
+    {
+      title: "واریز هزینهٔ باربری",
+      text: payStageText(
+        guaStatus === "approved",
+        shipStatus,
+        "بعد از تأیید ضمانت کالا باز می‌شود.",
+        "واریز باربری تأیید شده است.",
+        "فیش باربری در صف بررسی ادمین است؛ فعلاً صبر کنید.",
+        "فیش باربری رد شد؛ ارسال دوباره لازم است.",
+        "مبلغ باربری را واریز کنید و عکس فیش را بفرستید.",
+      ),
+    },
     ...heroFlow.slice(1),
   ];
 }
@@ -514,6 +581,7 @@ function stageClass(
   registered: boolean,
   insured: boolean,
   guaranteed: boolean,
+  shipped: boolean,
 ) {
   if (!ready) return index === 0 ? "is-open" : "is-wait";
   if (!chosen) {
@@ -536,8 +604,13 @@ function stageClass(
     if (index === 4) return "is-open";
     return "is-wait";
   }
-  if (index <= 4) return "is-done";
-  if (index === 5) return "is-open";
+  if (!shipped) {
+    if (index <= 4) return "is-done";
+    if (index === 5) return "is-open";
+    return "is-wait";
+  }
+  if (index <= 5) return "is-done";
+  if (index === 6) return "is-open";
   return "is-wait";
 }
 

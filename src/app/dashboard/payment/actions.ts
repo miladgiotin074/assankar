@@ -27,6 +27,7 @@ async function submitKind(kind: PaymentKind, formData: FormData): Promise<Paymen
   revalidatePath("/dashboard/payment");
   revalidatePath("/dashboard/insurance");
   revalidatePath("/dashboard/guarantee");
+  revalidatePath("/dashboard/shipping");
   redirect("/dashboard", RedirectType.replace);
 }
 
@@ -40,4 +41,8 @@ export async function submitInsuranceReceipt(_prev: PaymentState, formData: Form
 
 export async function submitGuaranteeReceipt(_prev: PaymentState, formData: FormData): Promise<PaymentState> {
   return submitKind("guarantee", formData);
+}
+
+export async function submitShippingReceipt(_prev: PaymentState, formData: FormData): Promise<PaymentState> {
+  return submitKind("shipping", formData);
 }

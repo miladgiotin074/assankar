@@ -105,7 +105,13 @@ export function AdminPaymentDetailView({
   const when = detail.payment.status === "pending" ? detail.payment.at : detail.payment.reviewedAt || detail.payment.at;
   const kindLabel =
     detail.payment.kindLabel ||
-    (kind === "insurance" ? "بیمه" : kind === "guarantee" ? "ضمانت کالا" : "ثبت‌نام");
+    (kind === "insurance"
+      ? "بیمه"
+      : kind === "guarantee"
+        ? "ضمانت کالا"
+        : kind === "shipping"
+          ? "باربری"
+          : "ثبت‌نام");
 
   return (
     <div className="admin-stack">

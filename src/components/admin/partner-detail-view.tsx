@@ -38,9 +38,17 @@ type Detail = {
     at: string;
     reviewedAt: string;
   } | null;
+  shipping: {
+    status: "pending" | "approved" | "rejected";
+    amountLabel: string;
+    phone: string;
+    at: string;
+    reviewedAt: string;
+  } | null;
   receiptUrl: string;
   insuranceReceiptUrl: string;
   guaranteeReceiptUrl: string;
+  shippingReceiptUrl: string;
 };
 
 function cardText(card: string) {
@@ -86,6 +94,7 @@ export function AdminPartnerDetailView({ phone }: { phone: string }) {
   const payWhen = detail.payment?.reviewedAt || detail.payment?.at || "";
   const insWhen = detail.insurance?.reviewedAt || detail.insurance?.at || "";
   const guaWhen = detail.guarantee?.reviewedAt || detail.guarantee?.at || "";
+  const shipWhen = detail.shipping?.reviewedAt || detail.shipping?.at || "";
 
   return (
     <div className="admin-stack">
@@ -214,6 +223,30 @@ export function AdminPartnerDetailView({ phone }: { phone: string }) {
             className="admin-link-row"
           >
             {detail.guarantee.status === "pending" ? "بررسی و تصمیم" : "جزئیات فیش"}
+            <span aria-hidden="true">‹</span>
+          </Link>
+        ) : null}
+      </section>
+
+      <section className="admin-panel">
+        <div className="admin-panel-head">
+          <h2>واریز باربری</h2>
+          <p>
+            {statusLabel(detail.shipping?.status)}
+            {detail.shipping ? ` · ${detail.shipping.amountLabel}` : ""}
+            {shipWhen ? ` · ${relativeFa(shipWhen)}` : ""}
+          </p>
+        </div>
+        {detail.shippingReceiptUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img className="admin-receipt is-inline" src={detail.shippingReceiptUrl} alt="فیش باربری" />
+        ) : null}
+        {detail.shipping ? (
+          <Link
+            href={`/admin/payments/detail?phone=${detail.shipping.phone}&kind=shipping`}
+            className="admin-link-row"
+          >
+            {detail.shipping.status === "pending" ? "بررسی و تصمیم" : "جزئیات فیش"}
             <span aria-hidden="true">‹</span>
           </Link>
         ) : null}
