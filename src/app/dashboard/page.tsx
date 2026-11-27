@@ -644,7 +644,9 @@ function PayLedger({
         </div>
         <a
           className="dash-ledger-ready-cta"
-          href={`https://t.me/${site.telegramUser}`}
+          href={`https://t.me/${site.telegramUser}?text=${encodeURIComponent(
+            `سلام، محصولم ارسال شده است. مبلغ آماده واریز من ${faNum(balance)} تومان است. لطفاً واریز را تأیید کنید.`,
+          )}`}
           target="_blank"
           rel="noopener noreferrer"
         >

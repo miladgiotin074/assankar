@@ -6,7 +6,7 @@ export const site = {
   phoneDisplay: "۰۲۱ ۹۱۰۰ ۹۱۰۰",
   phoneTel: "+982191009100",
   email: "hello@asankar.ir",
-  telegramUser: "asankar_support",
+  telegramUser: "asan_kar_admin",
   city: "تهران",
   year: "۱۴۰۵",
   keyword: "کار بسته‌بندی در منزل",
