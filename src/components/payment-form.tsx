@@ -40,13 +40,16 @@ export function PaymentForm({
   if (status === "approved") {
     return (
       <section className="pay-status is-ok" aria-label="وضعیت واریز">
-        <strong>واریز تأیید شد</strong>
-        <p>پشتیبانی فیش شما را بررسی و تأیید کرده است. مرحلهٔ بعدی همکاری باز است.</p>
-        {receiptUrl ? (
-          <a className="pay-receipt-link" href={receiptUrl} target="_blank" rel="noopener noreferrer">
-            مشاهدهٔ فیش ارسال‌شده
-          </a>
-        ) : null}
+        <span className="pay-status-mark" aria-hidden="true" />
+        <div>
+          <strong>واریز تأیید شد</strong>
+          <p>پشتیبانی فیش شما را بررسی و تأیید کرده است. مرحلهٔ بعدی همکاری باز است.</p>
+          {receiptUrl ? (
+            <a className="pay-receipt-link" href={receiptUrl} target="_blank" rel="noopener noreferrer">
+              مشاهدهٔ فیش ارسال‌شده
+            </a>
+          ) : null}
+        </div>
       </section>
     );
   }
@@ -54,40 +57,60 @@ export function PaymentForm({
   return (
     <form action={action} className="pay-form">
       <section className="pay-fee" aria-label="هزینه ثبت‌نام">
-        <p>هزینهٔ ثبت‌نام</p>
-        <strong>{toman(amount)}</strong>
-        <small>مبلغ را دقیقاً به کارت بالا واریز کنید.</small>
+        <div>
+          <p>هزینهٔ ثبت‌نام</p>
+          <strong>{toman(amount)}</strong>
+        </div>
+        <small>مبلغ را دقیقاً به همین کارت واریز کنید.</small>
       </section>
 
       <section className="pay-guide" aria-label="راهنمای فیش">
-        <h2>ارسال عکس فیش</h2>
+        <div className="pay-guide-head">
+          <h2>چطور واریز کنم؟</h2>
+          <span>۳ قدم</span>
+        </div>
         <ol>
-          <li>مبلغ {toman(amount)} را به کارت بالا واریز کنید.</li>
-          <li>از رسید بانکی یا فیش واریزی عکس واضح بگیرید.</li>
-          <li>عکس را همین‌جا بفرستید تا پشتیبانی واریز را تأیید کند.</li>
+          <li>
+            <strong>واریز مبلغ</strong>
+            <span>مبلغ {toman(amount)} را به کارت بالا واریز کنید.</span>
+          </li>
+          <li>
+            <strong>عکس از فیش</strong>
+            <span>از رسید بانکی یا فیش واریزی عکس واضح بگیرید.</span>
+          </li>
+          <li>
+            <strong>ارسال برای تأیید</strong>
+            <span>عکس را بفرستید تا پشتیبانی واریز را تأیید کند.</span>
+          </li>
         </ol>
       </section>
 
       {status === "pending" ? (
         <section className="pay-status is-wait" aria-label="وضعیت واریز">
-          <strong>فیش دریافت شد</strong>
-          <p>عکس فیش روی سرور ذخیره شده و منتظر تأیید پشتیبانی است. در صورت نیاز می‌توانید عکس جدید بفرستید.</p>
-          {receiptUrl ? (
-            <a className="pay-receipt-link" href={receiptUrl} target="_blank" rel="noopener noreferrer">
-              مشاهدهٔ فیش فعلی
-            </a>
-          ) : null}
+          <span className="pay-status-mark" aria-hidden="true" />
+          <div>
+            <strong>فیش دریافت شد</strong>
+            <p>عکس فیش روی سرور ذخیره شده و منتظر تأیید پشتیبانی است. در صورت نیاز عکس جدید بفرستید.</p>
+            {receiptUrl ? (
+              <a className="pay-receipt-link" href={receiptUrl} target="_blank" rel="noopener noreferrer">
+                مشاهدهٔ فیش فعلی
+              </a>
+            ) : null}
+          </div>
         </section>
       ) : null}
 
       {status === "rejected" ? (
         <section className="pay-status is-bad" aria-label="وضعیت واریز">
-          <strong>نیاز به ارسال دوباره</strong>
-          <p>فیش قبلی تأیید نشد. لطفاً عکس واضح‌تری از واریز درست بفرستید.</p>
+          <span className="pay-status-mark" aria-hidden="true" />
+          <div>
+            <strong>نیاز به ارسال دوباره</strong>
+            <p>فیش قبلی تأیید نشد. لطفاً عکس واضح‌تری از واریز درست بفرستید.</p>
+          </div>
         </section>
       ) : null}
 
-      <label className={preview || receiptUrl ? "pay-upload is-ready" : "pay-upload"}>
+      <label className={preview || (receiptUrl && status === "pending") ? "pay-upload is-ready" : "pay-upload"}>
         <input
           type="file"
           name="receipt"
@@ -102,12 +125,15 @@ export function PaymentForm({
             <img src={receiptUrl} alt="" />
           ) : (
             <span className="pay-upload-empty">
+              <em aria-hidden="true" />
               <strong>انتخاب عکس فیش</strong>
               <small>JPG، PNG یا WEBP تا ۵ مگابایت</small>
             </span>
           )}
         </span>
-        <span className="pay-upload-meta">{fileName ? faDigits(fileName) : "عکس را از گالری یا دوربین انتخاب کنید"}</span>
+        <span className="pay-upload-meta">
+          {fileName ? faDigits(fileName) : preview || status === "pending" ? "برای تعویض، عکس جدید انتخاب کنید" : "عکس را از گالری یا دوربین انتخاب کنید"}
+        </span>
       </label>
 
       {state.error ? (
@@ -120,7 +146,7 @@ export function PaymentForm({
         {pending ? "در حال ارسال" : status === "pending" ? "ارسال فیش جدید" : "ارسال فیش واریزی"}
       </button>
 
-      <p className="pay-foot">پشتیبانی پس از بررسی فیش، واریز را در حساب شما تأیید می‌کند. تلگرام: @{site.telegramUser}</p>
+      <p className="pay-foot">بعد از بررسی فیش، واریز در حساب شما تأیید می‌شود. پشتیبانی: @{site.telegramUser}</p>
     </form>
   );
 }
@@ -134,28 +160,83 @@ export function BankCard({
   holder: string;
   bank: string;
 }) {
+  const [spin, setSpin] = useState(true);
+  const [copied, setCopied] = useState(false);
   const digits = number.replace(/\D/g, "");
   const grouped = digits.replace(/(\d{4})(?=\d)/g, "$1 ").trim();
 
+  useEffect(() => {
+    if (!spin) return;
+    const timer = window.setTimeout(() => setSpin(false), 4200);
+    return () => window.clearTimeout(timer);
+  }, [spin]);
+
+  async function copyNumber() {
+    try {
+      await navigator.clipboard.writeText(digits);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch {
+      setCopied(false);
+    }
+  }
+
+  function replay() {
+    setSpin(false);
+    window.setTimeout(() => setSpin(true), 30);
+  }
+
   return (
-    <div className="bank-stage" aria-label="کارت واریز">
-      <div className="bank-card">
-        <div className="bank-card-shine" aria-hidden="true" />
-        <div className="bank-card-chip" aria-hidden="true" />
-        <p className="bank-card-bank">{bank}</p>
-        <p className="bank-card-number" dir="ltr">
-          {faDigits(grouped)}
-        </p>
-        <div className="bank-card-foot">
-          <div>
-            <span>صاحب حساب</span>
-            <strong>{holder}</strong>
-          </div>
-          <div>
-            <span>برند</span>
-            <strong>{site.latin}</strong>
-          </div>
-        </div>
+    <div className="bank-block">
+      <div className="bank-stage" aria-label="کارت واریز">
+        <button
+          type="button"
+          className={spin ? "bank-flip is-spin" : "bank-flip"}
+          onClick={replay}
+          aria-label="چرخش دوباره کارت"
+        >
+          <span className="bank-face bank-face-front">
+            <span className="bank-card-shine" aria-hidden="true" />
+            <span className="bank-card-chip" aria-hidden="true" />
+            <span className="bank-card-bank">{bank}</span>
+            <span className="bank-card-number" dir="ltr">
+              {faDigits(grouped)}
+            </span>
+            <span className="bank-card-foot">
+              <span>
+                <span>صاحب حساب</span>
+                <strong>{holder}</strong>
+              </span>
+              <span>
+                <span>برند</span>
+                <strong>{site.latin}</strong>
+              </span>
+            </span>
+          </span>
+          <span className="bank-face bank-face-back" aria-hidden="true">
+            <span className="bank-stripe" />
+            <span className="bank-back-panel">
+              <span className="bank-sign" />
+              <span className="bank-cvv">
+                <em>CVV</em>
+                <b>•••</b>
+              </span>
+            </span>
+            <span className="bank-back-note">
+              <strong>{bank}</strong>
+              <small>فقط برای واریز هزینهٔ ثبت‌نام آسان‌کار</small>
+            </span>
+          </span>
+        </button>
+      </div>
+
+      <div className="bank-actions">
+        <button type="button" className="bank-copy" onClick={copyNumber}>
+          {copied ? "کپی شد" : "کپی شماره کارت"}
+        </button>
+        <button type="button" className="bank-replay" onClick={replay}>
+          چرخش کارت
+        </button>
       </div>
     </div>
   );

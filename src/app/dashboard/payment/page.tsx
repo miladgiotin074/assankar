@@ -36,7 +36,11 @@ async function PaymentGate() {
 
   return (
     <div className="pay-screen">
-      <p className="pay-lead">مبلغ ثبت‌نام را به کارت زیر واریز کنید و عکس فیش را بفرستید.</p>
+      <div className="pay-intro">
+        <p className="pay-kicker">مرحله واریز</p>
+        <h2 className="pay-title">هزینهٔ ثبت‌نام</h2>
+        <p className="pay-lead">مبلغ را به کارت زیر واریز کنید، از فیش عکس بگیرید و همین‌جا بفرستید.</p>
+      </div>
       <BankCard number={site.payoutCard} holder={site.payoutHolder} bank={site.payoutBank} />
       <PaymentForm amount={site.registrationFee} status={status} receiptUrl={receiptUrl} />
     </div>
