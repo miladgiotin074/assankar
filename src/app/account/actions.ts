@@ -79,7 +79,7 @@ export async function submitProfile(_prev: ProfileState, formData: FormData): Pr
   const checked = checkProfile({
     firstName: String(formData.get("firstName") ?? ""),
     lastName: String(formData.get("lastName") ?? ""),
-    card: String(formData.get("card") ?? ""),
+    sheba: String(formData.get("sheba") ?? ""),
     birthDay: String(formData.get("birthDay") ?? ""),
     birthMonth: String(formData.get("birthMonth") ?? ""),
     birthYear: String(formData.get("birthYear") ?? ""),

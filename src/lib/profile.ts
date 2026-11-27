@@ -5,7 +5,7 @@ import { toEnglishDigits } from "@/lib/apply";
 import { isAtLeast18, isValidJalaliDate, jalaliToGregorian } from "@/lib/jalali";
 import { collection } from "@/lib/mongo";
 
-export type ProfileField = "firstName" | "lastName" | "card" | "birth" | "address";
+export type ProfileField = "firstName" | "lastName" | "sheba" | "birth" | "address";
 
 export type ProfileState = {
   error: string;
@@ -16,32 +16,19 @@ export type ProfileRecord = {
   phone: string;
   firstName: string;
   lastName: string;
-  card: string;
+  sheba: string;
   birthYear: number;
   birthMonth: number;
   birthDay: number;
   address: string;
   at: Date;
+  /** @deprecated legacy card profiles before sheba */
+  card?: string;
 };
 
 const namePattern = /^[\u0600-\u06FF\u200c\s-]{2,40}$/;
 
 let profilesReady: Promise<void> | null = null;
-
-function luhn(card: string) {
-  let sum = 0;
-  let double = false;
-  for (let index = card.length - 1; index >= 0; index -= 1) {
-    let digit = Number(card[index]);
-    if (double) {
-      digit *= 2;
-      if (digit > 9) digit -= 9;
-    }
-    sum += digit;
-    double = !double;
-  }
-  return sum % 10 === 0;
-}
 
 function digits(value: string) {
   return toEnglishDigits(value).replace(/\D/g, "");
@@ -55,15 +42,43 @@ function isPersonName(value: string) {
   return namePattern.test(value) && /[\u0600-\u06FF]/.test(value);
 }
 
+function shebaDigits(value: string) {
+  const cleaned = toEnglishDigits(value).replace(/[\s_-]/g, "").toUpperCase();
+  if (cleaned.startsWith("IR")) return cleaned.slice(2).replace(/\D/g, "");
+  return cleaned.replace(/\D/g, "");
+}
+
+function shebaChecksum(body: string) {
+  if (!/^\d{24}$/.test(body)) return false;
+  const rearranged = `${body}1827`;
+  let remainder = 0;
+  for (const char of rearranged) {
+    remainder = (remainder * 10 + Number(char)) % 97;
+  }
+  return remainder === 1;
+}
+
+export function normalizeSheba(value: string) {
+  const body = shebaDigits(value).slice(0, 24);
+  return body.length === 24 ? `IR${body}` : "";
+}
+
+export function formatSheba(value: string) {
+  const normalized = normalizeSheba(value) || value.replace(/\s/g, "").toUpperCase();
+  const body = normalized.startsWith("IR") ? normalized.slice(2) : digits(normalized);
+  const grouped = body.replace(/(.{4})/g, "$1 ").trim();
+  return `IR ${grouped}`.trim();
+}
+
 export function checkProfile(raw: {
   firstName: string;
   lastName: string;
-  card: string;
+  sheba: string;
   birthDay: string;
   birthMonth: string;
   birthYear: string;
   address: string;
-}): { ok: true; value: Omit<ProfileRecord, "phone" | "at"> } | { ok: false; error: string; field: ProfileField } {
+}): { ok: true; value: Omit<ProfileRecord, "phone" | "at" | "card"> } | { ok: false; error: string; field: ProfileField } {
   const firstName = cleanName(raw.firstName);
   if (!isPersonName(firstName)) {
     return { ok: false, field: "firstName", error: "نام را با حروف فارسی بنویسید." };
@@ -74,10 +89,11 @@ export function checkProfile(raw: {
     return { ok: false, field: "lastName", error: "نام خانوادگی را با حروف فارسی بنویسید." };
   }
 
-  const card = digits(raw.card);
-  if (!/^[56]\d{15}$/.test(card) || /^(\d)\1{15}$/.test(card) || !luhn(card)) {
-    return { ok: false, field: "card", error: "شماره کارت را شانزده رقم معتبر بنویسید." };
+  const body = shebaDigits(raw.sheba);
+  if (!/^\d{24}$/.test(body) || /^(\d)\1{23}$/.test(body) || !shebaChecksum(body)) {
+    return { ok: false, field: "sheba", error: "شماره شبا را با ۲۴ رقم معتبر بنویسید." };
   }
+  const sheba = `IR${body}`;
 
   const birthYear = Number(digits(raw.birthYear));
   const birthMonth = Number(digits(raw.birthMonth));
@@ -96,7 +112,7 @@ export function checkProfile(raw: {
     return { ok: false, field: "address", error: "آدرس دقیق محل سکونت را کامل بنویسید." };
   }
 
-  return { ok: true, value: { firstName, lastName, card, birthYear, birthMonth, birthDay, address } };
+  return { ok: true, value: { firstName, lastName, sheba, birthYear, birthMonth, birthDay, address } };
 }
 
 async function profiles() {
@@ -122,6 +138,7 @@ async function importLegacy(col: Collection<ProfileRecord>) {
       {
         firstName?: string;
         lastName?: string;
+        sheba?: string;
         card?: string;
         birthYear?: number;
         birthMonth?: number;
@@ -131,7 +148,9 @@ async function importLegacy(col: Collection<ProfileRecord>) {
       }
     >;
     for (const [phone, value] of Object.entries(data)) {
-      if (!/^09\d{9}$/.test(phone) || !value || typeof value.card !== "string") continue;
+      if (!/^09\d{9}$/.test(phone) || !value) continue;
+      const sheba = typeof value.sheba === "string" ? normalizeSheba(value.sheba) : "";
+      if (!sheba) continue;
       await col.updateOne(
         { phone },
         {
@@ -139,7 +158,7 @@ async function importLegacy(col: Collection<ProfileRecord>) {
             phone,
             firstName: value.firstName ?? "",
             lastName: value.lastName ?? "",
-            card: value.card,
+            sheba,
             birthYear: value.birthYear ?? 0,
             birthMonth: value.birthMonth ?? 0,
             birthDay: value.birthDay ?? 0,
@@ -160,7 +179,7 @@ function isComplete(profile: ProfileRecord | null) {
     profile &&
       isPersonName(profile.firstName) &&
       isPersonName(profile.lastName) &&
-      profile.card.length === 16 &&
+      normalizeSheba(profile.sheba || "") &&
       profile.address.length >= 12,
   );
 }
@@ -181,12 +200,13 @@ export async function listProfiles(limit = 80) {
 export async function searchProfiles(query: string, limit = 40) {
   const q = query.trim();
   if (!q) return listProfiles(limit);
-  const digits = q.replace(/\D/g, "");
+  const digitQuery = q.replace(/\D/g, "");
   const filter =
-    digits.length >= 3
+    digitQuery.length >= 3
       ? {
           $or: [
-            { phone: { $regex: digits } },
+            { phone: { $regex: digitQuery } },
+            { sheba: { $regex: digitQuery } },
             { firstName: { $regex: q, $options: "i" } },
             { lastName: { $regex: q, $options: "i" } },
           ],
@@ -200,10 +220,14 @@ export async function searchProfiles(query: string, limit = 40) {
   return (await profiles()).find(filter).sort({ at: -1 }).limit(limit).toArray();
 }
 
-export async function saveProfile(phone: string, value: Omit<ProfileRecord, "phone" | "at">) {
+export async function saveProfile(phone: string, value: Omit<ProfileRecord, "phone" | "at" | "card">) {
   await (
     await profiles()
-  ).updateOne({ phone }, { $set: { ...value, phone, at: new Date() } }, { upsert: true });
+  ).updateOne(
+    { phone },
+    { $set: { ...value, phone, at: new Date() }, $unset: { card: "" } },
+    { upsert: true },
+  );
 }
 
 export async function clearProfile(phone: string) {

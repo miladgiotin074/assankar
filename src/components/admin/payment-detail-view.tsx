@@ -23,17 +23,14 @@ type Detail = {
   profile: {
     firstName: string;
     lastName: string;
-    card: string;
+    sheba: string;
+    shebaDisplay: string;
     address: string;
     birth: string;
   } | null;
   choices: { productId: string; title: string; label: string; amountLabel: string; image: string }[];
   receiptUrl: string;
 };
-
-function cardText(card: string) {
-  return faDigits(card.replace(/(\d{4})(?=\d)/g, "$1 "));
-}
 
 const detailCache = new Map<string, Detail>();
 
@@ -159,10 +156,10 @@ export function AdminPaymentDetailView({
           <>
             <div className="admin-meta-line">
               <div>
-                <span>شماره کارت</span>
-                <strong dir="ltr">{cardText(detail.profile.card)}</strong>
+                <span>شماره شبا</span>
+                <strong dir="ltr">{faDigits(detail.profile.shebaDisplay || detail.profile.sheba || "—")}</strong>
               </div>
-              <CopyButton value={detail.profile.card} label="شماره کارت کپی شد" />
+              {detail.profile.sheba ? <CopyButton value={detail.profile.sheba} label="شماره شبا کپی شد" /> : null}
             </div>
             <div>
               <span>آدرس</span>

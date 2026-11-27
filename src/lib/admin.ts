@@ -9,7 +9,7 @@ import {
   type PaymentRecord,
   type PaymentStatus,
 } from "@/lib/payment";
-import { listProfiles, readProfile, searchProfiles, type ProfileRecord } from "@/lib/profile";
+import { formatSheba, listProfiles, readProfile, searchProfiles, type ProfileRecord } from "@/lib/profile";
 import { faDigits, toman } from "@/lib/format";
 
 export type AdminPaymentRow = {
@@ -163,7 +163,8 @@ export async function adminPaymentDetail(phone: string, kind: PaymentKind = "reg
       ? {
           firstName: profile.firstName,
           lastName: profile.lastName,
-          card: profile.card,
+          sheba: profile.sheba || "",
+          shebaDisplay: profile.sheba ? formatSheba(profile.sheba) : "",
           address: profile.address,
           birth: `${profile.birthYear}/${profile.birthMonth}/${profile.birthDay}`,
         }
@@ -248,7 +249,8 @@ export async function adminPartnerDetail(phone: string) {
     profile: {
       firstName: profile.firstName,
       lastName: profile.lastName,
-      card: profile.card,
+      sheba: profile.sheba || "",
+      shebaDisplay: profile.sheba ? formatSheba(profile.sheba) : "",
       address: profile.address,
       birth: `${profile.birthYear}/${profile.birthMonth}/${profile.birthDay}`,
     },

@@ -8,7 +8,7 @@ import Link from "next/link";
 import { readChoices, type ChoiceItem } from "@/lib/catalog";
 import { faDigits, faNum, toman } from "@/lib/format";
 import { readPayment, type PaymentRecord, type PaymentStatus } from "@/lib/payment";
-import { hasProfile, readProfile, type ProfileRecord } from "@/lib/profile";
+import { formatSheba, hasProfile, readProfile, type ProfileRecord } from "@/lib/profile";
 import { readSession } from "@/lib/session";
 import { heroFlow, site } from "@/lib/site";
 
@@ -237,7 +237,7 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
               <span>
                 <span className="dash-cta-kicker">اولین مرحله</span>
                 <strong>تکمیل ثبت‌نام</strong>
-                <small>نام، شماره کارت، تاریخ تولد و آدرس</small>
+                <small>نام، شماره شبا، تاریخ تولد و آدرس</small>
               </span>
               <span className="dash-cta-go">
                 شروع
@@ -577,9 +577,7 @@ function PayLedger({
   const invoice = invoiceCode(phone, invoiceAt);
   const fullName = profile ? `${profile.firstName} ${profile.lastName}`.trim() : "—";
   const phoneLabel = faDigits(phone.replace(/(\d{4})(\d{3})(\d{4})/, "$1 $2 $3"));
-  const cardLabel = profile?.card
-    ? faDigits(profile.card.replace(/(\d{4})(?=\d)/g, "$1 ").trim())
-    : "—";
+  const shebaLabel = profile?.sheba ? faDigits(formatSheba(profile.sheba)) : "—";
   const birthLabel = profile
     ? faDigits(`${profile.birthYear}/${String(profile.birthMonth).padStart(2, "0")}/${String(profile.birthDay).padStart(2, "0")}`)
     : "—";
@@ -616,9 +614,9 @@ function PayLedger({
             <dt>شماره موبایل</dt>
             <dd dir="ltr">{phoneLabel}</dd>
           </div>
-          <div>
-            <dt>شماره کارت</dt>
-            <dd dir="ltr">{cardLabel}</dd>
+          <div className="is-wide">
+            <dt>شماره شبا</dt>
+            <dd dir="ltr">{shebaLabel}</dd>
           </div>
           <div>
             <dt>تاریخ تولد</dt>
@@ -696,7 +694,7 @@ function PayLedger({
         <a
           className="dash-ledger-ready-cta"
           href={`https://t.me/${site.telegramUser}?text=${encodeURIComponent(
-            `سلام، محصولم ارسال شده است.\nشماره فاکتور: ${invoice}\nنام: ${fullName}\nموبایل: ${phone}\nمبلغ آماده واریز: ${faNum(balance)} تومان\nلطفاً واریز را تأیید کنید.`,
+            `سلام، محصولم ارسال شده است.\nشماره فاکتور: ${invoice}\nنام: ${fullName}\nموبایل: ${phone}\nشبا: ${profile?.sheba || "—"}\nمبلغ آماده واریز: ${faNum(balance)} تومان\nلطفاً واریز را تأیید کنید.`,
           )}`}
           target="_blank"
           rel="noopener noreferrer"
@@ -756,7 +754,7 @@ function workStages(
 ) {
   const chosen = choices.length > 0;
   return [
-    { title: "تکمیل ثبت‌نام", text: "نام، شماره کارت، تاریخ تولد و آدرس محل سکونت." },
+    { title: "تکمیل ثبت‌نام", text: "نام، شماره شبا، تاریخ تولد و آدرس محل سکونت." },
     {
       title: "انتخاب محصول",
       text: !ready

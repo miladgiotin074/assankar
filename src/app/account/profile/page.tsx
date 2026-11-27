@@ -28,7 +28,7 @@ async function ProfileGate() {
 
   return (
     <div className="profile-screen">
-      <p className="profile-lead">نام، شماره کارت، تاریخ تولد و آدرس محل سکونت را بنویسید.</p>
+      <p className="profile-lead">نام، شماره شبا، تاریخ تولد و آدرس محل سکونت را بنویسید.</p>
       <CompleteForm />
     </div>
   );

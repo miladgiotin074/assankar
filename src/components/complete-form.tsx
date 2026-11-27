@@ -10,7 +10,7 @@ export function CompleteForm() {
   const [state, formAction, pending] = useActionState(submitProfile, empty);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [card, setCard] = useState("");
+  const [sheba, setSheba] = useState("");
   const [day, setDay] = useState("");
   const [month, setMonth] = useState("");
   const [year, setYear] = useState("");
@@ -60,27 +60,28 @@ export function CompleteForm() {
         </div>
 
         <div className="profile-block">
-          <label className="label" htmlFor="card">
+          <label className="label" htmlFor="sheba">
             <span className="profile-no">۲</span>
-            شماره کارت بانکی
+            شماره شبا
           </label>
           <input
-            id="card"
-            name="card"
+            id="sheba"
+            name="sheba"
             className="field text-end tracking-wide"
             dir="ltr"
-            inputMode="numeric"
-            autoComplete="cc-number"
-            maxLength={19}
+            inputMode="text"
+            autoComplete="off"
+            maxLength={32}
             required
-            value={card}
-            onChange={(event) => setCard(groupCard(event.target.value))}
-            aria-invalid={state.field === "card"}
-            aria-describedby={state.field === "card" ? errorId : "card-hint"}
+            value={sheba}
+            onChange={(event) => setSheba(groupSheba(event.target.value))}
+            aria-invalid={state.field === "sheba"}
+            aria-describedby={state.field === "sheba" ? errorId : "sheba-hint"}
             disabled={pending}
+            placeholder="IR00 0000 0000 0000 0000 0000 00"
           />
-          <p id="card-hint" className="field-hint">
-            شانزده رقم، به نام خودتان.
+          <p id="sheba-hint" className="field-hint">
+            شبا با IR و ۲۴ رقم، به نام خودتان.
           </p>
         </div>
 
@@ -186,7 +187,9 @@ export function CompleteForm() {
   );
 }
 
-function groupCard(value: string) {
-  const digits = value.replace(/[^\d۰-۹٠-٩]/g, "").slice(0, 16);
-  return digits.replace(/(.{4})/g, "$1 ").trim();
+function groupSheba(value: string) {
+  const cleaned = value.replace(/[^\d۰-۹٠-٩A-Za-z]/g, "").toUpperCase();
+  const body = (cleaned.startsWith("IR") ? cleaned.slice(2) : cleaned).replace(/[^\d۰-۹٠-٩]/g, "").slice(0, 24);
+  const grouped = body.replace(/(.{4})/g, "$1 ").trim();
+  return grouped ? `IR ${grouped}` : "IR ";
 }
