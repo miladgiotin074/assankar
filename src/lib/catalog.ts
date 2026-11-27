@@ -1,20 +1,15 @@
 import { toEnglishDigits } from "@/lib/apply";
 import { faNum } from "@/lib/format";
 import { collection } from "@/lib/mongo";
+import {
+  maxChoices,
+  type CatalogCard,
+  type ChoiceItem,
+  type WageRow,
+} from "@/lib/catalog-shared";
 
-export type WageRow = {
-  label: string;
-  packs: number;
-  amount: number;
-};
-
-export type CatalogCard = {
-  id: string;
-  title: string;
-  image: string;
-  note: string;
-  wages: WageRow[];
-};
+export type { CatalogCard, ChoiceItem, WageRow };
+export { maxChoices };
 
 const packNote = "وسایل موردنیاز آماده است و کار شما صرفاً بسته‌بندی می‌باشد.";
 
@@ -105,13 +100,6 @@ type ProductDoc = {
   wages?: unknown;
 };
 
-export type ChoiceItem = {
-  productId: string;
-  title: string;
-  quantity: number;
-  label: string;
-};
-
 type ChoiceLine = {
   productId: string;
   quantity: number;
@@ -124,8 +112,6 @@ type ChoiceDoc = {
   quantity?: number;
   at: Date;
 };
-
-export const maxChoices = 3;
 
 const choicesReady = collectionReady();
 

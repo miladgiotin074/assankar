@@ -3,8 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { submitChoice, type ChoiceState } from "@/app/dashboard/products/actions";
 import { faDigits, toman } from "@/lib/format";
-import type { CatalogCard, ChoiceItem } from "@/lib/catalog";
-import { maxChoices } from "@/lib/catalog";
+import { maxChoices, type CatalogCard, type ChoiceItem } from "@/lib/catalog-shared";
 
 const empty: ChoiceState = { error: "" };
 
