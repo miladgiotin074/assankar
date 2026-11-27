@@ -81,7 +81,7 @@ export function CompleteForm() {
             placeholder="IR00 0000 0000 0000 0000 0000 00"
           />
           <p id="sheba-hint" className="field-hint">
-            شبا با IR و ۲۴ رقم، به نام خودتان.
+            شماره شبا به نام خودتان.
           </p>
         </div>
 

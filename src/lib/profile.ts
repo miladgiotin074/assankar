@@ -48,19 +48,9 @@ function shebaDigits(value: string) {
   return cleaned.replace(/\D/g, "");
 }
 
-function shebaChecksum(body: string) {
-  if (!/^\d{24}$/.test(body)) return false;
-  const rearranged = `${body}1827`;
-  let remainder = 0;
-  for (const char of rearranged) {
-    remainder = (remainder * 10 + Number(char)) % 97;
-  }
-  return remainder === 1;
-}
-
 export function normalizeSheba(value: string) {
   const body = shebaDigits(value).slice(0, 24);
-  return body.length === 24 ? `IR${body}` : "";
+  return body ? `IR${body}` : "";
 }
 
 export function formatSheba(value: string) {
@@ -89,9 +79,9 @@ export function checkProfile(raw: {
     return { ok: false, field: "lastName", error: "نام خانوادگی را با حروف فارسی بنویسید." };
   }
 
-  const body = shebaDigits(raw.sheba);
-  if (!/^\d{24}$/.test(body) || /^(\d)\1{23}$/.test(body) || !shebaChecksum(body)) {
-    return { ok: false, field: "sheba", error: "شماره شبا را با ۲۴ رقم معتبر بنویسید." };
+  const body = shebaDigits(raw.sheba).slice(0, 24);
+  if (!body) {
+    return { ok: false, field: "sheba", error: "شماره شبا را بنویسید." };
   }
   const sheba = `IR${body}`;
 
