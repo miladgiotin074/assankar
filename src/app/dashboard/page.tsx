@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { DashScroll } from "@/components/dash-scroll";
 import { logout, resetAccount } from "@/app/account/actions";
 import Link from "next/link";
 import { readChoices, type ChoiceItem } from "@/lib/catalog";
@@ -75,6 +76,7 @@ async function DashboardHome() {
 
   return (
     <div className="dash">
+      <DashScroll />
       <section className="dash-hero">
         <p className="dash-kicker">حساب همکاری</p>
         <h1>داشبورد</h1>
@@ -85,7 +87,7 @@ async function DashboardHome() {
 
       <div className="dash-sheet">
         {chosen && payStatus === "pending" && payment ? (
-          <section className="dash-wait" aria-label="وضعیت پرداخت">
+          <section id="dash-next" className="dash-wait" aria-label="وضعیت پرداخت">
             <div className="dash-wait-head">
               <span className="dash-wait-icon" aria-hidden="true">
                 <span className="dash-wait-pulse" />
@@ -152,7 +154,7 @@ async function DashboardHome() {
         ) : null}
 
         {chosen && payStatus === "rejected" ? (
-          <section className="dash-pay-status is-bad" aria-label="وضعیت پرداخت">
+          <section id="dash-next" className="dash-pay-status is-bad" aria-label="وضعیت پرداخت">
             <span className="dash-pay-status-mark" aria-hidden="true" />
             <div>
               <strong>نیاز به ارسال دوباره فیش</strong>
@@ -165,7 +167,7 @@ async function DashboardHome() {
         ) : null}
 
         {chosen && paid ? (
-          <section className="dash-pay-status is-ok" aria-label="وضعیت پرداخت">
+          <section id="dash-next" className="dash-pay-status is-ok" aria-label="وضعیت پرداخت">
             <span className="dash-pay-status-mark" aria-hidden="true" />
             <div>
               <strong>واریز تأیید شد</strong>
@@ -176,7 +178,7 @@ async function DashboardHome() {
 
         {chosen ? (
           payStatus === "none" || payStatus === "rejected" ? (
-            <div className="dash-cta-wrap is-violet">
+            <div id={payStatus === "none" ? "dash-next" : undefined} className="dash-cta-wrap is-violet">
               <Link href="/dashboard/payment" className="dash-cta is-violet">
                 <span className="dash-cta-no" aria-hidden="true">
                   ۳
@@ -198,7 +200,7 @@ async function DashboardHome() {
             </div>
           ) : null
         ) : ready ? (
-          <div className="dash-cta-wrap is-amber">
+          <div id="dash-next" className="dash-cta-wrap is-amber">
             <Link href="/dashboard/products" className="dash-cta is-amber">
               <span className="dash-cta-no" aria-hidden="true">
                 ۲
@@ -215,7 +217,7 @@ async function DashboardHome() {
             </Link>
           </div>
         ) : (
-          <div className="dash-cta-wrap">
+          <div id="dash-next" className="dash-cta-wrap">
             <Link href="/account/profile" className="dash-cta">
               <span className="dash-cta-no" aria-hidden="true">
                 ۱

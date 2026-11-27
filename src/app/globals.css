@@ -1065,12 +1065,25 @@ body:has(.app-device.is-form) {
 }
 
 .app-device.is-home {
+  height: 100svh;
+  max-height: 100svh;
+  overflow: hidden;
   background: #f3f7fb;
+  overscroll-behavior: none;
 }
 
 .app-device.is-home .app-main {
+  min-height: 0;
+  overflow: hidden;
   padding: 0;
   background: #0c4d86;
+}
+
+html:has(.app-device.is-home),
+body:has(.app-device.is-home) {
+  height: 100%;
+  overflow: hidden;
+  background-color: #0c4d86;
 }
 
 .auth-screen {
@@ -1179,11 +1192,24 @@ body:has(.app-device.is-form) {
   flex-direction: column;
   gap: 0.75rem;
   margin-top: -0.85rem;
-  overflow: auto;
+  overflow-x: clip;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   border-radius: 1.45rem 1.45rem 0 0;
   background: #f3f7fb;
   padding: 1rem 1rem calc(1.1rem + env(safe-area-inset-bottom));
   scrollbar-width: none;
+  scroll-behavior: smooth;
+}
+
+#dash-next {
+  scroll-margin-top: 0.75rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dash-sheet {
+    scroll-behavior: auto;
+  }
 }
 
 .dash-sheet::-webkit-scrollbar {
@@ -3332,7 +3358,8 @@ select.field {
     box-shadow: 0 18px 50px rgba(8, 44, 82, 0.12);
   }
 
-  .app-device.is-form {
+  .app-device.is-form,
+  .app-device.is-home {
     height: min(52rem, calc(100svh - 3rem));
     max-height: min(52rem, calc(100svh - 3rem));
   }
