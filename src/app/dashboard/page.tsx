@@ -836,27 +836,8 @@ function SupportFabIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path
-        d="M12 4.8a5.4 5.4 0 0 0-5.4 5.4v1.7H5.8A1.8 1.8 0 0 0 4 13.7v1.6a1.8 1.8 0 0 0 1.8 1.8h1.2v.4c0 1.1.9 2 2 2h1.1"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M12 4.8a5.4 5.4 0 0 1 5.4 5.4v1.7h.8A1.8 1.8 0 0 1 20 13.7v1.6a1.8 1.8 0 0 1-1.8 1.8h-1.2v.4c0 1.1-.9 2-2 2h-1.1"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M9.8 9.2h4.4"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
+        fill="currentColor"
+        d="M12 3a8 8 0 0 0-8 8v5.2A2.8 2.8 0 0 0 6.8 19H8v-6.2H5.5v-.8a6.5 6.5 0 0 1 13 0v.8H16V19h1.2A2.8 2.8 0 0 0 20 16.2V11a8 8 0 0 0-8-8Z"
       />
     </svg>
   );

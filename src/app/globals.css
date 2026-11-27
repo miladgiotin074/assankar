@@ -1166,11 +1166,13 @@ body:has(.app-device.is-home) {
   position: absolute;
   z-index: 30;
   right: 1rem;
+  left: auto;
   bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
   display: grid;
   width: 3.5rem;
   height: 3.5rem;
   place-items: center;
+  overflow: hidden;
   border-radius: 999px;
   background: linear-gradient(145deg, #1270b8 0%, #0c4d86 100%);
   color: #fff;
@@ -1180,8 +1182,9 @@ body:has(.app-device.is-home) {
 }
 
 .dash-support-fab svg {
-  width: 1.45rem;
-  height: 1.45rem;
+  display: block;
+  width: 1.55rem;
+  height: 1.55rem;
 }
 
 .dash-support-fab:hover {
