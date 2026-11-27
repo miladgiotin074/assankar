@@ -1155,10 +1155,41 @@ body:has(.app-device.is-home) {
 }
 
 .dash {
+  position: relative;
   display: flex;
   min-height: 0;
   flex: 1;
   flex-direction: column;
+}
+
+.dash-support-fab {
+  position: absolute;
+  z-index: 30;
+  right: 1rem;
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  display: grid;
+  width: 3.5rem;
+  height: 3.5rem;
+  place-items: center;
+  border-radius: 999px;
+  background: linear-gradient(145deg, #1270b8 0%, #0c4d86 100%);
+  color: #fff;
+  box-shadow:
+    0 12px 28px rgba(12, 77, 134, 0.34),
+    0 2px 0 rgba(255, 255, 255, 0.18) inset;
+}
+
+.dash-support-fab svg {
+  width: 1.45rem;
+  height: 1.45rem;
+}
+
+.dash-support-fab:hover {
+  background: linear-gradient(145deg, #0c4d86 0%, #082c52 100%);
+}
+
+.dash-support-fab:active {
+  transform: translateY(1px) scale(0.98);
 }
 
 .dash-fallback {
@@ -1176,7 +1207,7 @@ body:has(.app-device.is-home) {
   overflow-y: auto;
   overscroll-behavior: contain;
   background: #f3f7fb;
-  padding: 0.85rem 1rem calc(1.1rem + env(safe-area-inset-bottom));
+  padding: 0.85rem 1rem calc(5rem + env(safe-area-inset-bottom));
   scrollbar-width: none;
 }
 
