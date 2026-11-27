@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { submitChoice, type ChoiceState } from "@/app/dashboard/products/actions";
 import { faDigits, toman } from "@/lib/format";
 import { maxChoices, type CatalogCard, type ChoiceItem } from "@/lib/catalog-shared";
@@ -27,53 +27,125 @@ export function ProductPicker({
   );
   const [broken, setBroken] = useState<Record<string, true>>({});
   const [localError, setLocalError] = useState("");
-  const railRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
   const basketRef = useRef<HTMLElement>(null);
-  const openedOn = useRef(selected);
+  const dragRef = useRef({ pointer: -1, x: 0, y: 0, dx: 0, lock: "" as "" | "x" | "y", base: 0 });
+  const suppressClick = useRef(false);
   const product = products.find((item) => item.id === selected) ?? products[0];
   const inBasket = basket.find((item) => item.productId === product?.id);
   const productIndex = Math.max(0, products.findIndex((item) => item.id === product?.id));
 
-  useEffect(() => {
-    const rail = railRef.current;
-    if (!rail) return;
-    let frame = 0;
-    const sync = () => {
-      const mid = rail.getBoundingClientRect().left + rail.clientWidth / 2;
-      let best = "";
-      let dist = Number.POSITIVE_INFINITY;
-      rail.querySelectorAll<HTMLElement>("[data-id]").forEach((card) => {
-        const box = card.getBoundingClientRect();
-        const delta = Math.abs(box.left + box.width / 2 - mid);
-        if (delta < dist) {
-          dist = delta;
-          best = card.dataset.id ?? "";
-        }
-      });
-      if (best) setSelected((current) => (current === best ? current : best));
-    };
-    const onScroll = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(sync);
-    };
-    rail.addEventListener("scroll", onScroll, { passive: true });
-    const opened = rail.querySelector<HTMLElement>(`[data-id="${CSS.escape(openedOn.current)}"]`);
-    if (opened) centerCard(rail, opened);
-    return () => {
-      cancelAnimationFrame(frame);
-      rail.removeEventListener("scroll", onScroll);
-    };
-  }, []);
+  const productIndexRef = useRef(productIndex);
+  const productsRef = useRef(products);
+  const selectedRef = useRef(selected);
+  productIndexRef.current = productIndex;
+  productsRef.current = products;
+  selectedRef.current = selected;
+
+  function trackWidth() {
+    return trackRef.current?.clientWidth || trackRef.current?.parentElement?.clientWidth || 0;
+  }
+
+  function placeTrack(index: number, animate: boolean) {
+    const track = trackRef.current;
+    const width = trackWidth();
+    if (!track || !width) return;
+    track.style.transition = animate ? "" : "none";
+    track.style.transform = `translate3d(${index * width}px, 0, 0)`;
+  }
+
+  function placePixels(px: number, animate: boolean) {
+    const track = trackRef.current;
+    if (!track) return;
+    track.style.transition = animate ? "" : "none";
+    track.style.transform = `translate3d(${px}px, 0, 0)`;
+  }
 
   function focusCard(id: string) {
     setSelected(id);
     setLocalError("");
-    const rail = railRef.current;
-    const card = rail?.querySelector<HTMLElement>(`[data-id="${CSS.escape(id)}"]`);
-    if (rail && card) centerCard(rail, card, "smooth");
     const existing = basket.find((item) => item.productId === id);
     const next = products.find((item) => item.id === id);
     setQuantity(existing?.quantity ?? next?.wages[0]?.packs ?? 0);
+  }
+
+  const focusRef = useRef(focusCard);
+  focusRef.current = focusCard;
+
+  useLayoutEffect(() => {
+    if (dragRef.current.pointer !== -1) return;
+    placeTrack(productIndex, true);
+  }, [productIndex]);
+
+  useEffect(() => {
+    const rail = trackRef.current?.parentElement;
+    if (!rail) return;
+    const observer = new ResizeObserver(() => {
+      if (dragRef.current.pointer !== -1) return;
+      placeTrack(productIndexRef.current, false);
+    });
+    observer.observe(rail);
+    return () => observer.disconnect();
+  }, []);
+
+  function onPointerDown(event: React.PointerEvent<HTMLDivElement>) {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    const track = trackRef.current;
+    let base = productIndexRef.current * trackWidth();
+    if (track) {
+      const raw = getComputedStyle(track).transform;
+      if (raw && raw !== "none") base = new DOMMatrix(raw).m41;
+      track.style.transition = "none";
+      track.style.transform = `translate3d(${base}px, 0, 0)`;
+    }
+    dragRef.current = { pointer: event.pointerId, x: event.clientX, y: event.clientY, dx: 0, lock: "", base };
+  }
+
+  function onPointerMove(event: React.PointerEvent<HTMLDivElement>) {
+    const drag = dragRef.current;
+    if (drag.pointer !== event.pointerId) return;
+    const dx = event.clientX - drag.x;
+    const dy = event.clientY - drag.y;
+    if (!drag.lock) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      drag.lock = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+      if (drag.lock !== "x") return;
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
+    if (drag.lock !== "x") return;
+    event.preventDefault();
+    const width = trackWidth() || 1;
+    const max = Math.max(0, productsRef.current.length - 1) * width;
+    let px = drag.base + dx;
+    if (px < 0) px *= 0.32;
+    else if (px > max) px = max + (px - max) * 0.32;
+    drag.dx = dx;
+    placePixels(px, false);
+  }
+
+  function finishDrag(event: React.PointerEvent<HTMLDivElement>, commit: boolean) {
+    const drag = dragRef.current;
+    if (drag.pointer !== event.pointerId) return;
+    const horizontal = drag.lock === "x";
+    const dx = drag.dx;
+    dragRef.current.pointer = -1;
+    if (!horizontal) return;
+    if (Math.abs(dx) > 8) suppressClick.current = true;
+    const width = trackWidth() || 1;
+    const count = productsRef.current.length;
+    const maxIndex = Math.max(0, count - 1);
+    const origin = Math.round(drag.base / width);
+    let next = origin;
+    if (commit) {
+      const threshold = Math.min(56, width * 0.14);
+      if (dx > threshold) next = origin + 1;
+      else if (dx < -threshold) next = origin - 1;
+      else next = Math.round((drag.base + dx) / width);
+    }
+    next = Math.max(0, Math.min(maxIndex, next));
+    placeTrack(next, true);
+    const item = productsRef.current[next];
+    if (item && item.id !== selectedRef.current) focusRef.current(item.id);
   }
 
   function step(next: number) {
@@ -151,11 +223,24 @@ export function ProductPicker({
         </div>
 
         <div
-          ref={railRef}
           className="pick-rail"
           role="listbox"
           aria-label="محصولات"
           tabIndex={0}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={(event) => finishDrag(event, true)}
+          onPointerCancel={(event) => finishDrag(event, false)}
+          onLostPointerCapture={(event) => {
+            if (event.target !== event.currentTarget) return;
+            finishDrag(event, true);
+          }}
+          onClickCapture={(event) => {
+            if (!suppressClick.current) return;
+            suppressClick.current = false;
+            event.preventDefault();
+            event.stopPropagation();
+          }}
           onKeyDown={(event) => {
             if (event.key === "ArrowLeft") {
               event.preventDefault();
@@ -167,6 +252,7 @@ export function ProductPicker({
             }
           }}
         >
+          <div ref={trackRef} className="pick-track">
           {products.map((item) => {
             const on = item.id === product.id;
             const picked = basket.some((line) => line.productId === item.id);
@@ -178,13 +264,17 @@ export function ProductPicker({
                 className={on ? (picked ? "pick-card is-on is-picked" : "pick-card is-on") : picked ? "pick-card is-picked" : "pick-card"}
                 role="option"
                 aria-selected={on}
-                onClick={() => focusCard(item.id)}
+                draggable={false}
+                onClick={() => {
+                  if (item.id !== product.id) focusCard(item.id);
+                }}
               >
                 <span className="pick-photo">
                   {item.image && !broken[item.id] ? (
                     <img
                       src={item.image}
                       alt=""
+                      draggable={false}
                       onError={() => setBroken((current) => ({ ...current, [item.id]: true }))}
                     />
                   ) : (
@@ -199,6 +289,7 @@ export function ProductPicker({
               </button>
             );
           })}
+          </div>
         </div>
 
         <div className="pick-dots" aria-hidden="true">
@@ -313,21 +404,6 @@ export function ProductPicker({
       </button>
     </form>
   );
-}
-
-function centerCard(rail: HTMLElement, card: HTMLElement, behavior: ScrollBehavior = "auto") {
-  const delta =
-    card.getBoundingClientRect().left +
-    card.offsetWidth / 2 -
-    (rail.getBoundingClientRect().left + rail.clientWidth / 2);
-  if (Math.abs(delta) < 2) return;
-  rail.style.scrollSnapType = "none";
-  rail.scrollBy({ left: delta, behavior });
-  const restore = () => {
-    rail.style.scrollSnapType = "";
-  };
-  if (behavior === "auto") restore();
-  else rail.addEventListener("scrollend", restore, { once: true });
 }
 
 function PhotoFallback() {
