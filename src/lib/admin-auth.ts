@@ -1,6 +1,9 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
+import { adminTelegramIds, isAdminTelegramId } from "@/lib/admin-ids";
+
+export { isAdminTelegramId } from "@/lib/admin-ids";
 
 const cookieName = "ak_admin";
 const sessionSeconds = 12 * 60 * 60;
@@ -22,12 +25,7 @@ function sessionSecret() {
 }
 
 function adminIds() {
-  return (process.env.ADMIN_TELEGRAM_IDS || "")
-    .split(/[,\s]+/)
-    .map((value) => value.trim())
-    .filter(Boolean)
-    .map((value) => Number(value))
-    .filter((value) => Number.isFinite(value) && value > 0);
+  return adminTelegramIds();
 }
 
 function sign(payload: string) {

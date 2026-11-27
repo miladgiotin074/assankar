@@ -230,18 +230,28 @@ configure_telegram_bot() {
 
   webhook_url="${site_url}/api/telegram/webhook"
   log "Configuring Telegram bot webhook"
-  curl -fsS "https://api.telegram.org/bot${token}/setWebhook" \
-    --data-urlencode "url=${webhook_url}" \
-    --data-urlencode "secret_token=${secret}" \
-    --data-urlencode 'allowed_updates=["message"]' \
-    >/dev/null
+
+  # Ensure the app process sees the latest secret before Telegram starts posting.
+  systemctl restart "${SERVICE_NAME}" || true
+  sleep 2
+
+  local webhook_result
+  webhook_result="$(curl -fsS "https://api.telegram.org/bot${token}/setWebhook" \
+    -H "Content-Type: application/json" \
+    -d "{\"url\":\"${webhook_url}\",\"secret_token\":\"${secret}\",\"allowed_updates\":[\"message\"],\"drop_pending_updates\":true}")"
+  echo "${webhook_result}"
 
   curl -fsS "https://api.telegram.org/bot${token}/setChatMenuButton" \
     -H "Content-Type: application/json" \
     -d "{\"menu_button\":{\"type\":\"web_app\",\"text\":\"Admin\",\"web_app\":{\"url\":\"${site_url}/admin\"}}}" \
     >/dev/null || true
 
-  echo "Telegram webhook set to ${webhook_url}"
+  echo "Telegram webhook info:"
+  curl -fsS "https://api.telegram.org/bot${token}/getWebhookInfo" || true
+  echo
+  echo "Webhook endpoint check:"
+  curl -fsS "${webhook_url}" || true
+  echo
 }
 
 ask_admin_telegram() {
@@ -341,7 +351,17 @@ read_domain() {
 build_app() {
   log "Building the app"
   as_app npm --prefix "${APP_DIR}" ci
-  as_app npm --prefix "${APP_DIR}" run build
+  # Load production env so NEXT_PUBLIC_* values are baked correctly.
+  set -a
+  # shellcheck disable=SC1090
+  . "${ENV_FILE}"
+  set +a
+  as_app env \
+    NODE_ENV=production \
+    NEXT_PUBLIC_SITE_URL="${NEXT_PUBLIC_SITE_URL}" \
+    BOT_TOKEN="${BOT_TOKEN:-}" \
+    ADMIN_TELEGRAM_IDS="${ADMIN_TELEGRAM_IDS:-}" \
+    npm --prefix "${APP_DIR}" run build
 }
 
 write_service() {
@@ -441,7 +461,6 @@ install_all() {
   obtain_cert
   systemctl reload nginx
   configure_telegram_bot
-  systemctl restart "${SERVICE_NAME}"
   echo
   echo "AssanKar is running at https://${DOMAIN}"
   echo "Admin Mini App: https://${DOMAIN}/admin"
@@ -465,7 +484,6 @@ update_all() {
   obtain_cert
   systemctl reload nginx
   configure_telegram_bot
-  systemctl restart "${SERVICE_NAME}"
   echo
   echo "AssanKar updated: https://${DOMAIN}"
   echo "Admin panel: https://${DOMAIN}/admin"
