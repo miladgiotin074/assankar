@@ -207,6 +207,10 @@ export async function readChoice(phone: string) {
   return { productId: item.id, title: item.title, quantity: row.packs, label: row.label };
 }
 
+export async function clearChoice(phone: string) {
+  await (await choicesReady()).deleteOne({ phone });
+}
+
 export async function saveChoice(phone: string, productId: string, quantity: number) {
   const item = await productById(productId);
   const row = item?.wages.find((wage) => wage.packs === quantity);

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
-import { logout } from "@/app/account/actions";
+import { logout, resetAccount } from "@/app/account/actions";
 import Link from "next/link";
 import { readChoice } from "@/lib/catalog";
 import { faDigits } from "@/lib/format";
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 
 export default function DashboardPage() {
   return (
-    <AppShell variant="home" title="داشبورد" end={<LogoutButton />}>
+    <AppShell variant="home" title="داشبورد" end={<AccountTools />}>
       <Suspense fallback={<div className="dash-fallback" />}>
         <DashboardHome />
       </Suspense>
@@ -25,30 +25,37 @@ export default function DashboardPage() {
   );
 }
 
-function LogoutButton() {
+function AccountTools() {
   return (
-    <form action={logout}>
-      <button type="submit" className="dash-logout">
-        <span>خروج</span>
-        <svg viewBox="0 0 24 24" className="size-4" aria-hidden="true">
-          <path
-            d="M10 7V5.5A1.5 1.5 0 0 1 11.5 4h6A1.5 1.5 0 0 1 19 5.5v13a1.5 1.5 0 0 1-1.5 1.5h-6A1.5 1.5 0 0 1 10 18.5V17"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-          />
-          <path
-            d="M13 12H4m0 0 2.5-2.5M4 12l2.5 2.5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </button>
-    </form>
+    <div className="dash-tools">
+      <form action={resetAccount}>
+        <button type="submit" className="dash-reset">
+          ریست
+        </button>
+      </form>
+      <form action={logout}>
+        <button type="submit" className="dash-logout">
+          <span>خروج</span>
+          <svg viewBox="0 0 24 24" className="size-4" aria-hidden="true">
+            <path
+              d="M10 7V5.5A1.5 1.5 0 0 1 11.5 4h6A1.5 1.5 0 0 1 19 5.5v13a1.5 1.5 0 0 1-1.5 1.5h-6A1.5 1.5 0 0 1 10 18.5V17"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+            />
+            <path
+              d="M13 12H4m0 0 2.5-2.5M4 12l2.5 2.5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+      </form>
+    </div>
   );
 }
 

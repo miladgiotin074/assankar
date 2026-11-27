@@ -5,7 +5,8 @@ import { headers } from "next/headers";
 import { redirect, RedirectType } from "next/navigation";
 import { normalizePhone } from "@/lib/apply";
 import { isValidMobile, isValidNationalId, normalizeNationalId, type AuthState } from "@/lib/identity";
-import { checkProfile, saveProfile, type ProfileState } from "@/lib/profile";
+import { clearChoice } from "@/lib/catalog";
+import { checkProfile, clearProfile, saveProfile, type ProfileState } from "@/lib/profile";
 import { endSession, readPendingPhone, readSession, rememberPhone, startSession } from "@/lib/session";
 import { openAccount } from "@/lib/users";
 
@@ -98,4 +99,15 @@ export async function submitProfile(_prev: ProfileState, formData: FormData): Pr
 export async function logout() {
   await endSession();
   redirect("/register");
+}
+
+export async function resetAccount() {
+  const session = await readSession();
+  if (!session) redirect("/register");
+  await clearProfile(session.phone);
+  await clearChoice(session.phone);
+  revalidatePath("/dashboard");
+  revalidatePath("/account/profile");
+  revalidatePath("/dashboard/products");
+  redirect("/dashboard", RedirectType.replace);
 }

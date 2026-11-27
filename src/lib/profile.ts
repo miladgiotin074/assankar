@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Collection } from "mongodb";
 import { toEnglishDigits } from "@/lib/apply";
@@ -174,4 +174,17 @@ export async function saveProfile(phone: string, value: Omit<ProfileRecord, "pho
   await (
     await profiles()
   ).updateOne({ phone }, { $set: { ...value, phone, at: new Date() } }, { upsert: true });
+}
+
+export async function clearProfile(phone: string) {
+  await (await profiles()).deleteOne({ phone });
+  const path = join(process.cwd(), "data", "profiles.json");
+  try {
+    const data = JSON.parse(await readFile(path, "utf8")) as Record<string, unknown>;
+    if (!data || typeof data !== "object" || !(phone in data)) return;
+    delete data[phone];
+    await writeFile(path, `${JSON.stringify(data, null, 2)}\n`);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+  }
 }
