@@ -6,7 +6,7 @@ import { DashScroll } from "@/components/dash-scroll";
 import { logout, resetAccount } from "@/app/account/actions";
 import Link from "next/link";
 import { readChoices, type ChoiceItem } from "@/lib/catalog";
-import { faDigits, toman } from "@/lib/format";
+import { faDigits, faNum, toman } from "@/lib/format";
 import { readPayment, type PaymentRecord, type PaymentStatus } from "@/lib/payment";
 import { hasProfile } from "@/lib/profile";
 import { readSession } from "@/lib/session";
@@ -124,7 +124,7 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
             payment={shipping}
             href="/dashboard/shipping"
             label="باربری"
-            nextText="بعد از تأیید فیش باربری، مرحلهٔ بعد همکاری باز می‌شود."
+            nextText="بعد از تأیید فیش باربری، خلاصهٔ مبالغ واریزی در داشبورد می‌آید."
           />
         ) : null}
 
@@ -210,11 +210,15 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
           />
         ) : null}
 
-        {chosen && shipped ? (
-          <PayAlert
-            tone="ok"
-            title="واریز باربری تأیید شد"
-            text="هزینهٔ باربری تأیید شده است و می‌توانید مرحلهٔ بعد را ادامه دهید."
+        {chosen && shipped && registration && insurance && guarantee && warehouse && shipping ? (
+          <PayLedger
+            rows={[
+              { label: "هزینهٔ ثبت‌نام", amount: registration.amount },
+              { label: "هزینهٔ بیمه", amount: insurance.amount },
+              { label: "ضمانت کالا", amount: guarantee.amount },
+              { label: "هزینهٔ انبار", amount: warehouse.amount },
+              { label: "هزینهٔ باربری", amount: shipping.amount },
+            ]}
           />
         ) : null}
 
@@ -532,6 +536,51 @@ function PayAlert({
           </Link>
         ) : null}
       </div>
+    </section>
+  );
+}
+
+function PayLedger({ rows }: { rows: { label: string; amount: number }[] }) {
+  const total = rows.reduce((sum, row) => sum + (Number.isFinite(row.amount) ? row.amount : 0), 0);
+
+  return (
+    <section id="dash-next" className="dash-ledger" aria-label="خلاصه مبالغ واریزی">
+      <header className="dash-ledger-hero">
+        <span className="dash-ledger-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M6.5 12.5 10 16l7.5-8"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.1"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+        <div>
+          <p className="dash-ledger-kicker">همه واریزی‌ها تأیید شد</p>
+          <h2>خلاصه مبالغ واریزی</h2>
+        </div>
+      </header>
+      <ul className="dash-ledger-list">
+        {rows.map((row, index) => (
+          <li key={row.label} className="dash-ledger-row">
+            <span className="dash-ledger-no" aria-hidden="true">
+              {faDigits(String(index + 1))}
+            </span>
+            <span className="dash-ledger-label">{row.label}</span>
+            <span className="dash-ledger-amount">{toman(row.amount)}</span>
+          </li>
+        ))}
+      </ul>
+      <footer className="dash-ledger-total">
+        <span>مجموع واریزی</span>
+        <strong className="dash-ledger-sum">
+          <b>{faNum(total)}</b>
+          <small>تومان</small>
+        </strong>
+      </footer>
     </section>
   );
 }

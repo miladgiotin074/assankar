@@ -1593,6 +1593,139 @@ body:has(.app-device.is-home) {
   color: #a33b3b;
 }
 
+.dash-ledger {
+  overflow: hidden;
+  border: 1px solid #d5e4f0;
+  border-radius: 1.45rem;
+  background: #fff;
+  box-shadow: 0 16px 36px rgba(12, 77, 134, 0.08);
+}
+
+.dash-ledger-hero {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 1.05rem 1rem 1rem;
+  background:
+    radial-gradient(90% 150% at 100% 0%, rgba(255, 255, 255, 0.2), transparent 48%),
+    linear-gradient(135deg, #0c4d86 0%, #0a6288 52%, #0d7a56 100%);
+  color: #fff;
+}
+
+.dash-ledger-mark {
+  display: grid;
+  width: 2.65rem;
+  height: 2.65rem;
+  flex: none;
+  place-items: center;
+  border-radius: 0.95rem;
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.32);
+}
+
+.dash-ledger-mark svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.dash-ledger-kicker {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.dash-ledger-hero h2 {
+  margin-top: 0.12rem;
+  font-size: 1.08rem;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.dash-ledger-list {
+  margin: 0.2rem 0 0;
+  padding: 0.15rem 0.35rem 0;
+  list-style: none;
+}
+
+.dash-ledger-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.7rem;
+  margin-inline: 0.4rem;
+  padding: 0.78rem 0.2rem;
+  border-bottom: 1px solid #eef3f8;
+}
+
+.dash-ledger-row:last-child {
+  border-bottom: 0;
+}
+
+.dash-ledger-no {
+  display: grid;
+  width: 1.7rem;
+  height: 1.7rem;
+  place-items: center;
+  border-radius: 999px;
+  background: #eef5fb;
+  color: #0c4d86;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.dash-ledger-label {
+  color: #10293f;
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.dash-ledger-amount {
+  color: #10293f;
+  font-size: 0.9rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.dash-ledger-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0.15rem 0.7rem 0.75rem;
+  padding: 0.95rem 0.95rem 0.9rem;
+  border: 1px solid #d5efe4;
+  border-radius: 1.05rem;
+  background: linear-gradient(180deg, #f6fbf8, #eef8f3);
+}
+
+.dash-ledger-total span {
+  color: #0b7a52;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.dash-ledger-sum {
+  display: flex;
+  align-items: baseline;
+  gap: 0.28rem;
+  color: #0b7a52;
+  white-space: nowrap;
+}
+
+.dash-ledger-sum b {
+  font-size: 1.22rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.dash-ledger-sum small {
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
 .dash-cta-wrap {
   border-radius: 1.35rem;
   animation: cta-glow 1.8s ease-out infinite;

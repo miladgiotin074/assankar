@@ -58,7 +58,7 @@ async function ShippingGate() {
         status={status}
         receiptUrl={receiptUrl}
         title="هزینه باربری"
-        nextHint="بعد از تأیید فیش باربری، مرحلهٔ بعد همکاری باز می‌شود."
+        nextHint="بعد از تأیید فیش باربری، خلاصهٔ مبالغ واریزی در داشبورد می‌آید."
         action={submitShippingReceipt}
       />
     </div>
