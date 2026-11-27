@@ -8,10 +8,76 @@ import { useAdminTelegram } from "@/components/admin/telegram-provider";
 import { faDigits } from "@/lib/format";
 import type { AdminPaymentRow, AdminStats } from "@/lib/admin";
 
+let statsCache: AdminStats | null = null;
+
+function AdminCharts({ stats }: { stats: AdminStats }) {
+  const series = stats.series || [];
+  const max = Math.max(1, ...series.map((point) => Math.max(point.submitted, point.approved, point.rejected)));
+  const total = stats.pendingPayments + stats.approvedTotal + stats.rejectedTotal;
+  const approved = total ? (stats.approvedTotal / total) * 100 : 0;
+  const waiting = total ? (stats.pendingPayments / total) * 100 : 0;
+
+  return (
+    <>
+      <section className="admin-panel">
+        <div className="admin-panel-head">
+          <h2>هفت روز اخیر</h2>
+          <p>آبی ثبت فیش، سبز تأیید، قرمز رد</p>
+        </div>
+        <div className="admin-bars" aria-label="نمودار هفت روز">
+          {series.map((point, index) => (
+            <div key={`${point.label}-${index}`} className="admin-bar-col">
+              <div className="admin-bar">
+                <i className="is-in" style={{ height: `${(point.submitted / max) * 100}%` }} />
+                <i className="is-ok" style={{ height: `${(point.approved / max) * 100}%` }} />
+                <i className="is-bad" style={{ height: `${(point.rejected / max) * 100}%` }} />
+              </div>
+              <small>{point.label}</small>
+            </div>
+          ))}
+        </div>
+      </section>
+      <section className="admin-panel">
+        <div className="admin-panel-head">
+          <h2>ترکیب همه فیش‌ها</h2>
+          <p>{faDigits(String(total))} فیش</p>
+        </div>
+        <div className="admin-mix">
+          <div
+            className="admin-donut"
+            style={{
+              background: total
+                ? `conic-gradient(#0b7a52 0 ${approved}%, #d4880c ${approved}% ${approved + waiting}%, #c0392b ${approved + waiting}% 100%)`
+                : "#e7eef5",
+            }}
+          />
+          <ul>
+            <li>
+              <i className="is-ok" />
+              تأیید
+              <b>{faDigits(String(stats.approvedTotal))}</b>
+            </li>
+            <li>
+              <i className="is-wait" />
+              انتظار
+              <b>{faDigits(String(stats.pendingPayments))}</b>
+            </li>
+            <li>
+              <i className="is-bad" />
+              رد
+              <b>{faDigits(String(stats.rejectedTotal))}</b>
+            </li>
+          </ul>
+        </div>
+      </section>
+    </>
+  );
+}
+
 export function AdminHomeView() {
   const { admin } = useAdminTelegram();
   const { tick } = useAdminLive();
-  const [stats, setStats] = useState<AdminStats | null>(null);
+  const [stats, setStats] = useState<AdminStats | null>(statsCache);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -21,7 +87,8 @@ export function AdminHomeView() {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "خطا در دریافت آمار");
         if (alive) {
-          setStats(data as AdminStats);
+          statsCache = data as AdminStats;
+          setStats(statsCache);
           setError("");
         }
       })
@@ -72,6 +139,8 @@ export function AdminHomeView() {
       ) : !error ? (
         <AdminSkeleton rows={2} />
       ) : null}
+
+      {stats ? <AdminCharts stats={stats} /> : null}
 
       <div className="admin-section-row">
         <p className="admin-section-title">صف بررسی</p>

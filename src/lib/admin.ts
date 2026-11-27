@@ -1,5 +1,12 @@
 import { readChoices } from "@/lib/catalog";
-import { countPaymentsByStatus, listPayments, readPayment, type PaymentRecord, type PaymentStatus } from "@/lib/payment";
+import {
+  countPaymentsByStatus,
+  listPayments,
+  paymentSeries,
+  readPayment,
+  type PaymentRecord,
+  type PaymentStatus,
+} from "@/lib/payment";
 import { listProfiles, readProfile, searchProfiles, type ProfileRecord } from "@/lib/profile";
 import { faDigits, toman } from "@/lib/format";
 
@@ -29,6 +36,13 @@ export type AdminPartnerRow = {
 
 export type PartnerFilter = "all" | "pending" | "approved" | "rejected" | "none" | "no-choices";
 
+export type AdminDayPoint = {
+  label: string;
+  submitted: number;
+  approved: number;
+  rejected: number;
+};
+
 export type AdminStats = {
   pendingPayments: number;
   approvedToday: number;
@@ -37,6 +51,7 @@ export type AdminStats = {
   partners: number;
   partnersWithoutChoices: number;
   recent: AdminPaymentRow[];
+  series: AdminDayPoint[];
 };
 
 function nameOf(profile: ProfileRecord | null | undefined) {
@@ -86,7 +101,10 @@ export async function adminStats(): Promise<AdminStats> {
     if (!choices.length) withoutChoices += 1;
   }
   const pendingList = await listPayments({ status: "pending", limit: 6 });
-  const recent = await Promise.all(pendingList.map((payment) => hydratePayment(payment)));
+  const [recent, series] = await Promise.all([
+    Promise.all(pendingList.map((payment) => hydratePayment(payment))),
+    paymentSeries(7),
+  ]);
   return {
     pendingPayments: counts.pending,
     approvedToday: counts.approvedToday,
@@ -95,6 +113,7 @@ export async function adminStats(): Promise<AdminStats> {
     partners: profiles.length,
     partnersWithoutChoices: withoutChoices,
     recent,
+    series,
   };
 }
 

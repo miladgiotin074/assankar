@@ -2,8 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { AdminLiveProvider, useAdminLive } from "@/components/admin/admin-live";
+import { AdminHomeView } from "@/components/admin/home-view";
+import { AdminPartnerDetailView } from "@/components/admin/partner-detail-view";
+import { AdminPartnersView } from "@/components/admin/partners-view";
+import { AdminPaymentDetailView } from "@/components/admin/payment-detail-view";
+import { AdminPaymentsView } from "@/components/admin/payments-view";
 import { useAdminTelegram } from "@/components/admin/telegram-provider";
 import { useTelegramBack } from "@/components/admin/use-telegram-back";
 import { faDigits } from "@/lib/format";
@@ -76,14 +81,31 @@ function RefreshIcon() {
   );
 }
 
-function AdminFrame({ children }: { children: ReactNode }) {
+function useClientSearch() {
   const pathname = usePathname();
+  const [search, setSearch] = useState("");
+  useEffect(() => {
+    setSearch(window.location.search);
+  }, [pathname]);
+  return search;
+}
+
+function AdminFrame() {
+  const pathname = usePathname();
+  const search = useClientSearch();
   const title = titleFor(pathname);
   const { admin } = useAdminTelegram();
   const { pending, refresh } = useAdminLive();
   useTelegramBack();
-  const hideTabs =
-    /^\/admin\/payments\/[^/]+$/.test(pathname) || /^\/admin\/partners\/[^/]+$/.test(pathname);
+  const paymentPhone = pathname.match(/^\/admin\/payments\/([^/]+)$/)?.[1] || "";
+  const partnerPhone = pathname.match(/^\/admin\/partners\/([^/]+)$/)?.[1] || "";
+  const detail = Boolean(paymentPhone || partnerPhone);
+  const tab = pathname.startsWith("/admin/partners")
+    ? "partners"
+    : pathname.startsWith("/admin/payments")
+      ? "payments"
+      : "home";
+  const query = new URLSearchParams(search);
   const badge = pending > 99 ? "۹۹+" : faDigits(String(pending));
 
   return (
@@ -102,14 +124,34 @@ function AdminFrame({ children }: { children: ReactNode }) {
           </button>
         </div>
       </header>
-      <main className={hideTabs ? "admin-main is-detail" : "admin-main"}>{children}</main>
-      {hideTabs ? null : (
+      <div className="admin-stage">
+        <section className="admin-pane" hidden={tab !== "home" || detail}>
+          <AdminHomeView />
+        </section>
+        <section className="admin-pane" hidden={tab !== "payments" || detail}>
+          <AdminPaymentsView statusQuery={query.get("status") || ""} />
+        </section>
+        <section className="admin-pane" hidden={tab !== "partners" || detail}>
+          <AdminPartnersView stageQuery={query.get("stage") || ""} />
+        </section>
+        {paymentPhone ? (
+          <section className="admin-layer" key={paymentPhone}>
+            <AdminPaymentDetailView phone={decodeURIComponent(paymentPhone)} />
+          </section>
+        ) : null}
+        {partnerPhone ? (
+          <section className="admin-layer" key={partnerPhone}>
+            <AdminPartnerDetailView phone={decodeURIComponent(partnerPhone)} />
+          </section>
+        ) : null}
+      </div>
+      {detail ? null : (
         <nav className="admin-tabs" aria-label="منوی ادمین">
-          {tabs.map((tab) => (
-            <Link key={tab.href} href={tab.href} className={tab.match(pathname) ? "is-active" : undefined}>
-              <em aria-hidden="true">{tab.icon}</em>
-              {tab.label}
-              {tab.href === "/admin/payments" && pending > 0 ? <b className="admin-badge">{badge}</b> : null}
+          {tabs.map((tabItem) => (
+            <Link key={tabItem.href} href={tabItem.href} className={tabItem.match(pathname) ? "is-active" : undefined}>
+              <em aria-hidden="true">{tabItem.icon}</em>
+              {tabItem.label}
+              {tabItem.href === "/admin/payments" && pending > 0 ? <b className="admin-badge">{badge}</b> : null}
             </Link>
           ))}
         </nav>
@@ -146,7 +188,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
   return (
     <AdminLiveProvider>
-      <AdminFrame>{children}</AdminFrame>
+      <AdminFrame />
+      {children}
     </AdminLiveProvider>
   );
 }

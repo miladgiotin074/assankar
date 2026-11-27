@@ -38,33 +38,60 @@ function applyTheme() {
   try {
     const state = themeParams.state();
     const root = document.documentElement;
-    const bg = state.bg_color || "#f3f7fb";
     const sheet = state.secondary_bg_color || "#ffffff";
     const text = state.text_color || "#10293f";
     const muted = state.hint_color || "#4e6578";
-    const accent = state.button_color || "#0c4d86";
     const accentText = state.button_text_color || "#ffffff";
     const danger = state.destructive_text_color || "#a33b3b";
 
-    root.style.setProperty("--admin-bg", bg);
+    root.style.setProperty("--admin-bg", "#e7eef5");
     root.style.setProperty("--admin-sheet", sheet);
     root.style.setProperty("--admin-text", text);
     root.style.setProperty("--admin-muted", muted);
-    root.style.setProperty("--admin-accent", accent);
+    root.style.setProperty("--admin-accent", "#0c4d86");
     root.style.setProperty("--admin-accent-text", accentText);
     root.style.setProperty("--admin-danger", danger);
     root.style.setProperty("--admin-ok", "#0b7a52");
     root.style.setProperty("--admin-wait", "#9a5408");
     root.style.setProperty("--admin-line", "color-mix(in srgb, var(--admin-muted) 18%, transparent)");
-
-    try {
-      if (miniApp.setHeaderColor.isAvailable()) miniApp.setHeaderColor(accent as `#${string}`);
-      if (miniApp.setBgColor.isAvailable()) miniApp.setBgColor(bg as `#${string}`);
-    } catch {
-      /* optional */
-    }
+    paintChrome();
   } catch {
     /* theme optional */
+  }
+}
+
+function paintChrome() {
+  const header = "#0c4d86";
+  const bg = "#e7eef5";
+  const bottom = "#ffffff";
+  try {
+    if (miniApp.mount.isAvailable()) miniApp.mount();
+    if (miniApp.setHeaderColor.isAvailable()) {
+      if (miniApp.setHeaderColor.supports("rgb")) miniApp.setHeaderColor(header);
+      else miniApp.setHeaderColor("bg_color");
+    }
+    if (miniApp.setBgColor.isAvailable()) miniApp.setBgColor(bg);
+    if (miniApp.setBottomBarColor.isAvailable()) miniApp.setBottomBarColor(bottom);
+  } catch {
+    /* optional */
+  }
+  try {
+    const webApp = (
+      window as unknown as {
+        Telegram?: {
+          WebApp?: {
+            setHeaderColor?: (color: string) => void;
+            setBackgroundColor?: (color: string) => void;
+            setBottomBarColor?: (color: string) => void;
+          };
+        };
+      }
+    ).Telegram?.WebApp;
+    webApp?.setHeaderColor?.(header);
+    webApp?.setBackgroundColor?.(bg);
+    webApp?.setBottomBarColor?.(bottom);
+  } catch {
+    /* optional */
   }
 }
 
@@ -167,8 +194,9 @@ export function AdminTelegramProvider({ children }: { children: ReactNode }) {
           themeParams.mount();
           applyTheme();
         } catch {
-          /* optional */
+          paintChrome();
         }
+        paintChrome();
         try {
           if (backButton.isSupported()) backButton.mount();
         } catch {
@@ -188,8 +216,13 @@ export function AdminTelegramProvider({ children }: { children: ReactNode }) {
     }
 
     void boot();
+    const onShow = () => {
+      if (document.visibilityState === "visible") paintChrome();
+    };
+    document.addEventListener("visibilitychange", onShow);
     return () => {
       cancelled = true;
+      document.removeEventListener("visibilitychange", onShow);
     };
   }, [refreshSession]);
 

@@ -32,10 +32,12 @@ function cardText(card: string) {
   return faDigits(card.replace(/(\d{4})(?=\d)/g, "$1 "));
 }
 
+const detailCache = new Map<string, Detail>();
+
 export function AdminPaymentDetailView({ phone }: { phone: string }) {
   const router = useRouter();
   const { refresh } = useAdminLive();
-  const [detail, setDetail] = useState<Detail | null>(null);
+  const [detail, setDetail] = useState<Detail | null>(detailCache.get(phone) ?? null);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [ask, setAsk] = useState<"approved" | "rejected" | null>(null);
@@ -46,7 +48,10 @@ export function AdminPaymentDetailView({ phone }: { phone: string }) {
       .then(async (response) => {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "پیدا نشد");
-        if (alive) setDetail(data as Detail);
+        if (alive) {
+          detailCache.set(phone, data as Detail);
+          setDetail(data as Detail);
+        }
       })
       .catch((err: Error) => {
         if (alive) setError(err.message);
@@ -72,6 +77,7 @@ export function AdminPaymentDetailView({ phone }: { phone: string }) {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "ثبت نشد");
       buzz(status === "approved" ? "success" : "warning");
+      detailCache.delete(phone);
       refresh();
       router.replace("/admin/payments");
       router.refresh();

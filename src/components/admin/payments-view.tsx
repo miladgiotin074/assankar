@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { AdminAvatar, AdminSkeleton, buzz, relativeFa } from "@/components/admin/admin-kit";
 import { useAdminLive } from "@/components/admin/admin-live";
 import { faDigits } from "@/lib/format";
 import type { AdminPaymentRow } from "@/lib/admin";
 import type { PaymentStatus } from "@/lib/payment";
+
+const listCache = new Map<string, AdminPaymentRow[]>();
 
 const filters: { id: PaymentStatus | "all"; label: string }[] = [
   { id: "pending", label: "در انتظار" },
@@ -28,22 +29,31 @@ function chipLabel(status: PaymentStatus) {
   return "انتظار";
 }
 
-export function AdminPaymentsView() {
-  const params = useSearchParams();
-  const initial = params.get("status");
+function isStatus(value: string): value is PaymentStatus | "all" {
+  return value === "pending" || value === "approved" || value === "rejected" || value === "all";
+}
+
+export function AdminPaymentsView({ statusQuery = "" }: { statusQuery?: string }) {
   const { tick } = useAdminLive();
-  const [status, setStatus] = useState<PaymentStatus | "all">(
-    initial === "approved" || initial === "rejected" || initial === "all" || initial === "pending"
-      ? initial
-      : "pending",
-  );
+  const [status, setStatus] = useState<PaymentStatus | "all">(isStatus(statusQuery) ? statusQuery : "pending");
   const [q, setQ] = useState("");
   const [items, setItems] = useState<AdminPaymentRow[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    if (isStatus(statusQuery)) setStatus(statusQuery);
+  }, [statusQuery]);
+
   const load = useCallback(async () => {
-    setLoading(true);
+    const key = `${status}:${q.trim()}`;
+    const hit = listCache.get(key);
+    if (hit) {
+      setItems(hit);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
     setError("");
     try {
       const query = new URLSearchParams({ status });
@@ -51,10 +61,14 @@ export function AdminPaymentsView() {
       const response = await fetch(`/api/admin/payments?${query}`, { credentials: "same-origin" });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "خطا در دریافت فیش‌ها");
-      setItems((data.items || []) as AdminPaymentRow[]);
+      const rows = (data.items || []) as AdminPaymentRow[];
+      listCache.set(key, rows);
+      setItems(rows);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "خطا");
-      setItems([]);
+      if (!hit) {
+        setError(err instanceof Error ? err.message : "خطا");
+        setItems([]);
+      }
     } finally {
       setLoading(false);
     }

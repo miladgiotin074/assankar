@@ -74,6 +74,51 @@ export async function listPayments(filter: {
   return (await payments()).find(query).sort({ at: -1 }).limit(limit).toArray();
 }
 
+export async function paymentSeries(days = 7) {
+  const count = Math.min(14, Math.max(1, days));
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const start = new Date(today);
+  start.setDate(today.getDate() - (count - 1));
+  const docs = await (await payments())
+    .find({ $or: [{ at: { $gte: start } }, { reviewedAt: { $gte: start } }] })
+    .project({ at: 1, reviewedAt: 1, status: 1 })
+    .toArray();
+
+  const points = Array.from({ length: count }, (_, index) => {
+    const day = new Date(start);
+    day.setDate(start.getDate() + index);
+    return {
+      key: `${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`,
+      label: new Intl.DateTimeFormat("fa-IR", { day: "numeric" }).format(day),
+      submitted: 0,
+      approved: 0,
+      rejected: 0,
+    };
+  });
+  const byKey = new Map(points.map((point) => [point.key, point]));
+  const keyOf = (value: Date | undefined) => {
+    if (!value) return "";
+    const day = new Date(value);
+    return `${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`;
+  };
+
+  for (const doc of docs) {
+    const submitted = byKey.get(keyOf(doc.at));
+    if (submitted) submitted.submitted += 1;
+    const reviewed = byKey.get(keyOf(doc.reviewedAt));
+    if (reviewed && doc.status === "approved") reviewed.approved += 1;
+    if (reviewed && doc.status === "rejected") reviewed.rejected += 1;
+  }
+
+  return points.map(({ label, submitted, approved, rejected }) => ({
+    label,
+    submitted,
+    approved,
+    rejected,
+  }));
+}
+
 export async function countPaymentsByStatus() {
   const col = await payments();
   const [pending, approved, rejected] = await Promise.all([
