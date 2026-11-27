@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { AdminLiveProvider, useAdminLive } from "@/components/admin/admin-live";
 import { useAdminTelegram } from "@/components/admin/telegram-provider";
 import { useTelegramBack } from "@/components/admin/use-telegram-back";
+import { faDigits } from "@/lib/format";
 
 function IconHome() {
   return (
@@ -63,11 +65,61 @@ function titleFor(path: string) {
   return "مدیریت";
 }
 
-export function AdminShell({ children }: { children: ReactNode }) {
+function RefreshIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M12 5.2V3.1c0-.4.5-.6.8-.3l2.7 2.6c.2.2.2.5 0 .7l-2.7 2.6c-.3.3-.8.1-.8-.3V6.4a5.6 5.6 0 1 0 5.6 5.6h1.6A7.2 7.2 0 1 1 12 5.2Z"
+      />
+    </svg>
+  );
+}
+
+function AdminFrame({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const title = titleFor(pathname);
-  const { ready, admin, error, insideTelegram } = useAdminTelegram();
+  const { admin } = useAdminTelegram();
+  const { pending, refresh } = useAdminLive();
   useTelegramBack();
+  const hideTabs =
+    /^\/admin\/payments\/[^/]+$/.test(pathname) || /^\/admin\/partners\/[^/]+$/.test(pathname);
+  const badge = pending > 99 ? "۹۹+" : faDigits(String(pending));
+
+  return (
+    <div className="admin-app">
+      <header className="admin-top">
+        <div>
+          <p className="admin-top-kicker">آسان‌کار</p>
+          <h1>{title}</h1>
+        </div>
+        <div className="admin-top-side">
+          <p className="admin-top-user" dir="ltr">
+            {admin?.username ? `@${admin.username}` : admin?.name}
+          </p>
+          <button type="button" className="admin-icon-btn" aria-label="تازه‌سازی" onClick={refresh}>
+            <RefreshIcon />
+          </button>
+        </div>
+      </header>
+      <main className={hideTabs ? "admin-main is-detail" : "admin-main"}>{children}</main>
+      {hideTabs ? null : (
+        <nav className="admin-tabs" aria-label="منوی ادمین">
+          {tabs.map((tab) => (
+            <Link key={tab.href} href={tab.href} className={tab.match(pathname) ? "is-active" : undefined}>
+              <em aria-hidden="true">{tab.icon}</em>
+              {tab.label}
+              {tab.href === "/admin/payments" && pending > 0 ? <b className="admin-badge">{badge}</b> : null}
+            </Link>
+          ))}
+        </nav>
+      )}
+    </div>
+  );
+}
+
+export function AdminShell({ children }: { children: ReactNode }) {
+  const { ready, admin, error, insideTelegram } = useAdminTelegram();
 
   if (!ready) {
     return (
@@ -92,31 +144,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
     );
   }
 
-  const hideTabs =
-    /^\/admin\/payments\/[^/]+$/.test(pathname) || /^\/admin\/partners\/[^/]+$/.test(pathname);
-
   return (
-    <div className="admin-app">
-      <header className="admin-top">
-        <div>
-          <p className="admin-top-kicker">آسان‌کار</p>
-          <h1>{title}</h1>
-        </div>
-        <p className="admin-top-user" dir="ltr">
-          {admin.username ? `@${admin.username}` : admin.name}
-        </p>
-      </header>
-      <main className={hideTabs ? "admin-main is-detail" : "admin-main"}>{children}</main>
-      {hideTabs ? null : (
-        <nav className="admin-tabs" aria-label="منوی ادمین">
-          {tabs.map((tab) => (
-            <Link key={tab.href} href={tab.href} className={tab.match(pathname) ? "is-active" : undefined}>
-              <em aria-hidden="true">{tab.icon}</em>
-              {tab.label}
-            </Link>
-          ))}
-        </nav>
-      )}
-    </div>
+    <AdminLiveProvider>
+      <AdminFrame>{children}</AdminFrame>
+    </AdminLiveProvider>
   );
 }

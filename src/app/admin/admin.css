@@ -88,9 +88,16 @@
   line-height: 1.25;
 }
 
+.admin-top-side {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
 .admin-top-user {
-  margin: 0 0 0.1rem;
-  max-width: 42%;
+  margin: 0;
+  max-width: 8.5rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -131,6 +138,7 @@
 }
 
 .admin-tabs a {
+  position: relative;
   display: grid;
   justify-items: center;
   gap: 0.18rem;
@@ -206,6 +214,8 @@
   border-radius: 1.1rem;
   background: var(--admin-sheet);
   border: 1px solid var(--admin-line);
+  color: inherit;
+  text-decoration: none;
 }
 
 .admin-stat span {
@@ -228,6 +238,24 @@
   color: var(--admin-muted);
   font-size: 0.74rem;
   font-weight: 800;
+}
+
+.admin-section-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.admin-section-row .admin-section-title {
+  margin: 0;
+}
+
+.admin-section-row a {
+  color: var(--admin-accent);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-decoration: none;
 }
 
 .admin-panel {
@@ -286,6 +314,21 @@
   box-shadow: 0 4px 12px rgba(8, 44, 82, 0.08);
 }
 
+.admin-filters.is-scroll {
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.admin-filters.is-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.admin-filters.is-scroll button {
+  flex: 0 0 auto;
+  padding-inline: 0.85rem;
+}
+
 .admin-search {
   width: 100%;
   min-height: 2.7rem;
@@ -323,6 +366,10 @@
   color: inherit;
   text-decoration: none;
   border-bottom: 1px solid var(--admin-line);
+}
+
+.admin-row.is-person {
+  grid-template-columns: auto 1fr auto;
 }
 
 .admin-row:last-child {
@@ -391,10 +438,25 @@
 }
 
 .admin-receipt-wrap {
+  display: block;
+  width: 100%;
+  padding: 0;
   overflow: hidden;
+  border: 1px solid var(--admin-line);
   border-radius: 1.2rem;
   background: #0d1520;
-  border: 1px solid var(--admin-line);
+  color: inherit;
+  font: inherit;
+  text-align: center;
+}
+
+.admin-receipt-wrap > span {
+  display: block;
+  padding: 0.45rem 0.75rem 0.65rem;
+  background: #0d1520;
+  color: #c5d0dc;
+  font-size: 0.72rem;
+  font-weight: 800;
 }
 
 .admin-receipt {
@@ -403,6 +465,11 @@
   max-height: 22rem;
   object-fit: contain;
   background: #0d1520;
+}
+
+.admin-receipt.is-inline {
+  max-height: 12rem;
+  border-top: 1px solid var(--admin-line);
 }
 
 .admin-meta {
@@ -551,4 +618,223 @@
 .admin-status-banner.is-wait {
   background: #fff4e5;
   color: var(--admin-wait);
+}
+
+.admin-hero.is-person {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.admin-hero.is-person .admin-avatar {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+.admin-hero.is-person p {
+  margin-top: 0.2rem;
+}
+
+.admin-icon-btn {
+  display: grid;
+  width: 2.1rem;
+  height: 2.1rem;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+.admin-badge {
+  position: absolute;
+  top: 0.28rem;
+  inset-inline-start: calc(50% + 0.35rem);
+  min-width: 1.05rem;
+  height: 1.05rem;
+  padding-inline: 0.22rem;
+  border-radius: 999px;
+  background: #e24b4b;
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 800;
+  line-height: 1.05rem;
+  text-align: center;
+}
+
+.admin-avatar {
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--admin-accent) 12%, #fff);
+  color: var(--admin-accent);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.admin-meta > .admin-meta-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+}
+
+.admin-copy {
+  display: inline-grid;
+  place-items: center;
+  min-height: 1.75rem;
+  padding-inline: 0.7rem;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--admin-accent) 10%, transparent);
+  color: var(--admin-accent);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.admin-skel {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.admin-skel span {
+  display: block;
+  height: 4.2rem;
+  border-radius: 1.05rem;
+  background: linear-gradient(90deg, rgba(16, 41, 63, 0.05), rgba(16, 41, 63, 0.1), rgba(16, 41, 63, 0.05));
+  background-size: 180% 100%;
+  animation: admin-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes admin-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -80% 0;
+  }
+}
+
+.admin-toast {
+  position: fixed;
+  z-index: 70;
+  inset-inline: 0;
+  bottom: calc(5.4rem + env(safe-area-inset-bottom));
+  width: fit-content;
+  max-width: calc(100% - 2rem);
+  margin-inline: auto;
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+  background: #10293f;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.admin-zoom {
+  position: fixed;
+  z-index: 80;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(6, 16, 28, 0.94);
+}
+
+.admin-zoom img {
+  max-width: 100%;
+  max-height: calc(100% - 3rem);
+  object-fit: contain;
+}
+
+.admin-zoom-close {
+  position: absolute;
+  top: calc(0.8rem + env(safe-area-inset-top));
+  inset-inline-start: 0.8rem;
+  min-height: 2rem;
+  padding-inline: 0.8rem;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.admin-sheet-root {
+  position: fixed;
+  z-index: 75;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.admin-sheet-dim {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(8, 22, 36, 0.46);
+}
+
+.admin-sheet {
+  position: relative;
+  width: min(100%, 30rem);
+  padding: 1.1rem 1rem calc(1rem + env(safe-area-inset-bottom));
+  border-radius: 1.35rem 1.35rem 0 0;
+  background: var(--admin-sheet);
+}
+
+.admin-sheet strong {
+  display: block;
+  font-size: 1.02rem;
+  font-weight: 800;
+}
+
+.admin-sheet p {
+  margin: 0.45rem 0 0;
+  color: var(--admin-muted);
+  font-size: 0.88rem;
+  line-height: 1.8;
+}
+
+.admin-sheet-actions {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 0.55rem;
+  margin-top: 1rem;
+}
+
+.admin-sheet-actions button {
+  min-height: 2.8rem;
+  border: 0;
+  border-radius: 1rem;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.admin-sheet-actions .is-ghost {
+  background: color-mix(in srgb, var(--admin-muted) 10%, transparent);
+  color: var(--admin-text);
+}
+
+.admin-sheet-actions .is-ok {
+  background: var(--admin-ok);
+  color: #fff;
+}
+
+.admin-sheet-actions .is-bad {
+  background: var(--admin-danger);
+  color: #fff;
+}
+
+.admin-sheet-actions button:disabled {
+  opacity: 0.55;
 }

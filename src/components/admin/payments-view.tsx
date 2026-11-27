@@ -1,16 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { AdminAvatar, AdminSkeleton, buzz, relativeFa } from "@/components/admin/admin-kit";
+import { useAdminLive } from "@/components/admin/admin-live";
 import { faDigits } from "@/lib/format";
 import type { AdminPaymentRow } from "@/lib/admin";
 import type { PaymentStatus } from "@/lib/payment";
-import { hapticFeedback } from "@tma.js/sdk-react";
 
-const filters: { id: PaymentStatus; label: string }[] = [
+const filters: { id: PaymentStatus | "all"; label: string }[] = [
   { id: "pending", label: "در انتظار" },
   { id: "approved", label: "تأیید" },
   { id: "rejected", label: "رد" },
+  { id: "all", label: "همه" },
 ];
 
 function chipClass(status: PaymentStatus) {
@@ -20,33 +23,20 @@ function chipClass(status: PaymentStatus) {
 }
 
 function chipLabel(status: PaymentStatus) {
-  if (status === "approved") return "تأیید شده";
-  if (status === "rejected") return "رد شده";
-  return "در انتظار";
-}
-
-function timeLabel(iso: string) {
-  if (!iso) return "—";
-  return faDigits(
-    new Intl.DateTimeFormat("fa-IR", {
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(new Date(iso)),
-  );
-}
-
-function tap() {
-  try {
-    if (hapticFeedback.selectionChanged.isAvailable()) hapticFeedback.selectionChanged();
-  } catch {
-    /* optional */
-  }
+  if (status === "approved") return "تأیید";
+  if (status === "rejected") return "رد";
+  return "انتظار";
 }
 
 export function AdminPaymentsView() {
-  const [status, setStatus] = useState<PaymentStatus>("pending");
+  const params = useSearchParams();
+  const initial = params.get("status");
+  const { tick } = useAdminLive();
+  const [status, setStatus] = useState<PaymentStatus | "all">(
+    initial === "approved" || initial === "rejected" || initial === "all" || initial === "pending"
+      ? initial
+      : "pending",
+  );
   const [q, setQ] = useState("");
   const [items, setItems] = useState<AdminPaymentRow[]>([]);
   const [error, setError] = useState("");
@@ -56,9 +46,9 @@ export function AdminPaymentsView() {
     setLoading(true);
     setError("");
     try {
-      const params = new URLSearchParams({ status });
-      if (q.trim()) params.set("q", q.trim());
-      const response = await fetch(`/api/admin/payments?${params}`, { credentials: "same-origin" });
+      const query = new URLSearchParams({ status });
+      if (q.trim()) query.set("q", q.trim());
+      const response = await fetch(`/api/admin/payments?${query}`, { credentials: "same-origin" });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "خطا در دریافت فیش‌ها");
       setItems((data.items || []) as AdminPaymentRow[]);
@@ -75,18 +65,18 @@ export function AdminPaymentsView() {
       void load();
     }, q ? 250 : 0);
     return () => window.clearTimeout(timer);
-  }, [load, q]);
+  }, [load, q, tick]);
 
   return (
     <div className="admin-stack">
-      <div className="admin-filters">
+      <div className="admin-filters is-scroll">
         {filters.map((item) => (
           <button
             key={item.id}
             type="button"
             className={status === item.id ? "is-active" : undefined}
             onClick={() => {
-              tap();
+              buzz("light");
               setStatus(item.id);
             }}
           >
@@ -99,24 +89,26 @@ export function AdminPaymentsView() {
         className="admin-search"
         value={q}
         onChange={(event) => setQ(event.target.value)}
-        placeholder="جستجو با شماره موبایل"
-        inputMode="tel"
+        placeholder="جستجو با نام یا موبایل"
+        inputMode="search"
       />
 
-      {loading ? <div className="admin-empty">در حال بارگذاری…</div> : null}
+      {loading ? <AdminSkeleton rows={5} /> : null}
       {error ? <div className="admin-empty">{error}</div> : null}
       {!loading && !error && !items.length ? <div className="admin-empty">موردی در این فیلتر نیست.</div> : null}
 
       {!loading && items.length ? (
         <div className="admin-list">
           {items.map((item) => (
-            <Link key={item.phone} href={`/admin/payments/${item.phone}`} className="admin-row">
+            <Link key={item.phone} href={`/admin/payments/${item.phone}`} className="admin-row is-person">
+              <AdminAvatar name={item.name} />
               <span>
                 <strong>{item.name}</strong>
                 <small>
                   {item.phoneDisplay} · {item.amountLabel}
+                  {item.choiceCount ? ` · ${faDigits(String(item.choiceCount))} محصول` : ""}
                   <br />
-                  {timeLabel(item.at)}
+                  {relativeFa(item.status === "pending" ? item.at : item.reviewedAt || item.at)}
                 </small>
               </span>
               <span className={chipClass(item.status)}>{chipLabel(item.status)}</span>

@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { ConfirmSheet, CopyButton, ReceiptZoom, buzz, relativeFa } from "@/components/admin/admin-kit";
+import { useAdminLive } from "@/components/admin/admin-live";
 import { faDigits } from "@/lib/format";
-import { hapticFeedback } from "@tma.js/sdk-react";
 
 type Detail = {
   payment: {
@@ -13,6 +15,7 @@ type Detail = {
     status: "pending" | "approved" | "rejected";
     name: string;
     at: string;
+    reviewedAt: string;
   };
   profile: {
     firstName: string;
@@ -25,21 +28,17 @@ type Detail = {
   receiptUrl: string;
 };
 
-function buzz(kind: "success" | "error" | "warning") {
-  try {
-    if (hapticFeedback.notificationOccurred.isAvailable()) {
-      hapticFeedback.notificationOccurred(kind);
-    }
-  } catch {
-    /* optional */
-  }
+function cardText(card: string) {
+  return faDigits(card.replace(/(\d{4})(?=\d)/g, "$1 "));
 }
 
 export function AdminPaymentDetailView({ phone }: { phone: string }) {
   const router = useRouter();
+  const { refresh } = useAdminLive();
   const [detail, setDetail] = useState<Detail | null>(null);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [ask, setAsk] = useState<"approved" | "rejected" | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -57,6 +56,8 @@ export function AdminPaymentDetailView({ phone }: { phone: string }) {
     };
   }, [phone]);
 
+  const closeAsk = useCallback(() => setAsk(null), []);
+
   async function review(status: "approved" | "rejected") {
     if (pending) return;
     setPending(true);
@@ -71,47 +72,66 @@ export function AdminPaymentDetailView({ phone }: { phone: string }) {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "ثبت نشد");
       buzz(status === "approved" ? "success" : "warning");
+      refresh();
       router.replace("/admin/payments");
       router.refresh();
     } catch (err) {
       buzz("error");
       setError(err instanceof Error ? err.message : "خطا");
       setPending(false);
+      setAsk(null);
     }
   }
 
   if (error && !detail) return <div className="admin-empty">{error}</div>;
   if (!detail) return <div className="admin-empty">در حال بارگذاری فیش…</div>;
 
+  const when = detail.payment.status === "pending" ? detail.payment.at : detail.payment.reviewedAt || detail.payment.at;
+
   return (
     <div className="admin-stack">
       {detail.receiptUrl ? (
-        <div className="admin-receipt-wrap">
+        <ReceiptZoom src={detail.receiptUrl}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img className="admin-receipt" src={detail.receiptUrl} alt="فیش واریزی" />
-        </div>
+        </ReceiptZoom>
       ) : (
         <div className="admin-empty">تصویر فیش موجود نیست.</div>
       )}
 
       <div className="admin-meta">
-        <div>
-          <span>همکار</span>
-          <strong>
-            {detail.payment.name}
-            <br />
-            <span dir="ltr">{detail.payment.phoneDisplay}</span>
-          </strong>
+        <div className="admin-meta-line">
+          <div>
+            <span>همکار</span>
+            <strong>{detail.payment.name}</strong>
+          </div>
+          <Link href={`/admin/partners/${detail.payment.phone}`} className="admin-copy">
+            پرونده
+          </Link>
+        </div>
+        <div className="admin-meta-line">
+          <div>
+            <span>موبایل</span>
+            <strong dir="ltr">{detail.payment.phoneDisplay}</strong>
+          </div>
+          <CopyButton value={detail.payment.phone} label="شماره کپی شد" />
         </div>
         <div>
-          <span>مبلغ</span>
-          <strong>{detail.payment.amountLabel}</strong>
+          <span>مبلغ و زمان</span>
+          <strong>
+            {detail.payment.amountLabel}
+            <br />
+            {relativeFa(when)}
+          </strong>
         </div>
         {detail.profile ? (
           <>
-            <div>
-              <span>شماره کارت</span>
-              <strong dir="ltr">{faDigits(detail.profile.card.replace(/(\d{4})(?=\d)/g, "$1 "))}</strong>
+            <div className="admin-meta-line">
+              <div>
+                <span>شماره کارت</span>
+                <strong dir="ltr">{cardText(detail.profile.card)}</strong>
+              </div>
+              <CopyButton value={detail.profile.card} label="شماره کارت کپی شد" />
             </div>
             <div>
               <span>آدرس</span>
@@ -143,16 +163,18 @@ export function AdminPaymentDetailView({ phone }: { phone: string }) {
             </div>
           ))}
         </section>
-      ) : null}
+      ) : (
+        <div className="admin-empty">محصولی انتخاب نشده است.</div>
+      )}
 
       {error ? <div className="admin-empty">{error}</div> : null}
 
       {detail.payment.status === "pending" ? (
         <div className="admin-actions">
-          <button type="button" className="is-bad" disabled={pending} onClick={() => void review("rejected")}>
+          <button type="button" className="is-bad" disabled={pending} onClick={() => setAsk("rejected")}>
             رد فیش
           </button>
-          <button type="button" className="is-ok" disabled={pending} onClick={() => void review("approved")}>
+          <button type="button" className="is-ok" disabled={pending} onClick={() => setAsk("approved")}>
             تأیید واریز
           </button>
         </div>
@@ -163,8 +185,25 @@ export function AdminPaymentDetailView({ phone }: { phone: string }) {
           }
         >
           {detail.payment.status === "approved" ? "این فیش تأیید شده است." : "این فیش رد شده است."}
+          {when ? ` · ${relativeFa(when)}` : ""}
         </div>
       )}
+
+      {ask ? (
+        <ConfirmSheet
+          title={ask === "approved" ? "تأیید واریز" : "رد فیش"}
+          text={
+            ask === "approved"
+              ? `واریز ${detail.payment.name} به مبلغ ${detail.payment.amountLabel} تأیید شود؟`
+              : `فیش ${detail.payment.name} رد شود؟ همکار می‌تواند فیش تازه بفرستد.`
+          }
+          confirm={ask === "approved" ? "تأیید" : "رد کردن"}
+          tone={ask === "approved" ? "ok" : "bad"}
+          pending={pending}
+          onCancel={closeAsk}
+          onConfirm={() => void review(ask)}
+        />
+      ) : null}
     </div>
   );
 }

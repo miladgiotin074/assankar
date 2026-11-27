@@ -61,16 +61,16 @@ export async function readPayment(phone: string) {
 export async function listPayments(filter: {
   status?: PaymentStatus | "all";
   q?: string;
+  phones?: string[];
   limit?: number;
 }) {
   const limit = Math.min(100, Math.max(1, filter.limit ?? 40));
   const query: Record<string, unknown> = {};
   if (filter.status && filter.status !== "all") query.status = filter.status;
-  const q = filter.q?.trim() || "";
-  if (q) {
-    const digits = q.replace(/\D/g, "");
-    if (digits) query.phone = { $regex: digits };
-  }
+  const phones = (filter.phones || []).filter((phone) => /^09\d{9}$/.test(phone)).slice(0, 80);
+  const digits = (filter.q || "").replace(/\D/g, "");
+  if (phones.length) query.phone = { $in: phones };
+  else if (digits) query.phone = { $regex: digits };
   return (await payments()).find(query).sort({ at: -1 }).limit(limit).toArray();
 }
 

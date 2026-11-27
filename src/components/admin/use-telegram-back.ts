@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { backButton, hapticFeedback } from "@tma.js/sdk-react";
+import { useAdminLive } from "@/components/admin/admin-live";
 
 function parentPath(pathname: string) {
   if (/^\/admin\/payments\/[^/]+$/.test(pathname)) return "/admin/payments";
@@ -14,6 +15,7 @@ function parentPath(pathname: string) {
 export function useTelegramBack() {
   const pathname = usePathname();
   const router = useRouter();
+  const { consumeBack } = useAdminLive();
   const backTo = parentPath(pathname);
 
   useEffect(() => {
@@ -41,6 +43,7 @@ export function useTelegramBack() {
     }
 
     const off = backButton.onClick(() => {
+      if (consumeBack()) return;
       try {
         if (hapticFeedback.impactOccurred.isAvailable()) {
           hapticFeedback.impactOccurred("light");
@@ -59,5 +62,5 @@ export function useTelegramBack() {
         /* optional */
       }
     };
-  }, [backTo, router]);
+  }, [backTo, consumeBack, router]);
 }

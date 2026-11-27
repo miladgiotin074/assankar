@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { AdminAvatar, CopyButton, relativeFa } from "@/components/admin/admin-kit";
 import { faDigits } from "@/lib/format";
 
 type Detail = {
@@ -20,9 +21,15 @@ type Detail = {
     status: "pending" | "approved" | "rejected";
     amountLabel: string;
     phone: string;
+    at: string;
+    reviewedAt: string;
   } | null;
   receiptUrl: string;
 };
+
+function cardText(card: string) {
+  return faDigits(card.replace(/(\d{4})(?=\d)/g, "$1 "));
+}
 
 export function AdminPartnerDetailView({ phone }: { phone: string }) {
   const [detail, setDetail] = useState<Detail | null>(null);
@@ -55,22 +62,36 @@ export function AdminPartnerDetailView({ phone }: { phone: string }) {
         : detail.payment?.status === "pending"
           ? "در انتظار تأیید"
           : "بدون فیش";
+  const payWhen = detail.payment?.reviewedAt || detail.payment?.at || "";
 
   return (
     <div className="admin-stack">
-      <section className="admin-hero">
-        <strong>{detail.name}</strong>
-        <p dir="ltr">{detail.phoneDisplay}</p>
+      <section className="admin-hero is-person">
+        <AdminAvatar name={detail.name} />
+        <div>
+          <strong>{detail.name}</strong>
+          <p dir="ltr">{detail.phoneDisplay}</p>
+        </div>
       </section>
 
       <div className="admin-meta">
+        <div className="admin-meta-line">
+          <div>
+            <span>موبایل</span>
+            <strong dir="ltr">{detail.phoneDisplay}</strong>
+          </div>
+          <CopyButton value={detail.phone} label="شماره کپی شد" />
+        </div>
         <div>
           <span>تاریخ تولد</span>
           <strong>{faDigits(detail.profile.birth)}</strong>
         </div>
-        <div>
-          <span>شماره کارت</span>
-          <strong dir="ltr">{faDigits(detail.profile.card.replace(/(\d{4})(?=\d)/g, "$1 "))}</strong>
+        <div className="admin-meta-line">
+          <div>
+            <span>شماره کارت</span>
+            <strong dir="ltr">{cardText(detail.profile.card)}</strong>
+          </div>
+          <CopyButton value={detail.profile.card} label="شماره کارت کپی شد" />
         </div>
         <div>
           <span>آدرس</span>
@@ -81,27 +102,26 @@ export function AdminPartnerDetailView({ phone }: { phone: string }) {
       <section className="admin-panel">
         <div className="admin-panel-head">
           <h2>محصولات</h2>
+          <p>{detail.choices.length ? `${faDigits(String(detail.choices.length))} مورد` : "هنوز انتخاب نشده"}</p>
         </div>
-        {detail.choices.length ? (
-          detail.choices.map((item) => (
-            <div key={item.productId} className="admin-choice">
-              {item.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={item.image} alt="" />
-              ) : (
-                <span>کالا</span>
-              )}
-              <div>
-                <strong>{item.title}</strong>
-                <small>
-                  {item.label} · {item.amountLabel}
-                </small>
+        {detail.choices.length
+          ? detail.choices.map((item) => (
+              <div key={item.productId} className="admin-choice">
+                {item.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={item.image} alt="" />
+                ) : (
+                  <span>کالا</span>
+                )}
+                <div>
+                  <strong>{item.title}</strong>
+                  <small>
+                    {item.label} · {item.amountLabel}
+                  </small>
+                </div>
               </div>
-            </div>
-          ))
-        ) : (
-          <p>هنوز محصولی انتخاب نشده است.</p>
-        )}
+            ))
+          : null}
       </section>
 
       <section className="admin-panel">
@@ -110,18 +130,18 @@ export function AdminPartnerDetailView({ phone }: { phone: string }) {
           <p>
             {payStatus}
             {detail.payment ? ` · ${detail.payment.amountLabel}` : ""}
+            {payWhen ? ` · ${relativeFa(payWhen)}` : ""}
           </p>
         </div>
-        {detail.payment?.status === "pending" ? (
+        {detail.receiptUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img className="admin-receipt is-inline" src={detail.receiptUrl} alt="فیش واریزی" />
+        ) : null}
+        {detail.payment ? (
           <Link href={`/admin/payments/${detail.payment.phone}`} className="admin-link-row">
-            بررسی فیش
+            {detail.payment.status === "pending" ? "بررسی و تصمیم" : "جزئیات فیش"}
             <span aria-hidden="true">‹</span>
           </Link>
-        ) : detail.receiptUrl ? (
-          <a href={detail.receiptUrl} target="_blank" rel="noopener noreferrer" className="admin-link-row">
-            مشاهده فیش
-            <span aria-hidden="true">‹</span>
-          </a>
         ) : null}
       </section>
     </div>

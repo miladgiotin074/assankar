@@ -13,6 +13,7 @@ export type AdminPaymentRow = {
   at: string;
   reviewedAt: string;
   name: string;
+  choiceCount: number;
 };
 
 export type AdminPartnerRow = {
@@ -20,9 +21,13 @@ export type AdminPartnerRow = {
   phoneDisplay: string;
   name: string;
   hasChoices: boolean;
+  choiceCount: number;
+  choicesAmountLabel: string;
   paymentStatus: PaymentStatus | "none";
   stage: string;
 };
+
+export type PartnerFilter = "all" | "pending" | "approved" | "rejected" | "none" | "no-choices";
 
 export type AdminStats = {
   pendingPayments: number;
@@ -31,6 +36,7 @@ export type AdminStats = {
   rejectedTotal: number;
   partners: number;
   partnersWithoutChoices: number;
+  recent: AdminPaymentRow[];
 };
 
 function nameOf(profile: ProfileRecord | null | undefined) {
@@ -47,7 +53,11 @@ function iso(value: Date | undefined) {
   return value ? new Date(value).toISOString() : "";
 }
 
-function toPaymentRow(payment: PaymentRecord, profile: ProfileRecord | null): AdminPaymentRow {
+function toPaymentRow(
+  payment: PaymentRecord,
+  profile: ProfileRecord | null,
+  choiceCount: number,
+): AdminPaymentRow {
   return {
     phone: payment.phone,
     phoneDisplay: phoneDisplay(payment.phone),
@@ -58,7 +68,13 @@ function toPaymentRow(payment: PaymentRecord, profile: ProfileRecord | null): Ad
     at: iso(payment.at),
     reviewedAt: iso(payment.reviewedAt),
     name: nameOf(profile),
+    choiceCount,
   };
+}
+
+async function hydratePayment(payment: PaymentRecord) {
+  const [profile, choices] = await Promise.all([readProfile(payment.phone), readChoices(payment.phone)]);
+  return toPaymentRow(payment, profile, choices.length);
 }
 
 export async function adminStats(): Promise<AdminStats> {
@@ -69,6 +85,8 @@ export async function adminStats(): Promise<AdminStats> {
     const choices = await readChoices(profile.phone);
     if (!choices.length) withoutChoices += 1;
   }
+  const pendingList = await listPayments({ status: "pending", limit: 6 });
+  const recent = await Promise.all(pendingList.map((payment) => hydratePayment(payment)));
   return {
     pendingPayments: counts.pending,
     approvedToday: counts.approvedToday,
@@ -76,17 +94,29 @@ export async function adminStats(): Promise<AdminStats> {
     rejectedTotal: counts.rejected,
     partners: profiles.length,
     partnersWithoutChoices: withoutChoices,
+    recent,
   };
 }
 
 export async function adminListPayments(status: PaymentStatus | "all" = "pending", q = "") {
-  const payments = await listPayments({ status, q, limit: 50 });
-  const rows: AdminPaymentRow[] = [];
-  for (const payment of payments) {
-    const profile = await readProfile(payment.phone);
-    rows.push(toPaymentRow(payment, profile));
+  const query = q.trim();
+  const digits = query.replace(/\D/g, "");
+  const byName = /[^\d\s]/.test(query);
+  let payments: PaymentRecord[];
+  if (byName) {
+    const profiles = await searchProfiles(query, 40);
+    const phones = profiles.map((profile) => profile.phone);
+    const named = phones.length ? await listPayments({ status, phones, limit: 50 }) : [];
+    const phoned = digits.length >= 3 ? await listPayments({ status, q: digits, limit: 50 }) : [];
+    const merged = new Map<string, PaymentRecord>();
+    for (const item of [...named, ...phoned]) merged.set(item.phone, item);
+    payments = [...merged.values()]
+      .sort((a, b) => +new Date(b.at) - +new Date(a.at))
+      .slice(0, 50);
+  } else {
+    payments = await listPayments({ status, q: query, limit: 50 });
   }
-  return rows;
+  return Promise.all(payments.map((payment) => hydratePayment(payment)));
 }
 
 export async function adminPaymentDetail(phone: string) {
@@ -95,7 +125,7 @@ export async function adminPaymentDetail(phone: string) {
   const profile = await readProfile(phone);
   const choices = await readChoices(phone);
   return {
-    payment: toPaymentRow(payment, profile),
+    payment: toPaymentRow(payment, profile, choices.length),
     profile: profile
       ? {
           firstName: profile.firstName,
@@ -116,8 +146,8 @@ export async function adminPaymentDetail(phone: string) {
   };
 }
 
-export async function adminListPartners(q = "") {
-  const profiles = q.trim() ? await searchProfiles(q, 50) : await listProfiles(50);
+export async function adminListPartners(q = "", stageFilter: PartnerFilter = "all") {
+  const profiles = q.trim() ? await searchProfiles(q, 80) : await listProfiles(80);
   const rows: AdminPartnerRow[] = [];
   for (const profile of profiles) {
     const choices = await readChoices(profile.phone);
@@ -128,16 +158,21 @@ export async function adminListPartners(q = "") {
     else if (paymentStatus === "pending") stage = "منتظر تأیید فیش";
     else if (paymentStatus === "rejected") stage = "فیش رد شده";
     else if (choices.length) stage = "انتخاب محصول";
+    const amount = choices.reduce((sum, item) => sum + item.amount, 0);
     rows.push({
       phone: profile.phone,
       phoneDisplay: phoneDisplay(profile.phone),
       name: nameOf(profile),
       hasChoices: choices.length > 0,
+      choiceCount: choices.length,
+      choicesAmountLabel: amount ? toman(amount) : "",
       paymentStatus,
       stage,
     });
   }
-  return rows;
+  if (stageFilter === "no-choices") return rows.filter((row) => !row.hasChoices);
+  if (stageFilter === "all") return rows;
+  return rows.filter((row) => row.paymentStatus === stageFilter);
 }
 
 export async function adminPartnerDetail(phone: string) {
@@ -163,7 +198,7 @@ export async function adminPartnerDetail(phone: string) {
       amountLabel: toman(item.amount),
       image: item.image,
     })),
-    payment: payment ? toPaymentRow(payment, profile) : null,
+    payment: payment ? toPaymentRow(payment, profile, choices.length) : null,
     receiptUrl: payment?.fileId ? `/api/admin/receipts/${payment.fileId}` : "",
   };
 }
