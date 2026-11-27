@@ -3,13 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { redirect, RedirectType } from "next/navigation";
 import { readChoices } from "@/lib/catalog";
-import { saveReceipt } from "@/lib/payment";
+import { saveReceipt, type PaymentKind } from "@/lib/payment";
 import { hasProfile } from "@/lib/profile";
 import { readSession } from "@/lib/session";
 
 export type PaymentState = { error: string };
 
-export async function submitReceipt(_prev: PaymentState, formData: FormData): Promise<PaymentState> {
+async function submitKind(kind: PaymentKind, formData: FormData): Promise<PaymentState> {
   const session = await readSession();
   if (!session) redirect("/register");
   if (!(await hasProfile(session.phone))) redirect("/account/profile");
@@ -20,10 +20,19 @@ export async function submitReceipt(_prev: PaymentState, formData: FormData): Pr
     return { error: "عکس فیش واریزی را انتخاب کنید." };
   }
 
-  const saved = await saveReceipt(session.phone, file);
+  const saved = await saveReceipt(session.phone, file, kind);
   if (!saved.ok) return { error: saved.error };
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/payment");
+  revalidatePath("/dashboard/insurance");
   redirect("/dashboard", RedirectType.replace);
+}
+
+export async function submitReceipt(_prev: PaymentState, formData: FormData): Promise<PaymentState> {
+  return submitKind("registration", formData);
+}
+
+export async function submitInsuranceReceipt(_prev: PaymentState, formData: FormData): Promise<PaymentState> {
+  return submitKind("insurance", formData);
 }

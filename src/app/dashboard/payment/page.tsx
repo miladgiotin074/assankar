@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 
 export default function PaymentPage() {
   return (
-    <AppShell title="واریز هزینه" titleAs="h1" backHref="/dashboard" variant="form">
+    <AppShell title="واریز ثبت‌نام" titleAs="h1" backHref="/dashboard" variant="form">
       <Suspense fallback={<div className="h-40" />}>
         <PaymentGate />
       </Suspense>
@@ -30,7 +30,7 @@ async function PaymentGate() {
   if (!(await hasProfile(session.phone))) redirect("/account/profile");
   if (!(await readChoices(session.phone)).length) redirect("/dashboard/products");
 
-  const payment = await readPayment(session.phone);
+  const payment = await readPayment(session.phone, "registration");
   const status = payment?.status ?? "none";
   const receiptUrl = payment?.fileId ? `/api/receipts/${payment.fileId}` : "";
 
@@ -38,13 +38,24 @@ async function PaymentGate() {
     <div className="pay-screen">
       <div className="pay-intro">
         <p className="pay-kicker">مرحله واریز</p>
-        <h2 className="pay-title">واریز به کارت و ارسال فیش</h2>
+        <h2 className="pay-title">واریز هزینهٔ ثبت‌نام</h2>
         <p className="pay-lead">
           شماره کارت را کپی کنید، مبلغ ثبت‌نام را واریز کنید و عکس فیش را همین‌جا بفرستید.
         </p>
       </div>
-      <BankCard number={site.payoutCard} holder={site.payoutHolder} bank={site.payoutBank} />
-      <PaymentForm amount={site.registrationFee} status={status} receiptUrl={receiptUrl} />
+      <BankCard
+        number={site.payoutCard}
+        holder={site.payoutHolder}
+        bank={site.payoutBank}
+        purpose="فقط برای واریز هزینهٔ ثبت‌نام آسان‌کار"
+      />
+      <PaymentForm
+        amount={site.registrationFee}
+        status={status}
+        receiptUrl={receiptUrl}
+        title="هزینه ثبت‌نام"
+        nextHint="بعد از تأیید، مرحلهٔ واریز بیمه باز می‌شود."
+      />
     </div>
   );
 }

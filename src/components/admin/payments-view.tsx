@@ -6,7 +6,7 @@ import { AdminAvatar, AdminSkeleton, buzz, relativeFa } from "@/components/admin
 import { useAdminLive } from "@/components/admin/admin-live";
 import { faDigits } from "@/lib/format";
 import type { AdminPaymentRow } from "@/lib/admin";
-import type { PaymentStatus } from "@/lib/payment";
+import type { PaymentKind, PaymentStatus } from "@/lib/payment";
 
 const listCache = new Map<string, AdminPaymentRow[]>();
 
@@ -15,6 +15,12 @@ const filters: { id: PaymentStatus | "all"; label: string }[] = [
   { id: "approved", label: "تأیید" },
   { id: "rejected", label: "رد" },
   { id: "all", label: "همه" },
+];
+
+const kindFilters: { id: PaymentKind | "all"; label: string }[] = [
+  { id: "all", label: "همه نوع" },
+  { id: "registration", label: "ثبت‌نام" },
+  { id: "insurance", label: "بیمه" },
 ];
 
 function chipClass(status: PaymentStatus) {
@@ -36,6 +42,7 @@ function isStatus(value: string): value is PaymentStatus | "all" {
 export function AdminPaymentsView({ statusQuery = "" }: { statusQuery?: string }) {
   const { tick } = useAdminLive();
   const [status, setStatus] = useState<PaymentStatus | "all">(isStatus(statusQuery) ? statusQuery : "pending");
+  const [kind, setKind] = useState<PaymentKind | "all">("all");
   const [q, setQ] = useState("");
   const [items, setItems] = useState<AdminPaymentRow[]>([]);
   const [error, setError] = useState("");
@@ -46,7 +53,7 @@ export function AdminPaymentsView({ statusQuery = "" }: { statusQuery?: string }
   }, [statusQuery]);
 
   const load = useCallback(async () => {
-    const key = `${status}:${q.trim()}`;
+    const key = `${status}:${kind}:${q.trim()}`;
     const hit = listCache.get(key);
     if (hit) {
       setItems(hit);
@@ -56,7 +63,7 @@ export function AdminPaymentsView({ statusQuery = "" }: { statusQuery?: string }
     }
     setError("");
     try {
-      const query = new URLSearchParams({ status });
+      const query = new URLSearchParams({ status, kind });
       if (q.trim()) query.set("q", q.trim());
       const response = await fetch(`/api/admin/payments?${query}`, { credentials: "same-origin" });
       const data = await response.json();
@@ -72,7 +79,7 @@ export function AdminPaymentsView({ statusQuery = "" }: { statusQuery?: string }
     } finally {
       setLoading(false);
     }
-  }, [status, q]);
+  }, [status, kind, q]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -99,6 +106,22 @@ export function AdminPaymentsView({ statusQuery = "" }: { statusQuery?: string }
         ))}
       </div>
 
+      <div className="admin-filters is-scroll">
+        {kindFilters.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className={kind === item.id ? "is-active" : undefined}
+            onClick={() => {
+              buzz("light");
+              setKind(item.id);
+            }}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
       <input
         className="admin-search"
         value={q}
@@ -114,12 +137,16 @@ export function AdminPaymentsView({ statusQuery = "" }: { statusQuery?: string }
       {!loading && items.length ? (
         <div className="admin-list">
           {items.map((item) => (
-            <Link key={item.phone} href={`/admin/payments/detail?phone=${item.phone}`} className="admin-row is-person">
+            <Link
+              key={`${item.phone}:${item.kind}`}
+              href={`/admin/payments/detail?phone=${item.phone}&kind=${item.kind}`}
+              className="admin-row is-person"
+            >
               <AdminAvatar name={item.name} />
               <span>
                 <strong>{item.name}</strong>
                 <small>
-                  {item.phoneDisplay} · {item.amountLabel}
+                  {item.kindLabel} · {item.phoneDisplay} · {item.amountLabel}
                   {item.choiceCount ? ` · ${faDigits(String(item.choiceCount))} محصول` : ""}
                   <br />
                   {relativeFa(item.status === "pending" ? item.at : item.reviewedAt || item.at)}

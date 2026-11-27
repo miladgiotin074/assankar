@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ConfirmSheet, CopyButton, ReceiptZoom, buzz, relativeFa } from "@/components/admin/admin-kit";
 import { useAdminLive } from "@/components/admin/admin-live";
 import { faDigits } from "@/lib/format";
+import type { PaymentKind } from "@/lib/payment";
 
 type Detail = {
   payment: {
@@ -13,6 +14,8 @@ type Detail = {
     phoneDisplay: string;
     amountLabel: string;
     status: "pending" | "approved" | "rejected";
+    kind: PaymentKind;
+    kindLabel: string;
     name: string;
     at: string;
     reviewedAt: string;
@@ -34,22 +37,29 @@ function cardText(card: string) {
 
 const detailCache = new Map<string, Detail>();
 
-export function AdminPaymentDetailView({ phone }: { phone: string }) {
+export function AdminPaymentDetailView({
+  phone,
+  kind = "registration",
+}: {
+  phone: string;
+  kind?: PaymentKind;
+}) {
   const router = useRouter();
   const { refresh } = useAdminLive();
-  const [detail, setDetail] = useState<Detail | null>(detailCache.get(phone) ?? null);
+  const cacheKey = `${phone}:${kind}`;
+  const [detail, setDetail] = useState<Detail | null>(detailCache.get(cacheKey) ?? null);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [ask, setAsk] = useState<"approved" | "rejected" | null>(null);
 
   useEffect(() => {
     let alive = true;
-    fetch(`/api/admin/payments/${phone}`, { credentials: "same-origin" })
+    fetch(`/api/admin/payments/${phone}?kind=${kind}`, { credentials: "same-origin" })
       .then(async (response) => {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "پیدا نشد");
         if (alive) {
-          detailCache.set(phone, data as Detail);
+          detailCache.set(cacheKey, data as Detail);
           setDetail(data as Detail);
         }
       })
@@ -59,7 +69,7 @@ export function AdminPaymentDetailView({ phone }: { phone: string }) {
     return () => {
       alive = false;
     };
-  }, [phone]);
+  }, [phone, kind, cacheKey]);
 
   const closeAsk = useCallback(() => setAsk(null), []);
 
@@ -72,12 +82,12 @@ export function AdminPaymentDetailView({ phone }: { phone: string }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, kind }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "ثبت نشد");
       buzz(status === "approved" ? "success" : "warning");
-      detailCache.delete(phone);
+      detailCache.delete(cacheKey);
       refresh();
       router.replace("/admin/payments");
       router.refresh();
@@ -93,6 +103,7 @@ export function AdminPaymentDetailView({ phone }: { phone: string }) {
   if (!detail) return <div className="admin-empty">در حال بارگذاری فیش…</div>;
 
   const when = detail.payment.status === "pending" ? detail.payment.at : detail.payment.reviewedAt || detail.payment.at;
+  const kindLabel = detail.payment.kindLabel || (kind === "insurance" ? "بیمه" : "ثبت‌نام");
 
   return (
     <div className="admin-stack">
@@ -106,6 +117,10 @@ export function AdminPaymentDetailView({ phone }: { phone: string }) {
       )}
 
       <div className="admin-meta">
+        <div>
+          <span>نوع واریز</span>
+          <strong>{kindLabel}</strong>
+        </div>
         <div className="admin-meta-line">
           <div>
             <span>همکار</span>
@@ -190,18 +205,18 @@ export function AdminPaymentDetailView({ phone }: { phone: string }) {
             detail.payment.status === "approved" ? "admin-status-banner is-ok" : "admin-status-banner is-bad"
           }
         >
-          {detail.payment.status === "approved" ? "این فیش تأیید شده است." : "این فیش رد شده است."}
+          {detail.payment.status === "approved" ? `این فیش ${kindLabel} تأیید شده است.` : `این فیش ${kindLabel} رد شده است.`}
           {when ? ` · ${relativeFa(when)}` : ""}
         </div>
       )}
 
       {ask ? (
         <ConfirmSheet
-          title={ask === "approved" ? "تأیید واریز" : "رد فیش"}
+          title={ask === "approved" ? `تأیید واریز ${kindLabel}` : `رد فیش ${kindLabel}`}
           text={
             ask === "approved"
-              ? `واریز ${detail.payment.name} به مبلغ ${detail.payment.amountLabel} تأیید شود؟`
-              : `فیش ${detail.payment.name} رد شود؟ همکار می‌تواند فیش تازه بفرستد.`
+              ? `واریز ${kindLabel} ${detail.payment.name} به مبلغ ${detail.payment.amountLabel} تأیید شود؟`
+              : `فیش ${kindLabel} ${detail.payment.name} رد شود؟ همکار می‌تواند فیش تازه بفرستد.`
           }
           confirm={ask === "approved" ? "تأیید" : "رد کردن"}
           tone={ask === "approved" ? "ok" : "bad"}

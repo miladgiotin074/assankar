@@ -2,8 +2,10 @@ import { readChoices } from "@/lib/catalog";
 import {
   countPaymentsByStatus,
   listPayments,
+  paymentKindLabel,
   paymentSeries,
   readPayment,
+  type PaymentKind,
   type PaymentRecord,
   type PaymentStatus,
 } from "@/lib/payment";
@@ -16,6 +18,8 @@ export type AdminPaymentRow = {
   amount: number;
   amountLabel: string;
   status: PaymentStatus;
+  kind: PaymentKind;
+  kindLabel: string;
   fileId: string;
   at: string;
   reviewedAt: string;
@@ -31,6 +35,7 @@ export type AdminPartnerRow = {
   choiceCount: number;
   choicesAmountLabel: string;
   paymentStatus: PaymentStatus | "none";
+  insuranceStatus: PaymentStatus | "none";
   stage: string;
 };
 
@@ -79,6 +84,8 @@ function toPaymentRow(
     amount: payment.amount,
     amountLabel: toman(payment.amount),
     status: payment.status,
+    kind: payment.kind,
+    kindLabel: paymentKindLabel(payment.kind),
     fileId: payment.fileId,
     at: iso(payment.at),
     reviewedAt: iso(payment.reviewedAt),
@@ -117,7 +124,11 @@ export async function adminStats(): Promise<AdminStats> {
   };
 }
 
-export async function adminListPayments(status: PaymentStatus | "all" = "pending", q = "") {
+export async function adminListPayments(
+  status: PaymentStatus | "all" = "pending",
+  q = "",
+  kind: PaymentKind | "all" = "all",
+) {
   const query = q.trim();
   const digits = query.replace(/\D/g, "");
   const byName = /[^\d\s]/.test(query);
@@ -125,21 +136,21 @@ export async function adminListPayments(status: PaymentStatus | "all" = "pending
   if (byName) {
     const profiles = await searchProfiles(query, 40);
     const phones = profiles.map((profile) => profile.phone);
-    const named = phones.length ? await listPayments({ status, phones, limit: 50 }) : [];
-    const phoned = digits.length >= 3 ? await listPayments({ status, q: digits, limit: 50 }) : [];
+    const named = phones.length ? await listPayments({ status, kind, phones, limit: 50 }) : [];
+    const phoned = digits.length >= 3 ? await listPayments({ status, kind, q: digits, limit: 50 }) : [];
     const merged = new Map<string, PaymentRecord>();
-    for (const item of [...named, ...phoned]) merged.set(item.phone, item);
+    for (const item of [...named, ...phoned]) merged.set(`${item.phone}:${item.kind}`, item);
     payments = [...merged.values()]
       .sort((a, b) => +new Date(b.at) - +new Date(a.at))
       .slice(0, 50);
   } else {
-    payments = await listPayments({ status, q: query, limit: 50 });
+    payments = await listPayments({ status, kind, q: query, limit: 50 });
   }
   return Promise.all(payments.map((payment) => hydratePayment(payment)));
 }
 
-export async function adminPaymentDetail(phone: string) {
-  const payment = await readPayment(phone);
+export async function adminPaymentDetail(phone: string, kind: PaymentKind = "registration") {
+  const payment = await readPayment(phone, kind);
   if (!payment) return null;
   const profile = await readProfile(phone);
   const choices = await readChoices(phone);
@@ -170,10 +181,15 @@ export async function adminListPartners(q = "", stageFilter: PartnerFilter = "al
   const rows: AdminPartnerRow[] = [];
   for (const profile of profiles) {
     const choices = await readChoices(profile.phone);
-    const payment = await readPayment(profile.phone);
+    const payment = await readPayment(profile.phone, "registration");
+    const insurance = await readPayment(profile.phone, "insurance");
     const paymentStatus = payment?.status ?? "none";
+    const insuranceStatus = insurance?.status ?? "none";
     let stage = "پروفایل";
-    if (paymentStatus === "approved") stage = "واریز تأیید شده";
+    if (insuranceStatus === "approved") stage = "بیمه تأیید شده";
+    else if (insuranceStatus === "pending") stage = "منتظر تأیید بیمه";
+    else if (insuranceStatus === "rejected") stage = "فیش بیمه رد شده";
+    else if (paymentStatus === "approved") stage = "واریز ثبت‌نام تأیید شده";
     else if (paymentStatus === "pending") stage = "منتظر تأیید فیش";
     else if (paymentStatus === "rejected") stage = "فیش رد شده";
     else if (choices.length) stage = "انتخاب محصول";
@@ -186,6 +202,7 @@ export async function adminListPartners(q = "", stageFilter: PartnerFilter = "al
       choiceCount: choices.length,
       choicesAmountLabel: amount ? toman(amount) : "",
       paymentStatus,
+      insuranceStatus,
       stage,
     });
   }
@@ -198,7 +215,8 @@ export async function adminPartnerDetail(phone: string) {
   const profile = await readProfile(phone);
   if (!profile) return null;
   const choices = await readChoices(phone);
-  const payment = await readPayment(phone);
+  const payment = await readPayment(phone, "registration");
+  const insurance = await readPayment(phone, "insurance");
   return {
     phone: profile.phone,
     phoneDisplay: phoneDisplay(profile.phone),
@@ -218,6 +236,8 @@ export async function adminPartnerDetail(phone: string) {
       image: item.image,
     })),
     payment: payment ? toPaymentRow(payment, profile, choices.length) : null,
+    insurance: insurance ? toPaymentRow(insurance, profile, choices.length) : null,
     receiptUrl: payment?.fileId ? `/api/admin/receipts/${payment.fileId}` : "",
+    insuranceReceiptUrl: insurance?.fileId ? `/api/admin/receipts/${insurance.fileId}` : "",
   };
 }

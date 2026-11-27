@@ -24,7 +24,15 @@ type Detail = {
     at: string;
     reviewedAt: string;
   } | null;
+  insurance: {
+    status: "pending" | "approved" | "rejected";
+    amountLabel: string;
+    phone: string;
+    at: string;
+    reviewedAt: string;
+  } | null;
   receiptUrl: string;
+  insuranceReceiptUrl: string;
 };
 
 function cardText(card: string) {
@@ -59,15 +67,16 @@ export function AdminPartnerDetailView({ phone }: { phone: string }) {
   if (error) return <div className="admin-empty">{error}</div>;
   if (!detail) return <div className="admin-empty">در حال بارگذاری…</div>;
 
-  const payStatus =
-    detail.payment?.status === "approved"
+  const statusLabel = (status?: "pending" | "approved" | "rejected") =>
+    status === "approved"
       ? "تأیید شده"
-      : detail.payment?.status === "rejected"
+      : status === "rejected"
         ? "رد شده"
-        : detail.payment?.status === "pending"
+        : status === "pending"
           ? "در انتظار تأیید"
           : "بدون فیش";
   const payWhen = detail.payment?.reviewedAt || detail.payment?.at || "";
+  const insWhen = detail.insurance?.reviewedAt || detail.insurance?.at || "";
 
   return (
     <div className="admin-stack">
@@ -131,20 +140,47 @@ export function AdminPartnerDetailView({ phone }: { phone: string }) {
 
       <section className="admin-panel">
         <div className="admin-panel-head">
-          <h2>وضعیت واریز</h2>
+          <h2>واریز ثبت‌نام</h2>
           <p>
-            {payStatus}
+            {statusLabel(detail.payment?.status)}
             {detail.payment ? ` · ${detail.payment.amountLabel}` : ""}
             {payWhen ? ` · ${relativeFa(payWhen)}` : ""}
           </p>
         </div>
         {detail.receiptUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img className="admin-receipt is-inline" src={detail.receiptUrl} alt="فیش واریزی" />
+          <img className="admin-receipt is-inline" src={detail.receiptUrl} alt="فیش ثبت‌نام" />
         ) : null}
         {detail.payment ? (
-          <Link href={`/admin/payments/detail?phone=${detail.payment.phone}`} className="admin-link-row">
+          <Link
+            href={`/admin/payments/detail?phone=${detail.payment.phone}&kind=registration`}
+            className="admin-link-row"
+          >
             {detail.payment.status === "pending" ? "بررسی و تصمیم" : "جزئیات فیش"}
+            <span aria-hidden="true">‹</span>
+          </Link>
+        ) : null}
+      </section>
+
+      <section className="admin-panel">
+        <div className="admin-panel-head">
+          <h2>واریز بیمه</h2>
+          <p>
+            {statusLabel(detail.insurance?.status)}
+            {detail.insurance ? ` · ${detail.insurance.amountLabel}` : ""}
+            {insWhen ? ` · ${relativeFa(insWhen)}` : ""}
+          </p>
+        </div>
+        {detail.insuranceReceiptUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img className="admin-receipt is-inline" src={detail.insuranceReceiptUrl} alt="فیش بیمه" />
+        ) : null}
+        {detail.insurance ? (
+          <Link
+            href={`/admin/payments/detail?phone=${detail.insurance.phone}&kind=insurance`}
+            className="admin-link-row"
+          >
+            {detail.insurance.status === "pending" ? "بررسی و تصمیم" : "جزئیات فیش"}
             <span aria-hidden="true">‹</span>
           </Link>
         ) : null}

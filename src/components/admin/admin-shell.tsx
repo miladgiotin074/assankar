@@ -99,6 +99,7 @@ function AdminFrame() {
   useTelegramBack();
   const query = new URLSearchParams(search);
   const paymentPhone = pathname === "/admin/payments/detail" ? query.get("phone") || "" : "";
+  const paymentKind = query.get("kind") === "insurance" ? "insurance" : "registration";
   const partnerPhone = pathname === "/admin/partners/detail" ? query.get("phone") || "" : "";
   const detail = Boolean(paymentPhone || partnerPhone);
   const tab = pathname.startsWith("/admin/partners")
@@ -135,8 +136,8 @@ function AdminFrame() {
           <AdminPartnersView stageQuery={query.get("stage") || ""} />
         </section>
         {paymentPhone ? (
-          <section className="admin-layer" key={paymentPhone}>
-            <AdminPaymentDetailView phone={paymentPhone} />
+          <section className="admin-layer" key={`${paymentPhone}:${paymentKind}`}>
+            <AdminPaymentDetailView phone={paymentPhone} kind={paymentKind} />
           </section>
         ) : null}
         {partnerPhone ? (

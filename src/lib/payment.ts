@@ -6,9 +6,11 @@ import { collection } from "@/lib/mongo";
 import { site } from "@/lib/site";
 
 export type PaymentStatus = "pending" | "approved" | "rejected";
+export type PaymentKind = "registration" | "insurance";
 
 export type PaymentRecord = {
   phone: string;
+  kind: PaymentKind;
   amount: number;
   status: PaymentStatus;
   fileId: string;
@@ -34,11 +36,30 @@ function rootDir() {
   return join(process.cwd(), "data", "receipts");
 }
 
+function asKind(value: unknown): PaymentKind {
+  return value === "insurance" ? "insurance" : "registration";
+}
+
+function normalize(doc: PaymentRecord | null) {
+  if (!doc) return null;
+  return { ...doc, kind: asKind(doc.kind) };
+}
+
+function amountFor(kind: PaymentKind) {
+  return kind === "insurance" ? site.insuranceFee : site.registrationFee;
+}
+
 function payments() {
   if (!paymentsReady) {
     paymentsReady = collection<PaymentRecord>("payments")
       .then(async (col) => {
-        await col.createIndex({ phone: 1 }, { unique: true });
+        try {
+          await col.dropIndex("phone_1");
+        } catch {
+          /* old unique phone index may already be gone */
+        }
+        await col.updateMany({ kind: { $exists: false } }, { $set: { kind: "registration" } });
+        await col.createIndex({ phone: 1, kind: 1 }, { unique: true });
         await col.createIndex({ fileId: 1 }, { unique: true });
         return col;
       })
@@ -54,12 +75,24 @@ function safeName(value: string) {
   return value.replace(/[^\u0600-\u06FFa-zA-Z0-9._-]+/g, "-").slice(0, 80);
 }
 
-export async function readPayment(phone: string) {
-  return (await payments()).findOne({ phone });
+export function paymentKindLabel(kind: PaymentKind) {
+  return kind === "insurance" ? "بیمه" : "ثبت‌نام";
+}
+
+export async function readPayment(phone: string, kind: PaymentKind = "registration") {
+  const col = await payments();
+  if (kind === "registration") {
+    const exact = await col.findOne({ phone, kind: "registration" });
+    if (exact) return normalize(exact);
+    const legacy = await col.findOne({ phone, kind: { $exists: false } });
+    return normalize(legacy);
+  }
+  return normalize(await col.findOne({ phone, kind }));
 }
 
 export async function listPayments(filter: {
   status?: PaymentStatus | "all";
+  kind?: PaymentKind | "all";
   q?: string;
   phones?: string[];
   limit?: number;
@@ -67,11 +100,13 @@ export async function listPayments(filter: {
   const limit = Math.min(100, Math.max(1, filter.limit ?? 40));
   const query: Record<string, unknown> = {};
   if (filter.status && filter.status !== "all") query.status = filter.status;
+  if (filter.kind && filter.kind !== "all") query.kind = filter.kind;
   const phones = (filter.phones || []).filter((phone) => /^09\d{9}$/.test(phone)).slice(0, 80);
   const digits = (filter.q || "").replace(/\D/g, "");
   if (phones.length) query.phone = { $in: phones };
   else if (digits) query.phone = { $regex: digits };
-  return (await payments()).find(query).sort({ at: -1 }).limit(limit).toArray();
+  const rows = await (await payments()).find(query).sort({ at: -1 }).limit(limit).toArray();
+  return rows.map((row) => normalize(row)!);
 }
 
 export async function paymentSeries(days = 7) {
@@ -132,19 +167,24 @@ export async function countPaymentsByStatus() {
   return { pending, approved, rejected, approvedToday };
 }
 
-export async function reviewPayment(phone: string, status: "approved" | "rejected", adminTgId: number) {
+export async function reviewPayment(
+  phone: string,
+  status: "approved" | "rejected",
+  adminTgId: number,
+  kind: PaymentKind = "registration",
+) {
   if (!/^09\d{9}$/.test(phone)) {
     return { ok: false as const, error: "شماره معتبر نیست." };
   }
-  const col = await payments();
-  const current = await col.findOne({ phone });
+  const current = await readPayment(phone, kind);
   if (!current) return { ok: false as const, error: "فیشی برای این شماره نیست." };
   if (!current.fileId) return { ok: false as const, error: "فایل فیش پیدا نشد." };
 
-  await col.updateOne(
-    { phone },
+  await (await payments()).updateOne(
+    { phone, kind: current.kind },
     {
       $set: {
+        kind: current.kind,
         status,
         reviewedAt: new Date(),
         reviewedBy: adminTgId,
@@ -155,21 +195,24 @@ export async function reviewPayment(phone: string, status: "approved" | "rejecte
 }
 
 export async function clearPayment(phone: string) {
-  const current = await (await payments()).findOne({ phone });
-  if (current?.storedName) {
-    await rm(join(rootDir(), current.storedName), { force: true });
+  const col = await payments();
+  const rows = await col.find({ phone }).toArray();
+  for (const current of rows) {
+    if (current.storedName) {
+      await rm(join(rootDir(), current.storedName), { force: true });
+    }
   }
-  await (await payments()).deleteOne({ phone });
+  await col.deleteMany({ phone });
 }
 
 export async function readReceiptFile(fileId: string) {
-  const payment = await (await payments()).findOne({ fileId });
+  const payment = normalize(await (await payments()).findOne({ fileId }));
   if (!payment) return null;
   const bytes = await readFile(join(rootDir(), payment.storedName));
   return { payment, bytes };
 }
 
-export async function saveReceipt(phone: string, file: File) {
+export async function saveReceipt(phone: string, file: File, kind: PaymentKind = "registration") {
   const mime = file.type;
   const ext = allowed.get(mime);
   if (!ext) {
@@ -187,19 +230,30 @@ export async function saveReceipt(phone: string, file: File) {
     return { ok: false as const, error: "حجم عکس حداکثر ۵ مگابایت باشد." };
   }
 
-  const existing = await (await payments()).findOne({ phone });
+  if (kind === "insurance") {
+    const registration = await readPayment(phone, "registration");
+    if (registration?.status !== "approved") {
+      return { ok: false as const, error: "اول باید هزینهٔ ثبت‌نام تأیید شده باشد." };
+    }
+  }
+
+  const existing = await readPayment(phone, kind);
   if (existing?.status === "approved") {
     return { ok: false as const, error: "واریز شما قبلاً تأیید شده است." };
   }
 
   await mkdir(rootDir(), { recursive: true });
-  const fileId = createHash("sha256").update(`${phone}:${Date.now()}:${randomBytes(8).toString("hex")}`).digest("hex").slice(0, 32);
+  const fileId = createHash("sha256")
+    .update(`${phone}:${kind}:${Date.now()}:${randomBytes(8).toString("hex")}`)
+    .digest("hex")
+    .slice(0, 32);
   const storedName = `${fileId}.${ext}`;
   await writeFile(join(rootDir(), storedName), buffer);
 
   const record: PaymentRecord = {
     phone,
-    amount: site.registrationFee,
+    kind,
+    amount: amountFor(kind),
     status: "pending",
     fileId,
     storedName,
@@ -210,8 +264,8 @@ export async function saveReceipt(phone: string, file: File) {
   };
 
   await (await payments()).updateOne(
-    { phone },
-    { $set: record, $unset: { reviewedAt: "" } },
+    { phone, kind },
+    { $set: record, $unset: { reviewedAt: "", reviewedBy: "" } },
     { upsert: true },
   );
 

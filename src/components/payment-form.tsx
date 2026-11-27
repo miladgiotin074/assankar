@@ -7,16 +7,24 @@ import { site } from "@/lib/site";
 
 const empty: PaymentState = { error: "" };
 
+type PayAction = (prev: PaymentState, formData: FormData) => Promise<PaymentState>;
+
 export function PaymentForm({
   amount,
   status,
   receiptUrl,
+  title = "هزینه ثبت‌نام",
+  nextHint = "بعد از بررسی فیش، واریز در حساب شما تأیید می‌شود.",
+  action: submitAction = submitReceipt,
 }: {
   amount: number;
   status: "none" | "pending" | "approved" | "rejected";
   receiptUrl: string;
+  title?: string;
+  nextHint?: string;
+  action?: PayAction;
 }) {
-  const [state, action, pending] = useActionState(submitReceipt, empty);
+  const [state, action, pending] = useActionState(submitAction, empty);
   const [preview, setPreview] = useState("");
   const [fileName, setFileName] = useState("");
 
@@ -43,7 +51,7 @@ export function PaymentForm({
         <span className="pay-status-mark" aria-hidden="true" />
         <div>
           <strong>واریز تأیید شد</strong>
-          <p>پشتیبانی فیش شما را بررسی و تأیید کرده است. مرحلهٔ بعدی همکاری باز است.</p>
+          <p>{nextHint}</p>
           {receiptUrl ? (
             <a className="pay-receipt-link" href={receiptUrl} target="_blank" rel="noopener noreferrer">
               مشاهدهٔ فیش ارسال‌شده
@@ -56,9 +64,9 @@ export function PaymentForm({
 
   return (
     <form action={action} className="pay-form">
-      <section className="pay-fee" aria-label="هزینه ثبت‌نام">
+      <section className="pay-fee" aria-label={title}>
         <div className="pay-fee-main">
-          <p>مبلغ قابل واریز</p>
+          <p>{title}</p>
           <strong>{toman(amount)}</strong>
         </div>
         <p className="pay-fee-note">همین مبلغ را دقیقاً به شماره کارت بالا واریز کنید.</p>
@@ -150,7 +158,9 @@ export function PaymentForm({
         {pending ? "در حال ارسال" : status === "pending" ? "ارسال فیش جدید" : "ارسال فیش واریزی"}
       </button>
 
-      <p className="pay-foot">بعد از بررسی فیش، واریز در حساب شما تأیید می‌شود. پشتیبانی: @{site.telegramUser}</p>
+      <p className="pay-foot">
+        {nextHint} پشتیبانی: @{site.telegramUser}
+      </p>
     </form>
   );
 }
@@ -159,10 +169,12 @@ export function BankCard({
   number,
   holder,
   bank,
+  purpose = "فقط برای واریز هزینهٔ ثبت‌نام آسان‌کار",
 }: {
   number: string;
   holder: string;
   bank: string;
+  purpose?: string;
 }) {
   const [spin, setSpin] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -228,7 +240,7 @@ export function BankCard({
             </span>
             <span className="bank-back-note">
               <strong>{bank}</strong>
-              <small>فقط برای واریز هزینهٔ ثبت‌نام آسان‌کار</small>
+              <small>{purpose}</small>
             </span>
           </span>
         </button>
