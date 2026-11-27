@@ -614,14 +614,7 @@ function PayLedger({
           <strong>{toman(halfWage)}</strong>
         </div>
       </div>
-      <footer className="dash-ledger-result">
-        <span>مجموع واریزی منهای ثبت‌نام، به‌اضافهٔ نصف دستمزد</span>
-        <strong className="dash-ledger-sum">
-          <b>{faNum(balance)}</b>
-          <small>تومان</small>
-        </strong>
-      </footer>
-      <div className="dash-ledger-ready">
+      <section className="dash-ledger-payout">
         <div className="dash-ledger-ready-head">
           <span className="dash-ledger-ready-mark" aria-hidden="true">
             <svg viewBox="0 0 24 24">
@@ -641,16 +634,16 @@ function PayLedger({
             <strong>محصولتان ارسال شده است</strong>
           </div>
         </div>
-        <p className="dash-ledger-ready-text">
-          این مبلغ آمادهٔ واریز به حساب شماست. برای تأیید واریز به پشتیبانی پیام دهید.
-        </p>
-        <div className="dash-ledger-ready-pay">
-          <span>مبلغ آمادهٔ واریز</span>
+        <div className="dash-ledger-payout-sum">
+          <span>مجموع واریزی منهای ثبت‌نام، به‌اضافهٔ نصف دستمزد</span>
           <strong className="dash-ledger-sum">
             <b>{faNum(balance)}</b>
             <small>تومان</small>
           </strong>
         </div>
+        <p className="dash-ledger-ready-text">
+          این مبلغ آمادهٔ واریز به حساب شماست. برای تأیید واریز به پشتیبانی پیام دهید.
+        </p>
         <a
           className="dash-ledger-ready-cta"
           href={`https://t.me/${site.telegramUser}?text=${encodeURIComponent(
@@ -662,7 +655,7 @@ function PayLedger({
           پیام به پشتیبانی
           <span aria-hidden="true">‹</span>
         </a>
-      </div>
+      </section>
     </section>
   );
 }

@@ -1169,26 +1169,31 @@ body:has(.app-device.is-home) {
   left: auto;
   bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
   display: grid;
-  width: 3.5rem;
-  height: 3.5rem;
+  width: 3.85rem;
+  height: 3.85rem;
   place-items: center;
-  overflow: hidden;
   border-radius: 999px;
-  background: linear-gradient(145deg, #1270b8 0%, #0c4d86 100%);
+  background:
+    radial-gradient(circle at 32% 22%, rgba(255, 255, 255, 0.38), transparent 36%),
+    linear-gradient(155deg, #1aa56f 0%, #0b86a0 46%, #0c4d86 100%);
   color: #fff;
   box-shadow:
-    0 12px 28px rgba(12, 77, 134, 0.34),
-    0 2px 0 rgba(255, 255, 255, 0.18) inset;
+    0 0 0 6px rgba(12, 122, 150, 0.16),
+    0 16px 30px rgba(12, 77, 134, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 .dash-support-fab svg {
   display: block;
-  width: 1.55rem;
-  height: 1.55rem;
+  width: 1.7rem;
+  height: 1.7rem;
+  filter: drop-shadow(0 2px 3px rgba(8, 44, 82, 0.25));
 }
 
 .dash-support-fab:hover {
-  background: linear-gradient(145deg, #0c4d86 0%, #082c52 100%);
+  background:
+    radial-gradient(circle at 32% 22%, rgba(255, 255, 255, 0.38), transparent 36%),
+    linear-gradient(155deg, #0d7a56 0%, #0c4d86 100%);
 }
 
 .dash-support-fab:active {
@@ -1800,47 +1805,43 @@ body:has(.app-device.is-home) {
   white-space: nowrap;
 }
 
-.dash-ledger-result {
+.dash-ledger-payout {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin: 0 0.7rem 0.75rem;
+  padding: 0.9rem;
+  border: 1px solid #d5e4f0;
+  border-radius: 1.2rem;
+  background: #fff;
+}
+
+.dash-ledger-payout-sum {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 0.35rem;
-  margin: 0 0.7rem 0.55rem;
-  padding: 0.95rem 0.95rem 0.9rem;
-  border-radius: 1.05rem;
+  padding: 0.9rem 0.95rem;
+  border-radius: 1rem;
   background:
-    radial-gradient(80% 140% at 100% 0%, rgba(255, 255, 255, 0.16), transparent 46%),
-    linear-gradient(135deg, #0c4d86 0%, #0a6288 100%);
+    radial-gradient(90% 140% at 100% 0%, rgba(255, 255, 255, 0.18), transparent 46%),
+    linear-gradient(145deg, #0c4d86 0%, #0a6288 58%, #0d7a56 140%);
   color: #fff;
 }
 
-.dash-ledger-result > span {
+.dash-ledger-payout-sum > span {
   color: rgba(255, 255, 255, 0.88);
   font-size: 0.78rem;
   font-weight: 800;
   line-height: 1.75;
 }
 
-.dash-ledger-result .dash-ledger-sum {
+.dash-ledger-payout-sum .dash-ledger-sum {
   color: #fff;
 }
 
-.dash-ledger-result .dash-ledger-sum b {
-  font-size: 1.28rem;
-}
-
-.dash-ledger-ready {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin: 0 0.7rem 0.75rem;
-  padding: 0.95rem;
-  border: 1px solid #cfe6db;
-  border-radius: 1.15rem;
-  background:
-    radial-gradient(120% 90% at 100% 0%, rgba(13, 122, 86, 0.08), transparent 42%),
-    linear-gradient(180deg, #f7fcf9, #eef8f3);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+.dash-ledger-payout-sum .dash-ledger-sum b {
+  font-size: 1.35rem;
 }
 
 .dash-ledger-ready-head {
@@ -1887,31 +1888,6 @@ body:has(.app-device.is-home) {
   font-size: 0.84rem;
   font-weight: 700;
   line-height: 1.85;
-}
-
-.dash-ledger-ready-pay {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.7rem;
-  padding: 0.8rem 0.85rem;
-  border: 1px solid #d5efe4;
-  border-radius: 0.95rem;
-  background: rgba(255, 255, 255, 0.82);
-}
-
-.dash-ledger-ready-pay > span {
-  color: #0b7a52;
-  font-size: 0.8rem;
-  font-weight: 800;
-}
-
-.dash-ledger-ready-pay .dash-ledger-sum {
-  color: #0b7a52;
-}
-
-.dash-ledger-ready-pay .dash-ledger-sum b {
-  font-size: 1.08rem;
 }
 
 .dash-ledger-ready-cta {
