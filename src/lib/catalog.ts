@@ -1,3 +1,4 @@
+import { ObjectId, type WithId } from "mongodb";
 import { toEnglishDigits } from "@/lib/apply";
 import { faNum } from "@/lib/format";
 import { collection } from "@/lib/mongo";
@@ -100,6 +101,11 @@ type ProductDoc = {
   wages?: unknown;
 };
 
+export type AdminProduct = CatalogCard & {
+  active: boolean;
+  order: number;
+};
+
 type ChoiceLine = {
   productId: string;
   quantity: number;
@@ -190,6 +196,20 @@ function card(id: string, doc: ProductDoc): CatalogCard | null {
   return { id, title, image: imageUrl(doc.image), note: text(doc.note, 180), wages: wages(doc.wages) };
 }
 
+function toAdminProduct(doc: WithId<ProductDoc>): AdminProduct | null {
+  const title = text(doc.title, 80);
+  if (!title) return null;
+  return {
+    id: String(doc._id),
+    title,
+    image: imageUrl(doc.image),
+    note: text(doc.note, 180) || packNote,
+    wages: wages(doc.wages),
+    active: doc.active !== false,
+    order: Number.isFinite(Number(doc.order)) ? Number(doc.order) : 0,
+  };
+}
+
 export async function listProducts(): Promise<CatalogCard[]> {
   try {
     const docs = await (await collection<ProductDoc>("products"))
@@ -206,6 +226,102 @@ export async function listProducts(): Promise<CatalogCard[]> {
     return defaultProducts;
   }
   return defaultProducts;
+}
+
+async function ensureCatalogSeed() {
+  const col = await collection<ProductDoc & { _id?: string }>("products");
+  const count = await col.countDocuments();
+  if (count > 0) return;
+  await col.insertMany(
+    defaultProducts.map((item, index) => ({
+      _id: item.id,
+      title: item.title,
+      image: item.image,
+      note: item.note,
+      wages: item.wages,
+      active: true,
+      order: index + 1,
+      at: new Date(),
+    })) as never[],
+  );
+}
+
+export async function listAdminProducts(): Promise<AdminProduct[]> {
+  try {
+    await ensureCatalogSeed();
+    const docs = await (await collection<ProductDoc>("products")).find({}).sort({ order: 1, title: 1 }).limit(80).toArray();
+    return docs.flatMap((doc) => {
+      const item = toAdminProduct(doc);
+      return item ? [item] : [];
+    });
+  } catch {
+    return defaultProducts.map((item, index) => ({ ...item, active: true, order: index + 1 }));
+  }
+}
+
+export async function saveProduct(input: {
+  id?: string;
+  title: string;
+  image: string;
+  note: string;
+  wages: { packs: number; amount: number; label?: string }[];
+  active?: boolean;
+  order?: number;
+}) {
+  const title = text(input.title, 80);
+  if (!title) return { ok: false as const, error: "عنوان محصول را بنویسید." };
+  const image = imageUrl(input.image);
+  const note = text(input.note, 180) || packNote;
+  const wageRows = (input.wages || [])
+    .map((row, index) => {
+      const packs = Number(row.packs);
+      const amount = Number(row.amount);
+      if (!Number.isInteger(packs) || packs <= 0 || !Number.isFinite(amount) || amount < 0) return null;
+      return {
+        packs,
+        amount: Math.round(amount),
+        label: text(row.label, 80) || `هر ${faNum(packs)} بسته`,
+      };
+    })
+    .filter((row): row is WageRow => Boolean(row))
+    .slice(0, 12);
+  if (!wageRows.length) return { ok: false as const, error: "حداقل یک ردیف تعداد و دستمزد لازم است." };
+
+  const payload = {
+    title,
+    image,
+    note,
+    wages: wageRows,
+    active: input.active !== false,
+    order: Number.isFinite(Number(input.order)) ? Number(input.order) : 0,
+    at: new Date(),
+  };
+
+  const col = await collection<ProductDoc>("products");
+  if (input.id) {
+    if (!ObjectId.isValid(input.id) && !defaultProducts.some((item) => item.id === input.id)) {
+      return { ok: false as const, error: "شناسه محصول نامعتبر است." };
+    }
+    if (ObjectId.isValid(input.id)) {
+      await col.updateOne({ _id: new ObjectId(input.id) } as never, { $set: payload }, { upsert: false });
+      return { ok: true as const, id: input.id };
+    }
+    await col.updateOne({ _id: input.id } as never, { $set: payload }, { upsert: true });
+    return { ok: true as const, id: input.id };
+  }
+
+  const inserted = await col.insertOne(payload as never);
+  return { ok: true as const, id: String(inserted.insertedId) };
+}
+
+export async function setProductActive(id: string, active: boolean) {
+  const col = await collection<ProductDoc>("products");
+  if (ObjectId.isValid(id)) {
+    await col.updateOne({ _id: new ObjectId(id) } as never, { $set: { active, at: new Date() } });
+    return { ok: true as const };
+  }
+  await col.updateOne({ _id: id } as never, { $set: { active, at: new Date() } }, { upsert: false });
+  return { ok: true as const };
 }
 
 async function productById(id: string) {

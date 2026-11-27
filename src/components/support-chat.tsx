@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { site } from "@/lib/site";
 
-export function SupportChat() {
+export function SupportChat({ telegramUser = site.telegramUser }: { telegramUser?: string }) {
   const [open, setOpen] = useState(false);
   const titleId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -103,11 +103,11 @@ export function SupportChat() {
                 پشتیبانی آسان‌کار از راه تلگرام و به‌صورت ۲۴ ساعته در دسترس است.
               </p>
               <p className="mt-4 rounded-2xl bg-paper-deep px-4 py-3 text-end text-base font-extrabold text-pine" dir="ltr">
-                @{site.telegramUser}
+                @{telegramUser}
               </p>
               <a
                 className="btn mt-5 w-full"
-                href={`https://t.me/${site.telegramUser}`}
+                href={`https://t.me/${telegramUser}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >

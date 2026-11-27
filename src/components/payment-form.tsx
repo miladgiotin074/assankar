@@ -15,6 +15,7 @@ export function PaymentForm({
   receiptUrl,
   title = "هزینه ثبت‌نام",
   nextHint = "بعد از بررسی فیش، واریز در حساب شما تأیید می‌شود.",
+  telegramUser = site.telegramUser,
   action: submitAction = submitReceipt,
 }: {
   amount: number;
@@ -22,6 +23,7 @@ export function PaymentForm({
   receiptUrl: string;
   title?: string;
   nextHint?: string;
+  telegramUser?: string;
   action?: PayAction;
 }) {
   const [state, action, pending] = useActionState(submitAction, empty);
@@ -159,7 +161,7 @@ export function PaymentForm({
       </button>
 
       <p className="pay-foot">
-        {nextHint} پشتیبانی: @{site.telegramUser}
+        {nextHint} پشتیبانی: @{telegramUser}
       </p>
     </form>
   );

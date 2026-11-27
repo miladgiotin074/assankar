@@ -10,7 +10,8 @@ import { faDigits, faNum, toman } from "@/lib/format";
 import { readPayment, type PaymentRecord, type PaymentStatus } from "@/lib/payment";
 import { formatSheba, hasProfile, readProfile, type ProfileRecord } from "@/lib/profile";
 import { readSession } from "@/lib/session";
-import { heroFlow, site } from "@/lib/site";
+import { getSettings } from "@/lib/settings";
+import { heroFlow } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "داشبورد",
@@ -79,6 +80,7 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
   const shipped = shipStatus === "approved";
   const profile = shipped ? await readProfile(phoneRaw) : null;
   const stages = workStages(ready, choices, regStatus, insStatus, guaStatus, wareStatus, shipStatus);
+  const settings = await getSettings();
 
   return (
     <div className="dash">
@@ -90,6 +92,7 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
             href="/dashboard/payment"
             label="ثبت‌نام"
             nextText="بعد از تأیید، مرحلهٔ واریز بیمه باز می‌شود."
+            telegramUser={settings.telegramUser}
           />
         ) : null}
 
@@ -99,6 +102,7 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
             href="/dashboard/insurance"
             label="بیمه"
             nextText="بعد از تأیید فیش بیمه، مرحلهٔ ضمانت کالا باز می‌شود."
+            telegramUser={settings.telegramUser}
           />
         ) : null}
 
@@ -108,6 +112,7 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
             href="/dashboard/guarantee"
             label="ضمانت کالا"
             nextText="بعد از تأیید فیش ضمانت، مرحلهٔ هزینهٔ انبار باز می‌شود."
+            telegramUser={settings.telegramUser}
           />
         ) : null}
 
@@ -117,6 +122,7 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
             href="/dashboard/warehouse"
             label="انبار"
             nextText="بعد از تأیید فیش انبار، مرحلهٔ هزینهٔ باربری باز می‌شود."
+            telegramUser={settings.telegramUser}
           />
         ) : null}
 
@@ -126,6 +132,7 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
             href="/dashboard/shipping"
             label="باربری"
             nextText="بعد از تأیید فیش باربری، خلاصهٔ مبالغ واریزی در داشبورد می‌آید."
+            telegramUser={settings.telegramUser}
           />
         ) : null}
 
@@ -216,6 +223,7 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
             phone={phoneRaw}
             profile={profile}
             invoiceAt={shipping.reviewedAt || shipping.at}
+            telegramUser={settings.telegramUser}
             registration={registration.amount}
             wage={choices.reduce((sum, item) => sum + item.amount, 0)}
             rows={[
@@ -428,7 +436,7 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
           </ol>
         </section>
 
-        <a className="dash-help" href={`https://t.me/${site.telegramUser}`} target="_blank" rel="noopener noreferrer">
+        <a className="dash-help" href={`https://t.me/${settings.telegramUser}`} target="_blank" rel="noopener noreferrer">
           <span>
             <strong>پشتیبانی</strong>
             <small>تلگرام، ۲۴ ساعته</small>
@@ -438,7 +446,7 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
       </div>
       <a
         className="dash-support-fab"
-        href={`https://t.me/${site.telegramUser}`}
+        href={`https://t.me/${settings.telegramUser}`}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="پشتیبانی"
@@ -454,11 +462,13 @@ function PayWait({
   href,
   label,
   nextText,
+  telegramUser,
 }: {
   payment: PaymentRecord;
   href: string;
   label: string;
   nextText: string;
+  telegramUser: string;
 }) {
   return (
     <section id="dash-next" className="dash-wait" aria-label={`وضعیت واریز ${label}`}>
@@ -515,7 +525,7 @@ function PayWait({
         </Link>
         <a
           className="dash-wait-secondary"
-          href={`https://t.me/${site.telegramUser}`}
+          href={`https://t.me/${telegramUser}`}
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -562,6 +572,7 @@ function PayLedger({
   phone,
   profile,
   invoiceAt,
+  telegramUser,
 }: {
   rows: { label: string; amount: number }[];
   registration: number;
@@ -569,6 +580,7 @@ function PayLedger({
   phone: string;
   profile: ProfileRecord | null;
   invoiceAt: Date | string;
+  telegramUser: string;
 }) {
   const total = rows.reduce((sum, row) => sum + (Number.isFinite(row.amount) ? row.amount : 0), 0);
   const safeWage = Number.isFinite(wage) ? wage : 0;
@@ -693,7 +705,7 @@ function PayLedger({
         </p>
         <a
           className="dash-ledger-ready-cta"
-          href={`https://t.me/${site.telegramUser}?text=${encodeURIComponent(
+          href={`https://t.me/${telegramUser}?text=${encodeURIComponent(
             `سلام، محصولم ارسال شده است.\nشماره فاکتور: ${invoice}\nنام: ${fullName}\nموبایل: ${phone}\nشبا: ${profile?.sheba || "—"}\nمبلغ آماده واریز: ${faNum(balance)} تومان\nلطفاً واریز را تأیید کنید.`,
           )}`}
           target="_blank"

@@ -8,7 +8,7 @@ import { readChoices } from "@/lib/catalog";
 import { readPayment } from "@/lib/payment";
 import { hasProfile } from "@/lib/profile";
 import { readSession } from "@/lib/session";
-import { site } from "@/lib/site";
+import { getSettings } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "واریز هزینه انبار",
@@ -37,6 +37,7 @@ async function WarehouseGate() {
   const payment = await readPayment(session.phone, "warehouse");
   const status = payment?.status ?? "none";
   const receiptUrl = payment?.fileId ? `/api/receipts/${payment.fileId}` : "";
+  const settings = await getSettings();
 
   return (
     <div className="pay-screen">
@@ -48,17 +49,18 @@ async function WarehouseGate() {
         </p>
       </div>
       <BankCard
-        number={site.payoutCard}
-        holder={site.payoutHolder}
-        bank={site.payoutBank}
+        number={settings.payoutCard}
+        holder={settings.payoutHolder}
+        bank={settings.payoutBank}
         purpose="فقط برای واریز هزینهٔ انبار آسان‌کار"
       />
       <PaymentForm
-        amount={site.warehouseFee}
+        amount={settings.warehouseFee}
         status={status}
         receiptUrl={receiptUrl}
         title="هزینه انبار"
         nextHint="بعد از تأیید فیش انبار، مرحلهٔ هزینهٔ باربری باز می‌شود."
+        telegramUser={settings.telegramUser}
         action={submitWarehouseReceipt}
       />
     </div>

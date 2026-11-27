@@ -2,14 +2,16 @@ import type { ReactNode } from "react";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { SupportChat } from "@/components/support-chat";
+import { getSettings } from "@/lib/settings";
 
-export function Frame({
+export async function Frame({
   children,
   hashPrefix = "",
 }: {
   children: ReactNode;
   hashPrefix?: string;
 }) {
+  const settings = await getSettings();
   return (
     <>
       <a className="skip" href="#main">
@@ -20,7 +22,7 @@ export function Frame({
         {children}
       </main>
       <Footer hashPrefix={hashPrefix} />
-      <SupportChat />
+      <SupportChat telegramUser={settings.telegramUser} />
     </>
   );
 }

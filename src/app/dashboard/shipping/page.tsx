@@ -8,7 +8,7 @@ import { readChoices } from "@/lib/catalog";
 import { readPayment } from "@/lib/payment";
 import { hasProfile } from "@/lib/profile";
 import { readSession } from "@/lib/session";
-import { site } from "@/lib/site";
+import { getSettings } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "واریز هزینه باربری",
@@ -37,6 +37,7 @@ async function ShippingGate() {
   const payment = await readPayment(session.phone, "shipping");
   const status = payment?.status ?? "none";
   const receiptUrl = payment?.fileId ? `/api/receipts/${payment.fileId}` : "";
+  const settings = await getSettings();
 
   return (
     <div className="pay-screen">
@@ -48,17 +49,18 @@ async function ShippingGate() {
         </p>
       </div>
       <BankCard
-        number={site.payoutCard}
-        holder={site.payoutHolder}
-        bank={site.payoutBank}
+        number={settings.payoutCard}
+        holder={settings.payoutHolder}
+        bank={settings.payoutBank}
         purpose="فقط برای واریز هزینهٔ باربری آسان‌کار"
       />
       <PaymentForm
-        amount={site.shippingFee}
+        amount={settings.shippingFee}
         status={status}
         receiptUrl={receiptUrl}
         title="هزینه باربری"
         nextHint="بعد از تأیید فیش باربری، خلاصهٔ مبالغ واریزی در داشبورد می‌آید."
+        telegramUser={settings.telegramUser}
         action={submitShippingReceipt}
       />
     </div>

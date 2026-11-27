@@ -7,7 +7,7 @@ import { readChoices } from "@/lib/catalog";
 import { readPayment } from "@/lib/payment";
 import { hasProfile } from "@/lib/profile";
 import { readSession } from "@/lib/session";
-import { site } from "@/lib/site";
+import { getSettings } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "واریز هزینه ثبت‌نام",
@@ -33,6 +33,7 @@ async function PaymentGate() {
   const payment = await readPayment(session.phone, "registration");
   const status = payment?.status ?? "none";
   const receiptUrl = payment?.fileId ? `/api/receipts/${payment.fileId}` : "";
+  const settings = await getSettings();
 
   return (
     <div className="pay-screen">
@@ -44,17 +45,18 @@ async function PaymentGate() {
         </p>
       </div>
       <BankCard
-        number={site.payoutCard}
-        holder={site.payoutHolder}
-        bank={site.payoutBank}
+        number={settings.payoutCard}
+        holder={settings.payoutHolder}
+        bank={settings.payoutBank}
         purpose="فقط برای واریز هزینهٔ ثبت‌نام آسان‌کار"
       />
       <PaymentForm
-        amount={site.registrationFee}
+        amount={settings.registrationFee}
         status={status}
         receiptUrl={receiptUrl}
         title="هزینه ثبت‌نام"
         nextHint="بعد از تأیید، مرحلهٔ واریز بیمه باز می‌شود."
+        telegramUser={settings.telegramUser}
       />
     </div>
   );

@@ -9,6 +9,7 @@ import { AdminPartnerDetailView } from "@/components/admin/partner-detail-view";
 import { AdminPartnersView } from "@/components/admin/partners-view";
 import { AdminPaymentDetailView } from "@/components/admin/payment-detail-view";
 import { AdminPaymentsView } from "@/components/admin/payments-view";
+import { AdminSettingsView } from "@/components/admin/settings-view";
 import { useAdminTelegram } from "@/components/admin/telegram-provider";
 import { useTelegramBack } from "@/components/admin/use-telegram-back";
 import { faDigits } from "@/lib/format";
@@ -46,6 +47,17 @@ function IconPeople() {
   );
 }
 
+function IconSettings() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M19.1 12.9c0-.3 0-.6.1-.9l1.7-1.3c.2-.1.2-.4.1-.6l-1.6-2.8c-.1-.2-.4-.3-.6-.2l-2 .8c-.4-.3-.8-.5-1.3-.7l-.3-2.1c0-.2-.2-.4-.5-.4h-3.2c-.2 0-.5.2-.5.4l-.3 2.1c-.5.2-.9.4-1.3.7l-2-.8c-.2-.1-.5 0-.6.2L4 10.1c-.1.2-.1.5.1.6l1.7 1.3c0 .3 0 .6 0 .9s0 .6-.1.9L4.1 15c-.2.1-.2.4-.1.6l1.6 2.8c.1.2.4.3.6.2l2-.8c.4.3.8.5 1.3.7l.3 2.1c0 .2.2.4.5.4h3.2c.2 0 .5-.2.5-.4l.3-2.1c.5-.2.9-.4 1.3-.7l2 .8c.2.1.5 0 .6-.2l1.6-2.8c.1-.2.1-.5-.1-.6l-1.7-1.3c.1-.3.1-.6.1-.9ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z"
+      />
+    </svg>
+  );
+}
+
 const tabs = [
   { href: "/admin", label: "خانه", icon: <IconHome />, match: (path: string) => path === "/admin" },
   {
@@ -60,6 +72,12 @@ const tabs = [
     icon: <IconPeople />,
     match: (path: string) => path.startsWith("/admin/partners"),
   },
+  {
+    href: "/admin/settings",
+    label: "تنظیمات",
+    icon: <IconSettings />,
+    match: (path: string) => path.startsWith("/admin/settings"),
+  },
 ];
 
 function titleFor(path: string) {
@@ -67,6 +85,7 @@ function titleFor(path: string) {
   if (path.startsWith("/admin/payments")) return "فیش‌ها";
   if (path === "/admin/partners/detail") return "پرونده همکار";
   if (path.startsWith("/admin/partners")) return "همکاران";
+  if (path.startsWith("/admin/settings")) return "تنظیمات";
   return "مدیریت";
 }
 
@@ -113,7 +132,9 @@ function AdminFrame() {
     ? "partners"
     : pathname.startsWith("/admin/payments")
       ? "payments"
-      : "home";
+      : pathname.startsWith("/admin/settings")
+        ? "settings"
+        : "home";
   const badge = pending > 99 ? "۹۹+" : faDigits(String(pending));
 
   return (
@@ -141,6 +162,9 @@ function AdminFrame() {
         </section>
         <section className="admin-pane" hidden={tab !== "partners" || detail}>
           <AdminPartnersView stageQuery={query.get("stage") || ""} />
+        </section>
+        <section className="admin-pane" hidden={tab !== "settings" || detail}>
+          <AdminSettingsView />
         </section>
         {paymentPhone ? (
           <section className="admin-layer" key={`${paymentPhone}:${paymentKind}`}>

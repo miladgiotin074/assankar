@@ -3,7 +3,7 @@ import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Collection } from "mongodb";
 import { collection } from "@/lib/mongo";
-import { site } from "@/lib/site";
+import { getSettings } from "@/lib/settings";
 
 export type PaymentStatus = "pending" | "approved" | "rejected";
 export type PaymentKind = "registration" | "insurance" | "guarantee" | "warehouse" | "shipping";
@@ -49,12 +49,13 @@ function normalize(doc: PaymentRecord | null) {
   return { ...doc, kind: parsePaymentKind(doc.kind) };
 }
 
-function amountFor(kind: PaymentKind) {
-  if (kind === "insurance") return site.insuranceFee;
-  if (kind === "guarantee") return site.guaranteeFee;
-  if (kind === "warehouse") return site.warehouseFee;
-  if (kind === "shipping") return site.shippingFee;
-  return site.registrationFee;
+async function amountFor(kind: PaymentKind) {
+  const settings = await getSettings();
+  if (kind === "insurance") return settings.insuranceFee;
+  if (kind === "guarantee") return settings.guaranteeFee;
+  if (kind === "warehouse") return settings.warehouseFee;
+  if (kind === "shipping") return settings.shippingFee;
+  return settings.registrationFee;
 }
 
 function payments() {
@@ -283,7 +284,7 @@ export async function saveReceipt(phone: string, file: File, kind: PaymentKind =
   const record: PaymentRecord = {
     phone,
     kind,
-    amount: amountFor(kind),
+    amount: await amountFor(kind),
     status: "pending",
     fileId,
     storedName,
