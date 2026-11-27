@@ -1771,7 +1771,7 @@ body:has(.app-device.is-home) {
   flex-direction: column;
   align-items: flex-start;
   gap: 0.35rem;
-  margin: 0 0.7rem 0.75rem;
+  margin: 0 0.7rem 0.55rem;
   padding: 0.95rem 0.95rem 0.9rem;
   border-radius: 1.05rem;
   background:
@@ -1793,6 +1793,47 @@ body:has(.app-device.is-home) {
 
 .dash-ledger-result .dash-ledger-sum b {
   font-size: 1.28rem;
+}
+
+.dash-ledger-ready {
+  margin: 0 0.7rem 0.75rem;
+  padding: 0.95rem 0.95rem 0.9rem;
+  border: 1px solid #d5efe4;
+  border-radius: 1.05rem;
+  background: linear-gradient(180deg, #f8fdfb, #f3faf6);
+}
+
+.dash-ledger-ready-title {
+  margin-top: 0;
+  color: #0b7a52;
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1.6;
+}
+
+.dash-ledger-ready p {
+  margin-top: 0.35rem;
+  color: #245c46;
+  font-size: 0.84rem;
+  font-weight: 700;
+  line-height: 1.85;
+}
+
+.dash-ledger-ready a {
+  display: inline-flex;
+  align-items: center;
+  height: 2.35rem;
+  margin-top: 0.8rem;
+  padding-inline: 0.95rem;
+  border-radius: 999px;
+  background: #0c4d86;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.dash-ledger-ready a:hover {
+  background: #082c52;
 }
 
 .dash-cta-wrap {

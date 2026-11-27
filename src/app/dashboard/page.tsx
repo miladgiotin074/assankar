@@ -612,6 +612,13 @@ function PayLedger({
           <small>تومان</small>
         </strong>
       </footer>
+      <div className="dash-ledger-ready">
+        <p className="dash-ledger-ready-title">محصولتان ارسال شده است</p>
+        <p>این مبلغ آمادهٔ واریز به حساب شماست. برای تأیید واریز به پشتیبانی پیام دهید.</p>
+        <a href={`https://t.me/${site.telegramUser}`} target="_blank" rel="noopener noreferrer">
+          پیام به پشتیبانی
+        </a>
+      </div>
     </section>
   );
 }
