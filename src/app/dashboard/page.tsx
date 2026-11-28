@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { DashScroll } from "@/components/dash-scroll";
@@ -7,7 +8,7 @@ import { logout, resetAccount } from "@/app/account/actions";
 import Link from "next/link";
 import { readChoices, type ChoiceItem } from "@/lib/catalog";
 import { faDigits, faNum, toman } from "@/lib/format";
-import { readPaymentsByPhone, type PaymentRecord, type PaymentStatus } from "@/lib/payment";
+import { readPayment, type PaymentRecord, type PaymentStatus } from "@/lib/payment";
 import { formatSheba, hasProfile, readProfile, type ProfileRecord } from "@/lib/profile";
 import { readSession } from "@/lib/session";
 import { getSettings } from "@/lib/settings";
@@ -62,15 +63,24 @@ async function DashboardGate() {
 }
 
 async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
+  await connection();
   let ready = false;
   let choices: ChoiceItem[] = [];
-  let payments: Awaited<ReturnType<typeof readPaymentsByPhone>> = {};
+  let registration: PaymentRecord | null = null;
+  let insurance: PaymentRecord | null = null;
+  let guarantee: PaymentRecord | null = null;
+  let warehouse: PaymentRecord | null = null;
+  let shipping: PaymentRecord | null = null;
   let settings: Awaited<ReturnType<typeof getSettings>>;
   try {
-    [ready, choices, payments, settings] = await Promise.all([
+    [ready, choices, registration, insurance, guarantee, warehouse, shipping, settings] = await Promise.all([
       hasProfile(phoneRaw),
       readChoices(phoneRaw),
-      readPaymentsByPhone(phoneRaw),
+      readPayment(phoneRaw, "registration"),
+      readPayment(phoneRaw, "insurance"),
+      readPayment(phoneRaw, "guarantee"),
+      readPayment(phoneRaw, "warehouse"),
+      readPayment(phoneRaw, "shipping"),
       getSettings(),
     ]);
   } catch {
@@ -88,11 +98,6 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
       </div>
     );
   }
-  const registration = payments.registration ?? null;
-  const insurance = payments.insurance ?? null;
-  const guarantee = payments.guarantee ?? null;
-  const warehouse = payments.warehouse ?? null;
-  const shipping = payments.shipping ?? null;
   const regStatus = registration?.status ?? "none";
   const insStatus = insurance?.status ?? "none";
   const guaStatus = guarantee?.status ?? "none";
@@ -240,34 +245,6 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
             tone="ok"
             title="واریز انبار تأیید شد"
             text="هزینهٔ انبار تأیید شده است. حالا هزینهٔ باربری را واریز کنید."
-          />
-        ) : null}
-
-        {shipped && shipping ? (
-          <PayLedger
-            phone={phoneRaw}
-            profile={profile}
-            invoiceAt={shipping.reviewedAt || shipping.at}
-            telegramUser={settings.telegramUser}
-            registration={registration?.amount ?? 0}
-            wage={choices.reduce((sum, item) => sum + item.amount, 0)}
-            rows={[
-              ...(registration ? [{ label: "هزینهٔ ثبت‌نام", amount: registration.amount }] : []),
-              ...(insurance ? [{ label: "هزینهٔ بیمه", amount: insurance.amount }] : []),
-              ...(guarantee ? [{ label: "ضمانت کالا", amount: guarantee.amount }] : []),
-              ...(warehouse
-                ? [
-                    {
-                      label: warehouse.optionLabel ? `هزینهٔ انبار · ${warehouse.optionLabel}` : "هزینهٔ انبار",
-                      amount: warehouse.amount,
-                    },
-                  ]
-                : []),
-              {
-                label: shipping.optionLabel ? `هزینهٔ باربری · ${shipping.optionLabel}` : "هزینهٔ باربری",
-                amount: shipping.amount,
-              },
-            ]}
           />
         ) : null}
 
@@ -423,6 +400,34 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
               </span>
             </Link>
           </div>
+        ) : null}
+
+        {shipping?.status === "approved" ? (
+          <PayLedger
+            phone={phoneRaw}
+            profile={profile}
+            invoiceAt={shipping.reviewedAt || shipping.at}
+            telegramUser={settings.telegramUser}
+            registration={registration?.amount ?? 0}
+            wage={choices.reduce((sum, item) => sum + item.amount, 0)}
+            rows={[
+              ...(registration ? [{ label: "هزینهٔ ثبت‌نام", amount: registration.amount }] : []),
+              ...(insurance ? [{ label: "هزینهٔ بیمه", amount: insurance.amount }] : []),
+              ...(guarantee ? [{ label: "ضمانت کالا", amount: guarantee.amount }] : []),
+              ...(warehouse
+                ? [
+                    {
+                      label: warehouse.optionLabel ? `هزینهٔ انبار · ${warehouse.optionLabel}` : "هزینهٔ انبار",
+                      amount: warehouse.amount,
+                    },
+                  ]
+                : []),
+              {
+                label: shipping.optionLabel ? `هزینهٔ باربری · ${shipping.optionLabel}` : "هزینهٔ باربری",
+                amount: shipping.amount,
+              },
+            ]}
+          />
         ) : null}
 
         {chosen ? (
