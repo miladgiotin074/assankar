@@ -341,18 +341,21 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
           </div>
         ) : guaranteed && (wareStatus === "none" || wareStatus === "rejected") ? (
           <div id={wareStatus === "none" ? "dash-next" : undefined} className="dash-cta-wrap is-violet">
-            <Link href="/dashboard/warehouse" className="dash-cta is-violet">
+            <Link href="/dashboard/warehouse" className="dash-cta is-violet is-rich">
               <span className="dash-cta-no" aria-hidden="true">
                 ۶
               </span>
               <span>
                 <span className="dash-cta-kicker">مرحله بعد</span>
                 <strong>واریز هزینهٔ انبار</strong>
-                <small>
-                  {wareStatus === "rejected"
-                    ? "فیش انبار رد شد؛ دوباره واریز و ارسال کنید."
-                    : "مبلغ انبار را واریز کنید و عکس فیش را بفرستید."}
-                </small>
+                {wareStatus === "rejected" ? (
+                  <small>فیش انبار رد شد؛ دوباره واریز و ارسال کنید.</small>
+                ) : (
+                  <small className="dash-cta-note">
+                    <span>این مبلغ برای هزینهٔ انبار محصولات در شهرستان شماست.</span>
+                    <span>همین مبلغ همراه نصف دستمزد، هنگام ارسال محصولات به حسابتان برمی‌گردد.</span>
+                  </small>
+                )}
               </span>
               <span className="dash-cta-go">
                 واریز
