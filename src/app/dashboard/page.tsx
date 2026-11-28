@@ -230,7 +230,10 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
               { label: "هزینهٔ ثبت‌نام", amount: registration.amount },
               { label: "هزینهٔ بیمه", amount: insurance.amount },
               { label: "ضمانت کالا", amount: guarantee.amount },
-              { label: "هزینهٔ انبار", amount: warehouse.amount },
+              {
+                label: warehouse.optionLabel ? `هزینهٔ انبار · ${warehouse.optionLabel}` : "هزینهٔ انبار",
+                amount: warehouse.amount,
+              },
               { label: "هزینهٔ باربری", amount: shipping.amount },
             ]}
           />
@@ -353,6 +356,7 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
                 ) : (
                   <small className="dash-cta-note">
                     <span>این مبلغ برای هزینهٔ انبار محصولات در شهرستان شماست.</span>
+                    <span>مدت ۶ یا ۱۲ ماهه را در صفحهٔ واریز انتخاب می‌کنید.</span>
                     <span>همین مبلغ همراه نصف دستمزد، هنگام ارسال محصولات به حسابتان برمی‌گردد.</span>
                   </small>
                 )}

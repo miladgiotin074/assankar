@@ -17,6 +17,9 @@ export function PaymentForm({
   nextHint = "بعد از بررسی فیش، واریز در حساب شما تأیید می‌شود.",
   telegramUser = site.telegramUser,
   action: submitAction = submitReceipt,
+  options,
+  initialOptionId = "",
+  lockedOptionLabel = "",
 }: {
   amount: number;
   status: "none" | "pending" | "approved" | "rejected";
@@ -25,10 +28,22 @@ export function PaymentForm({
   nextHint?: string;
   telegramUser?: string;
   action?: PayAction;
+  options?: { id: string; label: string; amount: number }[];
+  initialOptionId?: string;
+  lockedOptionLabel?: string;
 }) {
   const [state, action, pending] = useActionState(submitAction, empty);
   const [preview, setPreview] = useState("");
   const [fileName, setFileName] = useState("");
+  const hasOptions = Boolean(options?.length);
+  const [optionId, setOptionId] = useState(
+    () => initialOptionId || options?.[0]?.id || "",
+  );
+  const selected = hasOptions
+    ? options?.find((row) => row.id === optionId) || options?.[0]
+    : undefined;
+  const optionLocked = status === "pending" || status === "approved";
+  const payAmount = hasOptions && !optionLocked ? (selected?.amount ?? amount) : amount;
 
   useEffect(() => {
     return () => {
@@ -54,6 +69,7 @@ export function PaymentForm({
         <div>
           <strong>واریز تأیید شد</strong>
           <p>{nextHint}</p>
+          {lockedOptionLabel ? <p className="pay-option-locked">گزینه: {lockedOptionLabel}</p> : null}
           {receiptUrl ? (
             <a className="pay-receipt-link" href={receiptUrl} target="_blank" rel="noopener noreferrer">
               مشاهدهٔ فیش ارسال‌شده
@@ -66,10 +82,45 @@ export function PaymentForm({
 
   return (
     <form action={action} className="pay-form">
+      {hasOptions ? (
+        <section className="pay-options" aria-label="گزینه مدت انبار">
+          <div className="pay-options-head">
+            <h2>مدت انبار</h2>
+            <span>یکی را انتخاب کنید</span>
+          </div>
+          <div className="pay-options-list" role="radiogroup" aria-label="مدت انبار">
+            {options!.map((row) => {
+              const on = row.id === (selected?.id || "");
+              return (
+                <button
+                  key={row.id}
+                  type="button"
+                  className={on ? "is-on" : undefined}
+                  role="radio"
+                  aria-checked={on}
+                  disabled={optionLocked}
+                  onClick={() => setOptionId(row.id)}
+                >
+                  <span className="pay-option-mark" aria-hidden="true" />
+                  <span className="pay-option-copy">
+                    <span>{row.label}</span>
+                    <strong>{toman(row.amount)}</strong>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          {optionLocked && lockedOptionLabel ? (
+            <p className="pay-fee-note">گزینهٔ ارسال‌شده: {lockedOptionLabel}</p>
+          ) : null}
+          <input type="hidden" name="optionId" value={selected?.id || ""} />
+        </section>
+      ) : null}
+
       <section className="pay-fee" aria-label={title}>
         <div className="pay-fee-main">
-          <p>{title}</p>
-          <strong>{toman(amount)}</strong>
+          <p>{selected ? `${title} · ${selected.label}` : title}</p>
+          <strong>{toman(payAmount)}</strong>
         </div>
         <p className="pay-fee-note">همین مبلغ را دقیقاً به شماره کارت بالا واریز کنید.</p>
       </section>
@@ -82,7 +133,7 @@ export function PaymentForm({
         <ol>
           <li>
             <strong>واریز به کارت</strong>
-            <span>مبلغ {toman(amount)} را به شمارهٔ کپی‌شده واریز کنید.</span>
+            <span>مبلغ {toman(payAmount)} را به شمارهٔ کپی‌شده واریز کنید.</span>
           </li>
           <li>
             <strong>عکس از فیش</strong>

@@ -1,12 +1,19 @@
 import { collection } from "@/lib/mongo";
 import { site } from "@/lib/site";
 
+export type WarehouseOption = {
+  id: string;
+  label: string;
+  amount: number;
+};
+
 export type AppSettings = {
   registrationFee: number;
   insuranceFee: number;
   guaranteeFee: number;
   warehouseFee: number;
   shippingFee: number;
+  warehouseOptions: WarehouseOption[];
   telegramUser: string;
   payoutCard: string;
   payoutHolder: string;
@@ -16,12 +23,19 @@ export type AppSettings = {
 type SettingsDoc = Partial<AppSettings> & { _id: string; at?: Date };
 
 const SETTINGS_ID = "app";
+
+const defaultWarehouseOptions: WarehouseOption[] = [
+  { id: "6m", label: "۶ ماهه", amount: site.warehouseFee },
+  { id: "12m", label: "۱۲ ماهه", amount: site.warehouseFee12 },
+];
+
 const defaults: AppSettings = {
   registrationFee: site.registrationFee,
   insuranceFee: site.insuranceFee,
   guaranteeFee: site.guaranteeFee,
   warehouseFee: site.warehouseFee,
   shippingFee: site.shippingFee,
+  warehouseOptions: defaultWarehouseOptions,
   telegramUser: site.telegramUser,
   payoutCard: site.payoutCard,
   payoutHolder: site.payoutHolder,
@@ -57,13 +71,48 @@ function cardNumber(value: unknown, fallback: string) {
   return digits;
 }
 
+function optionId(value: unknown, fallback: string) {
+  if (typeof value === "string" && /^[a-zA-Z0-9_-]{1,32}$/.test(value.trim())) return value.trim();
+  return fallback;
+}
+
+function warehouseOptions(value: unknown, fallbackFee: number): WarehouseOption[] {
+  if (!Array.isArray(value) || !value.length) {
+    if (fallbackFee > 0) {
+      return [
+        { id: "6m", label: "۶ ماهه", amount: fallbackFee },
+        { id: "12m", label: "۱۲ ماهه", amount: site.warehouseFee12 },
+      ];
+    }
+    return defaultWarehouseOptions.map((row) => ({ ...row }));
+  }
+
+  const seen = new Set<string>();
+  const rows: WarehouseOption[] = [];
+  value.forEach((row, index) => {
+    if (!row || typeof row !== "object") return;
+    const raw = row as Record<string, unknown>;
+    const label = typeof raw.label === "string" ? raw.label.trim().replace(/\s+/g, " ") : "";
+    const amount = money(raw.amount, -1);
+    if (!label || label.length > 48 || amount < 0) return;
+    let id = optionId(raw.id, `opt${index + 1}`);
+    if (seen.has(id)) id = `${id}_${index + 1}`;
+    seen.add(id);
+    rows.push({ id, label, amount });
+  });
+
+  return rows.length ? rows : defaultWarehouseOptions.map((row) => ({ ...row }));
+}
+
 function normalize(doc: Partial<AppSettings> | null | undefined): AppSettings {
+  const options = warehouseOptions(doc?.warehouseOptions, money(doc?.warehouseFee, defaults.warehouseFee));
   return {
     registrationFee: money(doc?.registrationFee, defaults.registrationFee),
     insuranceFee: money(doc?.insuranceFee, defaults.insuranceFee),
     guaranteeFee: money(doc?.guaranteeFee, defaults.guaranteeFee),
-    warehouseFee: money(doc?.warehouseFee, defaults.warehouseFee),
+    warehouseFee: options[0]?.amount ?? defaults.warehouseFee,
     shippingFee: money(doc?.shippingFee, defaults.shippingFee),
+    warehouseOptions: options,
     telegramUser: telegram(doc?.telegramUser, defaults.telegramUser),
     payoutCard: cardNumber(doc?.payoutCard, defaults.payoutCard),
     payoutHolder: text(doc?.payoutHolder, defaults.payoutHolder, 80),
@@ -95,4 +144,8 @@ export async function saveSettings(input: Partial<AppSettings>) {
   ).updateOne({ _id: SETTINGS_ID }, { $set: { ...next, updatedAt: new Date() } }, { upsert: true });
   cache = next;
   return next;
+}
+
+export function findWarehouseOption(settings: AppSettings, optionIdValue: string) {
+  return settings.warehouseOptions.find((row) => row.id === optionIdValue) || settings.warehouseOptions[0] || null;
 }

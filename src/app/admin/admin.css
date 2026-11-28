@@ -1070,6 +1070,18 @@
   margin-top: 0.55rem;
 }
 
+.admin-option-row {
+  grid-template-columns: 1.2fr 1fr auto auto;
+  align-items: center;
+}
+
+.admin-option-row small {
+  color: var(--admin-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .admin-wage-row input {
   min-height: 2.35rem;
   padding: 0.45rem 0.6rem;

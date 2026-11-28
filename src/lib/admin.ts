@@ -20,6 +20,7 @@ export type AdminPaymentRow = {
   status: PaymentStatus;
   kind: PaymentKind;
   kindLabel: string;
+  optionLabel: string;
   fileId: string;
   at: string;
   reviewedAt: string;
@@ -89,6 +90,7 @@ function toPaymentRow(
     status: payment.status,
     kind: payment.kind,
     kindLabel: paymentKindLabel(payment.kind),
+    optionLabel: payment.optionLabel || "",
     fileId: payment.fileId,
     at: iso(payment.at),
     reviewedAt: iso(payment.reviewedAt),

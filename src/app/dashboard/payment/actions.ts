@@ -20,7 +20,8 @@ async function submitKind(kind: PaymentKind, formData: FormData): Promise<Paymen
     return { error: "عکس فیش واریزی را انتخاب کنید." };
   }
 
-  const saved = await saveReceipt(session.phone, file, kind);
+  const optionId = String(formData.get("optionId") ?? "").trim();
+  const saved = await saveReceipt(session.phone, file, kind, optionId);
   if (!saved.ok) return { error: saved.error };
 
   revalidatePath("/dashboard");

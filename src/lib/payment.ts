@@ -3,7 +3,7 @@ import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Collection } from "mongodb";
 import { collection } from "@/lib/mongo";
-import { getSettings } from "@/lib/settings";
+import { findWarehouseOption, getSettings } from "@/lib/settings";
 
 export type PaymentStatus = "pending" | "approved" | "rejected";
 export type PaymentKind = "registration" | "insurance" | "guarantee" | "warehouse" | "shipping";
@@ -29,6 +29,8 @@ export type PaymentRecord = {
   at: Date;
   reviewedAt?: Date;
   reviewedBy?: number;
+  optionId?: string;
+  optionLabel?: string;
 };
 
 const allowed = new Map([
@@ -49,11 +51,14 @@ function normalize(doc: PaymentRecord | null) {
   return { ...doc, kind: parsePaymentKind(doc.kind) };
 }
 
-async function amountFor(kind: PaymentKind) {
+async function amountFor(kind: PaymentKind, optionId = "") {
   const settings = await getSettings();
   if (kind === "insurance") return settings.insuranceFee;
   if (kind === "guarantee") return settings.guaranteeFee;
-  if (kind === "warehouse") return settings.warehouseFee;
+  if (kind === "warehouse") {
+    const option = findWarehouseOption(settings, optionId);
+    return option?.amount ?? settings.warehouseFee;
+  }
   if (kind === "shipping") return settings.shippingFee;
   return settings.registrationFee;
 }
@@ -225,7 +230,12 @@ export async function readReceiptFile(fileId: string) {
   return { payment, bytes };
 }
 
-export async function saveReceipt(phone: string, file: File, kind: PaymentKind = "registration") {
+export async function saveReceipt(
+  phone: string,
+  file: File,
+  kind: PaymentKind = "registration",
+  optionId = "",
+) {
   const mime = file.type;
   const ext = allowed.get(mime);
   if (!ext) {
@@ -273,6 +283,20 @@ export async function saveReceipt(phone: string, file: File, kind: PaymentKind =
     return { ok: false as const, error: "واریز شما قبلاً تأیید شده است." };
   }
 
+  let amount = await amountFor(kind, optionId);
+  let resolvedOptionId: string | undefined;
+  let optionLabel: string | undefined;
+  if (kind === "warehouse") {
+    const settings = await getSettings();
+    const option = findWarehouseOption(settings, optionId);
+    if (!option) {
+      return { ok: false as const, error: "یکی از گزینه‌های مدت انبار را انتخاب کنید." };
+    }
+    amount = option.amount;
+    resolvedOptionId = option.id;
+    optionLabel = option.label;
+  }
+
   await mkdir(rootDir(), { recursive: true });
   const fileId = createHash("sha256")
     .update(`${phone}:${kind}:${Date.now()}:${randomBytes(8).toString("hex")}`)
@@ -284,7 +308,7 @@ export async function saveReceipt(phone: string, file: File, kind: PaymentKind =
   const record: PaymentRecord = {
     phone,
     kind,
-    amount: await amountFor(kind),
+    amount,
     status: "pending",
     fileId,
     storedName,
@@ -292,11 +316,19 @@ export async function saveReceipt(phone: string, file: File, kind: PaymentKind =
     size: buffer.byteLength,
     originalName: safeName(file.name || `receipt.${ext}`),
     at: new Date(),
+    ...(resolvedOptionId ? { optionId: resolvedOptionId, optionLabel } : {}),
   };
 
   await (await payments()).updateOne(
     { phone, kind },
-    { $set: record, $unset: { reviewedAt: "", reviewedBy: "" } },
+    {
+      $set: record,
+      $unset: {
+        reviewedAt: "",
+        reviewedBy: "",
+        ...(kind === "warehouse" ? {} : { optionId: "", optionLabel: "" }),
+      },
+    },
     { upsert: true },
   );
 

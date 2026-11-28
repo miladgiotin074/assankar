@@ -45,7 +45,7 @@ async function WarehouseGate() {
         <p className="pay-kicker">مرحله انبار</p>
         <h2 className="pay-title">واریز هزینهٔ انبار</h2>
         <p className="pay-lead">
-          بعد از تأیید ضمانت کالا، هزینهٔ انبار را به همان کارت واریز کنید و عکس فیش را بفرستید.
+          مدت انبار را انتخاب کنید، مبلغ همان گزینه را به کارت واریز کنید و عکس فیش را بفرستید.
         </p>
       </div>
       <BankCard
@@ -55,13 +55,16 @@ async function WarehouseGate() {
         purpose="فقط برای واریز هزینهٔ انبار آسان‌کار"
       />
       <PaymentForm
-        amount={settings.warehouseFee}
+        amount={payment?.amount ?? settings.warehouseOptions[0]?.amount ?? settings.warehouseFee}
         status={status}
         receiptUrl={receiptUrl}
         title="هزینه انبار"
         nextHint="بعد از تأیید فیش انبار، مرحلهٔ هزینهٔ باربری باز می‌شود."
         telegramUser={settings.telegramUser}
         action={submitWarehouseReceipt}
+        options={settings.warehouseOptions}
+        initialOptionId={payment?.optionId || settings.warehouseOptions[0]?.id || ""}
+        lockedOptionLabel={payment?.optionLabel || ""}
       />
     </div>
   );

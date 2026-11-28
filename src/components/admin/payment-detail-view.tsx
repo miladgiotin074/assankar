@@ -16,6 +16,7 @@ type Detail = {
     status: "pending" | "approved" | "rejected";
     kind: PaymentKind;
     kindLabel: string;
+    optionLabel: string;
     name: string;
     at: string;
     reviewedAt: string;
@@ -126,7 +127,10 @@ export function AdminPaymentDetailView({
       <div className="admin-meta">
         <div>
           <span>نوع واریز</span>
-          <strong>{kindLabel}</strong>
+          <strong>
+            {kindLabel}
+            {detail.payment.optionLabel ? ` · ${detail.payment.optionLabel}` : ""}
+          </strong>
         </div>
         <div className="admin-meta-line">
           <div>
