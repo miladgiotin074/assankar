@@ -65,7 +65,33 @@ log() {
 }
 
 git_app() {
+  git config --global --add safe.directory "${APP_DIR}" >/dev/null 2>&1 || true
   git -c safe.directory="${APP_DIR}" -C "${APP_DIR}" "$@"
+}
+
+free_disk_space() {
+  log "Freeing disk space"
+  apt-get clean >/dev/null 2>&1 || true
+  rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* /tmp/* /var/tmp/* 2>/dev/null || true
+  journalctl --vacuum-size=50M >/dev/null 2>&1 || true
+  if [[ -d "${APP_DIR}" ]]; then
+    rm -rf "${APP_DIR}/.next/cache" 2>/dev/null || true
+    rm -rf /var/lib/assankar/.npm/_cacache 2>/dev/null || true
+  fi
+  df -h / | sed -n '1,2p' || true
+}
+
+ensure_disk_space() {
+  local avail
+  free_disk_space
+  avail="$(df -Pm / | awk 'NR==2 {print $4}')"
+  if [[ -z "${avail}" || "${avail}" -lt 1500 ]]; then
+    echo "Not enough free disk space on /. Need about 1.5GB free."
+    echo "Current free space: ${avail:-0}MB"
+    echo "Free space manually, then rerun: sudo bash deploy.sh"
+    echo "Useful checks: df -h   du -xh / --max-depth=2 | sort -h | tail"
+    exit 1
+  fi
 }
 
 as_app() {
@@ -101,7 +127,12 @@ ensure_swap() {
 
 install_base() {
   log "Installing system packages"
-  apt-get update
+  if ! apt-get update; then
+    echo "apt update failed; cleaning lists and retrying once."
+    rm -rf /var/lib/apt/lists/*
+    apt-get clean >/dev/null 2>&1 || true
+    apt-get update
+  fi
   apt-get install -y ca-certificates curl gnupg git nginx certbot python3-certbot-nginx ufw openssl
 }
 
@@ -488,6 +519,7 @@ start_app() {
 }
 
 install_all() {
+  ensure_disk_space
   ensure_swap
   install_base
   install_node
@@ -512,6 +544,7 @@ install_all() {
 }
 
 update_all() {
+  ensure_disk_space
   read_domain
   ensure_swap
   install_base
