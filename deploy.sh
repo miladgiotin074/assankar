@@ -439,27 +439,29 @@ EOF
 ensure_nginx_streaming() {
   local file="${NGINX_SITE}"
   local tmp
+  local line
+  local patched=0
   if [[ ! -f "${file}" ]]; then
     return
   fi
-  if grep -q 'proxy_buffering off' "${file}"; then
+  if grep -Fq "proxy_buffering off" "${file}"; then
     return
   fi
-  if ! grep -q 'proxy_pass http://127.0.0.1:3000;' "${file}"; then
+  if ! grep -Fq "proxy_pass http://127.0.0.1:3000;" "${file}"; then
     return
   fi
   tmp="$(mktemp)"
-  awk '
-    { print }
-    /proxy_pass http:\/\/127\.0\.0\.1:3000;/ && !done {
-      print "        proxy_buffering off;"
-      print "        proxy_request_buffering off;"
-      print "        proxy_read_timeout 60s;"
-      print "        proxy_send_timeout 60s;"
-      print "        proxy_set_header X-Accel-Buffering no;"
-      done = 1
-    }
-  ' "${file}" > "${tmp}"
+  while IFS= read -r line || [[ -n "${line}" ]]; do
+    printf "%s\n" "${line}"
+    if [[ "${patched}" -eq 0 && "${line}" == *"proxy_pass http://127.0.0.1:3000;"* ]]; then
+      printf "%s\n" "        proxy_buffering off;"
+      printf "%s\n" "        proxy_request_buffering off;"
+      printf "%s\n" "        proxy_read_timeout 60s;"
+      printf "%s\n" "        proxy_send_timeout 60s;"
+      printf "%s\n" "        proxy_set_header X-Accel-Buffering no;"
+      patched=1
+    fi
+  done < "${file}" > "${tmp}"
   mv "${tmp}" "${file}"
   echo "nginx streaming proxy settings applied"
 }
