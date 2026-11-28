@@ -108,6 +108,22 @@ export async function readPayment(phone: string, kind: PaymentKind = "registrati
   return normalize(await col.findOne({ phone, kind }));
 }
 
+export async function readPaymentsByPhone(phone: string) {
+  const col = await payments();
+  const rows = await col.find({ phone }).toArray();
+  const map: Partial<Record<PaymentKind, PaymentRecord>> = {};
+  for (const row of rows) {
+    const hasKind = typeof row.kind === "string";
+    const kind = hasKind ? parsePaymentKind(row.kind) : "registration";
+    const normalized = normalize({ ...row, kind });
+    if (!normalized) continue;
+    if (!map[kind] || (kind === "registration" && hasKind)) {
+      map[kind] = normalized;
+    }
+  }
+  return map;
+}
+
 export async function listPayments(filter: {
   status?: PaymentStatus | "all";
   kind?: PaymentKind | "all";

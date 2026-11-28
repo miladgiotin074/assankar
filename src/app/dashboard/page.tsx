@@ -7,7 +7,7 @@ import { logout, resetAccount } from "@/app/account/actions";
 import Link from "next/link";
 import { readChoices, type ChoiceItem } from "@/lib/catalog";
 import { faDigits, faNum, toman } from "@/lib/format";
-import { readPayment, type PaymentRecord, type PaymentStatus } from "@/lib/payment";
+import { readPaymentsByPhone, type PaymentRecord, type PaymentStatus } from "@/lib/payment";
 import { formatSheba, hasProfile, readProfile, type ProfileRecord } from "@/lib/profile";
 import { readSession } from "@/lib/session";
 import { getSettings } from "@/lib/settings";
@@ -54,33 +54,58 @@ async function DashboardGate() {
 
   return (
     <AppShell variant="home" title="داشبورد" end={<AccountTools phone={phone} />}>
-      <DashboardHome phoneRaw={session.phone} />
+      <Suspense fallback={<div className="dash-fallback" />}>
+        <DashboardHome phoneRaw={session.phone} />
+      </Suspense>
     </AppShell>
   );
 }
 
 async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
-  const ready = await hasProfile(phoneRaw);
-  const choices = ready ? await readChoices(phoneRaw) : [];
-  const chosen = choices.length > 0;
-  const registration = chosen ? await readPayment(phoneRaw, "registration") : null;
+  let ready = false;
+  let choices: ChoiceItem[] = [];
+  let payments: Awaited<ReturnType<typeof readPaymentsByPhone>> = {};
+  let settings: Awaited<ReturnType<typeof getSettings>>;
+  try {
+    [ready, choices, payments, settings] = await Promise.all([
+      hasProfile(phoneRaw),
+      readChoices(phoneRaw),
+      readPaymentsByPhone(phoneRaw),
+      getSettings(),
+    ]);
+  } catch {
+    return (
+      <div className="dash">
+        <div className="dash-sheet">
+          <section className="dash-alert" role="alert">
+            <strong>داشبورد الان در دسترس نیست</strong>
+            <p>ارتباط با سرور قطع یا کند است. چند لحظه بعد دوباره وارد شوید.</p>
+            <Link href="/dashboard" className="btn">
+              تلاش دوباره
+            </Link>
+          </section>
+        </div>
+      </div>
+    );
+  }
+  const chosen = ready && choices.length > 0;
+  const registration = chosen ? payments.registration ?? null : null;
   const regStatus = registration?.status ?? "none";
   const registered = regStatus === "approved";
-  const insurance = registered ? await readPayment(phoneRaw, "insurance") : null;
+  const insurance = registered ? payments.insurance ?? null : null;
   const insStatus = insurance?.status ?? "none";
   const insured = insStatus === "approved";
-  const guarantee = insured ? await readPayment(phoneRaw, "guarantee") : null;
+  const guarantee = insured ? payments.guarantee ?? null : null;
   const guaStatus = guarantee?.status ?? "none";
   const guaranteed = guaStatus === "approved";
-  const warehouse = guaranteed ? await readPayment(phoneRaw, "warehouse") : null;
+  const warehouse = guaranteed ? payments.warehouse ?? null : null;
   const wareStatus = warehouse?.status ?? "none";
   const warehoused = wareStatus === "approved";
-  const shipping = warehoused ? await readPayment(phoneRaw, "shipping") : null;
+  const shipping = warehoused ? payments.shipping ?? null : null;
   const shipStatus = shipping?.status ?? "none";
   const shipped = shipStatus === "approved";
-  const profile = shipped ? await readProfile(phoneRaw) : null;
+  const profile = shipped ? await readProfile(phoneRaw).catch(() => null) : null;
   const stages = workStages(ready, choices, regStatus, insStatus, guaStatus, wareStatus, shipStatus);
-  const settings = await getSettings();
 
   return (
     <div className="dash">

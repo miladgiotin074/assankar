@@ -1205,6 +1205,34 @@ body:has(.app-device.is-home) {
   background: #f3f7fb;
 }
 
+.dash-alert {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-top: 1rem;
+  padding: 1rem 1.05rem;
+  border: 1px solid #f0d7b0;
+  border-radius: 1.2rem;
+  background: #fff8ef;
+}
+
+.dash-alert strong {
+  color: #9a5408;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.dash-alert p {
+  margin: 0;
+  color: #4e6578;
+  font-size: 0.9rem;
+  line-height: 1.8;
+}
+
+.dash-alert .btn {
+  margin-top: 0.25rem;
+}
+
 .dash-sheet {
   display: flex;
   min-height: 0;

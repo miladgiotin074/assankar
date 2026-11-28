@@ -401,10 +401,8 @@ EOF
 }
 
 write_nginx() {
-  if [[ -f "${NGINX_SITE}" ]]; then
-    return
-  fi
-  cat > "${NGINX_SITE}" <<EOF
+  if [[ ! -f "${NGINX_SITE}" ]]; then
+    cat > "${NGINX_SITE}" <<EOF
 server {
     listen 80;
     listen [::]:80;
@@ -415,20 +413,57 @@ server {
     location / {
         proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
+        proxy_buffering off;
+        proxy_request_buffering off;
+        proxy_read_timeout 60s;
+        proxy_send_timeout 60s;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection "upgrade";
+        proxy_set_header X-Accel-Buffering no;
     }
 }
 EOF
-  ln -sfn "${NGINX_SITE}" /etc/nginx/sites-enabled/assankar
-  rm -f /etc/nginx/sites-enabled/default
+    ln -sfn "${NGINX_SITE}" /etc/nginx/sites-enabled/assankar
+    rm -f /etc/nginx/sites-enabled/default
+  fi
+  ensure_nginx_streaming
   nginx -t
   systemctl enable nginx
   systemctl reload nginx
+}
+
+ensure_nginx_streaming() {
+  local file="${NGINX_SITE}"
+  if [[ ! -f "${file}" ]]; then
+    return
+  fi
+  if grep -q 'proxy_buffering off' "${file}"; then
+    return
+  fi
+  python3 - "${file}" <<'PY'
+from pathlib import Path
+import sys
+path = Path(sys.argv[1])
+text = path.read_text()
+needle = "proxy_pass http://127.0.0.1:3000;"
+extra = """proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_buffering off;
+        proxy_request_buffering off;
+        proxy_read_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_set_header X-Accel-Buffering no;"""
+if needle not in text:
+    raise SystemExit(0)
+# Replace only the first bare proxy_pass line occurrence patterns carefully per block
+updated = text.replace(needle, extra)
+path.write_text(updated)
+print("nginx streaming proxy settings applied")
+PY
 }
 
 open_firewall() {
