@@ -90,19 +90,19 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
   }
   const chosen = ready && choices.length > 0;
   const registration = chosen ? payments.registration ?? null : null;
+  const insurance = chosen ? payments.insurance ?? null : null;
+  const guarantee = chosen ? payments.guarantee ?? null : null;
+  const warehouse = chosen ? payments.warehouse ?? null : null;
+  const shipping = chosen ? payments.shipping ?? null : null;
   const regStatus = registration?.status ?? "none";
-  const registered = regStatus === "approved";
-  const insurance = registered ? payments.insurance ?? null : null;
   const insStatus = insurance?.status ?? "none";
-  const insured = insStatus === "approved";
-  const guarantee = insured ? payments.guarantee ?? null : null;
   const guaStatus = guarantee?.status ?? "none";
-  const guaranteed = guaStatus === "approved";
-  const warehouse = guaranteed ? payments.warehouse ?? null : null;
   const wareStatus = warehouse?.status ?? "none";
-  const warehoused = wareStatus === "approved";
-  const shipping = warehoused ? payments.shipping ?? null : null;
   const shipStatus = shipping?.status ?? "none";
+  const registered = regStatus === "approved";
+  const insured = insStatus === "approved";
+  const guaranteed = guaStatus === "approved";
+  const warehoused = wareStatus === "approved";
   const shipped = shipStatus === "approved";
   const profile = shipped ? await readProfile(phoneRaw).catch(() => null) : null;
   const stages = workStages(ready, choices, regStatus, insStatus, guaStatus, wareStatus, shipStatus);
@@ -243,21 +243,21 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
           />
         ) : null}
 
-        {chosen && shipped && registration && insurance && guarantee && warehouse && shipping ? (
+        {chosen && shipped && shipping ? (
           <PayLedger
             phone={phoneRaw}
             profile={profile}
             invoiceAt={shipping.reviewedAt || shipping.at}
             telegramUser={settings.telegramUser}
-            registration={registration.amount}
+            registration={registration?.amount ?? 0}
             wage={choices.reduce((sum, item) => sum + item.amount, 0)}
             rows={[
-              { label: "هزینهٔ ثبت‌نام", amount: registration.amount },
-              { label: "هزینهٔ بیمه", amount: insurance.amount },
-              { label: "ضمانت کالا", amount: guarantee.amount },
+              { label: "هزینهٔ ثبت‌نام", amount: registration?.amount ?? 0 },
+              { label: "هزینهٔ بیمه", amount: insurance?.amount ?? 0 },
+              { label: "ضمانت کالا", amount: guarantee?.amount ?? 0 },
               {
-                label: warehouse.optionLabel ? `هزینهٔ انبار · ${warehouse.optionLabel}` : "هزینهٔ انبار",
-                amount: warehouse.amount,
+                label: warehouse?.optionLabel ? `هزینهٔ انبار · ${warehouse.optionLabel}` : "هزینهٔ انبار",
+                amount: warehouse?.amount ?? 0,
               },
               {
                 label: shipping.optionLabel ? `هزینهٔ باربری · ${shipping.optionLabel}` : "هزینهٔ باربری",
@@ -896,6 +896,13 @@ function workStages(
         "مبلغ باربری را واریز کنید و عکس فیش را بفرستید.",
       ),
       tone: payTone(shipStatus),
+    });
+  }
+  if (shipped) {
+    stages.push({
+      title: "خلاصه و فاکتور",
+      text: "شماره فاکتور، مجموع واریزی‌ها و مبلغ آماده واریز.",
+      tone: "is-done",
     });
   }
 
