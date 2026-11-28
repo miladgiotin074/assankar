@@ -293,18 +293,21 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
           </div>
         ) : registered && (insStatus === "none" || insStatus === "rejected") ? (
           <div id={insStatus === "none" ? "dash-next" : undefined} className="dash-cta-wrap is-violet">
-            <Link href="/dashboard/insurance" className="dash-cta is-violet">
+            <Link href="/dashboard/insurance" className="dash-cta is-violet is-rich">
               <span className="dash-cta-no" aria-hidden="true">
                 ۴
               </span>
               <span>
                 <span className="dash-cta-kicker">مرحله بعد</span>
                 <strong>واریز هزینهٔ بیمه</strong>
-                <small>
-                  {insStatus === "rejected"
-                    ? "فیش بیمه رد شد؛ دوباره واریز و ارسال کنید."
-                    : "مبلغ بیمه را واریز کنید و عکس فیش را بفرستید."}
-                </small>
+                {insStatus === "rejected" ? (
+                  <small>فیش بیمه رد شد؛ دوباره واریز و ارسال کنید.</small>
+                ) : (
+                  <small className="dash-cta-note">
+                    <span>در صورت آسیب محصول در مسیر، بیمه پاسخگو است نه شما.</span>
+                    <span>همین مبلغ همراه نصف دستمزد، هنگام ارسال محصولات به حسابتان برمی‌گردد.</span>
+                  </small>
+                )}
               </span>
               <span className="dash-cta-go">
                 واریز

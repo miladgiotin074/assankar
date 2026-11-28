@@ -2071,6 +2071,42 @@ body:has(.app-device.is-home) {
   line-height: 1.7;
 }
 
+.dash-cta.is-rich {
+  align-items: start;
+  padding-block: 1rem;
+}
+
+.dash-cta.is-rich .dash-cta-no,
+.dash-cta.is-rich .dash-cta-go {
+  margin-top: 0.15rem;
+}
+
+.dash-cta-note {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-top: 0.4rem;
+}
+
+.dash-cta-note span {
+  position: relative;
+  padding-inline-start: 0.75rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.78rem;
+  line-height: 1.75;
+}
+
+.dash-cta-note span::before {
+  content: "";
+  position: absolute;
+  top: 0.55rem;
+  inset-inline-start: 0;
+  width: 0.28rem;
+  height: 0.28rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+}
+
 .dash-cta-go {
   display: inline-flex;
   align-items: center;
