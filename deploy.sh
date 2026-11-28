@@ -438,32 +438,30 @@ EOF
 
 ensure_nginx_streaming() {
   local file="${NGINX_SITE}"
+  local tmp
   if [[ ! -f "${file}" ]]; then
     return
   fi
   if grep -q 'proxy_buffering off' "${file}"; then
     return
   fi
-  python3 - "${file}" <<'PY'
-from pathlib import Path
-import sys
-path = Path(sys.argv[1])
-text = path.read_text()
-needle = "proxy_pass http://127.0.0.1:3000;"
-extra = """proxy_pass http://127.0.0.1:3000;
-        proxy_http_version 1.1;
-        proxy_buffering off;
-        proxy_request_buffering off;
-        proxy_read_timeout 60s;
-        proxy_send_timeout 60s;
-        proxy_set_header X-Accel-Buffering no;"""
-if needle not in text:
-    raise SystemExit(0)
-# Replace only the first bare proxy_pass line occurrence patterns carefully per block
-updated = text.replace(needle, extra)
-path.write_text(updated)
-print("nginx streaming proxy settings applied")
-PY
+  if ! grep -q 'proxy_pass http://127.0.0.1:3000;' "${file}"; then
+    return
+  fi
+  tmp="$(mktemp)"
+  awk '
+    { print }
+    /proxy_pass http:\/\/127\.0\.0\.1:3000;/ && !done {
+      print "        proxy_buffering off;"
+      print "        proxy_request_buffering off;"
+      print "        proxy_read_timeout 60s;"
+      print "        proxy_send_timeout 60s;"
+      print "        proxy_set_header X-Accel-Buffering no;"
+      done = 1
+    }
+  ' "${file}" > "${tmp}"
+  mv "${tmp}" "${file}"
+  echo "nginx streaming proxy settings applied"
 }
 
 open_firewall() {
