@@ -317,18 +317,21 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
           </div>
         ) : insured && (guaStatus === "none" || guaStatus === "rejected") ? (
           <div id={guaStatus === "none" ? "dash-next" : undefined} className="dash-cta-wrap is-violet">
-            <Link href="/dashboard/guarantee" className="dash-cta is-violet">
+            <Link href="/dashboard/guarantee" className="dash-cta is-violet is-rich">
               <span className="dash-cta-no" aria-hidden="true">
                 ۵
               </span>
               <span>
                 <span className="dash-cta-kicker">مرحله بعد</span>
                 <strong>واریز ضمانت کالا</strong>
-                <small>
-                  {guaStatus === "rejected"
-                    ? "فیش ضمانت رد شد؛ دوباره واریز و ارسال کنید."
-                    : "مبلغ ضمانت کالا را واریز کنید و عکس فیش را بفرستید."}
-                </small>
+                {guaStatus === "rejected" ? (
+                  <small>فیش ضمانت رد شد؛ دوباره واریز و ارسال کنید.</small>
+                ) : (
+                  <small className="dash-cta-note">
+                    <span>این مبلغ برای ضمانت کالا و اطمینان شرکت نسبت به کارجوی گرامی است.</span>
+                    <span>همین مبلغ همراه نصف دستمزد، هنگام ارسال محصولات به حسابتان برمی‌گردد.</span>
+                  </small>
+                )}
               </span>
               <span className="dash-cta-go">
                 واریز
