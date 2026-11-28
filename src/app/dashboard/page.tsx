@@ -116,6 +116,38 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
     <div className="dash">
       <DashScroll />
       <div className="dash-sheet">
+        {shipped ? (
+          <PayLedger
+            phone={phoneRaw}
+            profile={profile}
+            invoiceAt={shipping?.reviewedAt || shipping?.at || new Date()}
+            telegramUser={settings.telegramUser}
+            registration={registration?.amount ?? 0}
+            wage={choices.reduce((sum, item) => sum + item.amount, 0)}
+            rows={[
+              ...(registration ? [{ label: "هزینهٔ ثبت‌نام", amount: registration.amount }] : []),
+              ...(insurance ? [{ label: "هزینهٔ بیمه", amount: insurance.amount }] : []),
+              ...(guarantee ? [{ label: "ضمانت کالا", amount: guarantee.amount }] : []),
+              ...(warehouse
+                ? [
+                    {
+                      label: warehouse.optionLabel ? `هزینهٔ انبار · ${warehouse.optionLabel}` : "هزینهٔ انبار",
+                      amount: warehouse.amount,
+                    },
+                  ]
+                : []),
+              ...(shipping
+                ? [
+                    {
+                      label: shipping.optionLabel ? `هزینهٔ باربری · ${shipping.optionLabel}` : "هزینهٔ باربری",
+                      amount: shipping.amount,
+                    },
+                  ]
+                : []),
+            ]}
+          />
+        ) : null}
+
         {chosen && regStatus === "pending" && registration ? (
           <PayWait
             payment={registration}
@@ -402,35 +434,7 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
           </div>
         ) : null}
 
-        {shipping?.status === "approved" ? (
-          <PayLedger
-            phone={phoneRaw}
-            profile={profile}
-            invoiceAt={shipping.reviewedAt || shipping.at}
-            telegramUser={settings.telegramUser}
-            registration={registration?.amount ?? 0}
-            wage={choices.reduce((sum, item) => sum + item.amount, 0)}
-            rows={[
-              ...(registration ? [{ label: "هزینهٔ ثبت‌نام", amount: registration.amount }] : []),
-              ...(insurance ? [{ label: "هزینهٔ بیمه", amount: insurance.amount }] : []),
-              ...(guarantee ? [{ label: "ضمانت کالا", amount: guarantee.amount }] : []),
-              ...(warehouse
-                ? [
-                    {
-                      label: warehouse.optionLabel ? `هزینهٔ انبار · ${warehouse.optionLabel}` : "هزینهٔ انبار",
-                      amount: warehouse.amount,
-                    },
-                  ]
-                : []),
-              {
-                label: shipping.optionLabel ? `هزینهٔ باربری · ${shipping.optionLabel}` : "هزینهٔ باربری",
-                amount: shipping.amount,
-              },
-            ]}
-          />
-        ) : null}
-
-        {chosen ? (
+        {chosen && !shipped ? (
           <section className="dash-picks" aria-label="محصولات انتخاب‌شده">
             <div className="dash-picks-head">
               <div>
@@ -911,15 +915,15 @@ function workStages(
     stages.push({
       title: "خلاصه و فاکتور",
       text: "شماره فاکتور، مجموع واریزی‌ها و مبلغ آماده واریز.",
-      tone: "is-done",
+      tone: "is-open",
     });
   }
 
-  heroFlow.slice(1).forEach((step, index) => {
+  heroFlow.slice(1).forEach((step) => {
     stages.push({
       title: step.title,
       text: step.text,
-      tone: !shipped ? "is-wait" : index === 0 ? "is-open" : "is-wait",
+      tone: "is-wait",
     });
   });
 
