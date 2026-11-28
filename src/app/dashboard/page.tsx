@@ -88,12 +88,11 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
       </div>
     );
   }
-  const chosen = ready && choices.length > 0;
-  const registration = chosen ? payments.registration ?? null : null;
-  const insurance = chosen ? payments.insurance ?? null : null;
-  const guarantee = chosen ? payments.guarantee ?? null : null;
-  const warehouse = chosen ? payments.warehouse ?? null : null;
-  const shipping = chosen ? payments.shipping ?? null : null;
+  const registration = payments.registration ?? null;
+  const insurance = payments.insurance ?? null;
+  const guarantee = payments.guarantee ?? null;
+  const warehouse = payments.warehouse ?? null;
+  const shipping = payments.shipping ?? null;
   const regStatus = registration?.status ?? "none";
   const insStatus = insurance?.status ?? "none";
   const guaStatus = guarantee?.status ?? "none";
@@ -104,7 +103,8 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
   const guaranteed = guaStatus === "approved";
   const warehoused = wareStatus === "approved";
   const shipped = shipStatus === "approved";
-  const profile = shipped ? await readProfile(phoneRaw).catch(() => null) : null;
+  const chosen = Boolean(choices.length > 0 || registration || insurance || guarantee || warehouse || shipping);
+  const profile = shipped || ready ? await readProfile(phoneRaw).catch(() => null) : null;
   const stages = workStages(ready, choices, regStatus, insStatus, guaStatus, wareStatus, shipStatus);
 
   return (
@@ -243,7 +243,7 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
           />
         ) : null}
 
-        {chosen && shipped && shipping ? (
+        {shipped && shipping ? (
           <PayLedger
             phone={phoneRaw}
             profile={profile}
@@ -252,13 +252,17 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
             registration={registration?.amount ?? 0}
             wage={choices.reduce((sum, item) => sum + item.amount, 0)}
             rows={[
-              { label: "هزینهٔ ثبت‌نام", amount: registration?.amount ?? 0 },
-              { label: "هزینهٔ بیمه", amount: insurance?.amount ?? 0 },
-              { label: "ضمانت کالا", amount: guarantee?.amount ?? 0 },
-              {
-                label: warehouse?.optionLabel ? `هزینهٔ انبار · ${warehouse.optionLabel}` : "هزینهٔ انبار",
-                amount: warehouse?.amount ?? 0,
-              },
+              ...(registration ? [{ label: "هزینهٔ ثبت‌نام", amount: registration.amount }] : []),
+              ...(insurance ? [{ label: "هزینهٔ بیمه", amount: insurance.amount }] : []),
+              ...(guarantee ? [{ label: "ضمانت کالا", amount: guarantee.amount }] : []),
+              ...(warehouse
+                ? [
+                    {
+                      label: warehouse.optionLabel ? `هزینهٔ انبار · ${warehouse.optionLabel}` : "هزینهٔ انبار",
+                      amount: warehouse.amount,
+                    },
+                  ]
+                : []),
               {
                 label: shipping.optionLabel ? `هزینهٔ باربری · ${shipping.optionLabel}` : "هزینهٔ باربری",
                 amount: shipping.amount,

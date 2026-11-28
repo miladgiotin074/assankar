@@ -328,6 +328,21 @@ async function productById(id: string) {
   return (await listProducts()).find((item) => item.id === id) ?? null;
 }
 
+async function productByIdAny(id: string) {
+  const active = await productById(id);
+  if (active) return active;
+  try {
+    const col = await collection<ProductDoc>("products");
+    const doc = ObjectId.isValid(id)
+      ? await col.findOne({ _id: new ObjectId(id) } as never)
+      : await col.findOne({ _id: id } as never);
+    if (!doc) return defaultProducts.find((item) => item.id === id) ?? null;
+    return card(String(doc._id), doc);
+  } catch {
+    return defaultProducts.find((item) => item.id === id) ?? null;
+  }
+}
+
 export async function readChoices(phone: string): Promise<ChoiceItem[]> {
   const doc = await (await choicesReady()).findOne({ phone });
   const lines = linesFromDoc(doc);
@@ -335,7 +350,7 @@ export async function readChoices(phone: string): Promise<ChoiceItem[]> {
 
   const resolved = await Promise.all(
     lines.map(async (line) => {
-      const item = await productById(line.productId);
+      const item = await productByIdAny(line.productId);
       const row = item?.wages.find((wage) => wage.packs === line.quantity);
       if (!item || !row) return null;
       return {
