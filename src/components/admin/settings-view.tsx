@@ -90,6 +90,9 @@ export function AdminSettingsView() {
           warehouseOptions: settings.warehouseOptions
             .map((row) => ({ ...row, label: row.label.trim() }))
             .filter((row) => row.label),
+          shippingOptions: settings.shippingOptions
+            .map((row) => ({ ...row, label: row.label.trim() }))
+            .filter((row) => row.label),
         }),
       });
       const data = await response.json();
@@ -172,7 +175,6 @@ export function AdminSettingsView() {
               ["registrationFee", "ثبت‌نام"],
               ["insuranceFee", "بیمه"],
               ["guaranteeFee", "ضمانت کالا"],
-              ["shippingFee", "باربری"],
             ] as const
           ).map(([key, label]) => (
             <label key={key} className="admin-field">
@@ -249,6 +251,76 @@ export function AdminSettingsView() {
                   ...settings.warehouseOptions,
                   {
                     id: `opt${Date.now().toString(36)}`,
+                    label: "",
+                    amount: 0,
+                  },
+                ],
+              })
+            }
+          >
+            افزودن گزینه
+          </button>
+        </div>
+      </section>
+
+      <section className="admin-panel">
+        <div className="admin-panel-head">
+          <h2>گزینه‌های هزینهٔ باربری</h2>
+          <p>مدت و مبلغ را ویرایش، اضافه یا حذف کنید</p>
+        </div>
+        <div className="admin-wage-box">
+          {(settings.shippingOptions || []).map((row, index) => (
+            <div key={`${row.id}-${index}`} className="admin-wage-row admin-option-row">
+              <input
+                placeholder="عنوان (مثل ۶ ماهه)"
+                value={row.label}
+                onChange={(event) => {
+                  const shippingOptions = [...settings.shippingOptions];
+                  shippingOptions[index] = { ...row, label: event.target.value };
+                  setSettings({ ...settings, shippingOptions });
+                }}
+              />
+              <input
+                dir="ltr"
+                inputMode="numeric"
+                placeholder="مبلغ"
+                value={moneyInput(row.amount)}
+                onChange={(event) => {
+                  const shippingOptions = [...settings.shippingOptions];
+                  shippingOptions[index] = {
+                    ...row,
+                    amount: Number(event.target.value.replace(/\D/g, "") || 0),
+                  };
+                  setSettings({ ...settings, shippingOptions });
+                }}
+              />
+              <small>{faNum(row.amount)} تومان</small>
+              {settings.shippingOptions.length > 1 ? (
+                <button
+                  type="button"
+                  className="admin-link-btn"
+                  onClick={() =>
+                    setSettings({
+                      ...settings,
+                      shippingOptions: settings.shippingOptions.filter((_, i) => i !== index),
+                    })
+                  }
+                >
+                  حذف
+                </button>
+              ) : null}
+            </div>
+          ))}
+          <button
+            type="button"
+            className="admin-link-btn"
+            onClick={() =>
+              setSettings({
+                ...settings,
+                shippingOptions: [
+                  ...(settings.shippingOptions || []),
+                  {
+                    id: `ship${Date.now().toString(36)}`,
                     label: "",
                     amount: 0,
                   },

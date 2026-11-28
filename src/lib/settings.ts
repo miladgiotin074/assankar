@@ -1,11 +1,14 @@
 import { collection } from "@/lib/mongo";
 import { site } from "@/lib/site";
 
-export type WarehouseOption = {
+export type FeeOption = {
   id: string;
   label: string;
   amount: number;
 };
+
+/** @deprecated use FeeOption */
+export type WarehouseOption = FeeOption;
 
 export type AppSettings = {
   registrationFee: number;
@@ -13,7 +16,8 @@ export type AppSettings = {
   guaranteeFee: number;
   warehouseFee: number;
   shippingFee: number;
-  warehouseOptions: WarehouseOption[];
+  warehouseOptions: FeeOption[];
+  shippingOptions: FeeOption[];
   telegramUser: string;
   payoutCard: string;
   payoutHolder: string;
@@ -24,9 +28,14 @@ type SettingsDoc = Partial<AppSettings> & { _id: string; at?: Date };
 
 const SETTINGS_ID = "app";
 
-const defaultWarehouseOptions: WarehouseOption[] = [
+const defaultWarehouseOptions: FeeOption[] = [
   { id: "6m", label: "۶ ماهه", amount: site.warehouseFee },
   { id: "12m", label: "۱۲ ماهه", amount: site.warehouseFee12 },
+];
+
+const defaultShippingOptions: FeeOption[] = [
+  { id: "6m", label: "۶ ماهه", amount: site.shippingFee },
+  { id: "12m", label: "۱۲ ماهه", amount: site.shippingFee12 },
 ];
 
 const defaults: AppSettings = {
@@ -36,6 +45,7 @@ const defaults: AppSettings = {
   warehouseFee: site.warehouseFee,
   shippingFee: site.shippingFee,
   warehouseOptions: defaultWarehouseOptions,
+  shippingOptions: defaultShippingOptions,
   telegramUser: site.telegramUser,
   payoutCard: site.payoutCard,
   payoutHolder: site.payoutHolder,
@@ -76,19 +86,24 @@ function optionId(value: unknown, fallback: string) {
   return fallback;
 }
 
-function warehouseOptions(value: unknown, fallbackFee: number): WarehouseOption[] {
+function feeOptions(
+  value: unknown,
+  fallback: FeeOption[],
+  legacyFee: number,
+  legacyFee12: number,
+): FeeOption[] {
   if (!Array.isArray(value) || !value.length) {
-    if (fallbackFee > 0) {
+    if (legacyFee > 0) {
       return [
-        { id: "6m", label: "۶ ماهه", amount: fallbackFee },
-        { id: "12m", label: "۱۲ ماهه", amount: site.warehouseFee12 },
+        { id: "6m", label: "۶ ماهه", amount: legacyFee },
+        { id: "12m", label: "۱۲ ماهه", amount: legacyFee12 },
       ];
     }
-    return defaultWarehouseOptions.map((row) => ({ ...row }));
+    return fallback.map((row) => ({ ...row }));
   }
 
   const seen = new Set<string>();
-  const rows: WarehouseOption[] = [];
+  const rows: FeeOption[] = [];
   value.forEach((row, index) => {
     if (!row || typeof row !== "object") return;
     const raw = row as Record<string, unknown>;
@@ -101,18 +116,30 @@ function warehouseOptions(value: unknown, fallbackFee: number): WarehouseOption[
     rows.push({ id, label, amount });
   });
 
-  return rows.length ? rows : defaultWarehouseOptions.map((row) => ({ ...row }));
+  return rows.length ? rows : fallback.map((row) => ({ ...row }));
 }
 
 function normalize(doc: Partial<AppSettings> | null | undefined): AppSettings {
-  const options = warehouseOptions(doc?.warehouseOptions, money(doc?.warehouseFee, defaults.warehouseFee));
+  const warehouse = feeOptions(
+    doc?.warehouseOptions,
+    defaultWarehouseOptions,
+    money(doc?.warehouseFee, defaults.warehouseFee),
+    site.warehouseFee12,
+  );
+  const shipping = feeOptions(
+    doc?.shippingOptions,
+    defaultShippingOptions,
+    money(doc?.shippingFee, defaults.shippingFee),
+    site.shippingFee12,
+  );
   return {
     registrationFee: money(doc?.registrationFee, defaults.registrationFee),
     insuranceFee: money(doc?.insuranceFee, defaults.insuranceFee),
     guaranteeFee: money(doc?.guaranteeFee, defaults.guaranteeFee),
-    warehouseFee: options[0]?.amount ?? defaults.warehouseFee,
-    shippingFee: money(doc?.shippingFee, defaults.shippingFee),
-    warehouseOptions: options,
+    warehouseFee: warehouse[0]?.amount ?? defaults.warehouseFee,
+    shippingFee: shipping[0]?.amount ?? defaults.shippingFee,
+    warehouseOptions: warehouse,
+    shippingOptions: shipping,
     telegramUser: telegram(doc?.telegramUser, defaults.telegramUser),
     payoutCard: cardNumber(doc?.payoutCard, defaults.payoutCard),
     payoutHolder: text(doc?.payoutHolder, defaults.payoutHolder, 80),
@@ -148,4 +175,8 @@ export async function saveSettings(input: Partial<AppSettings>) {
 
 export function findWarehouseOption(settings: AppSettings, optionIdValue: string) {
   return settings.warehouseOptions.find((row) => row.id === optionIdValue) || settings.warehouseOptions[0] || null;
+}
+
+export function findShippingOption(settings: AppSettings, optionIdValue: string) {
+  return settings.shippingOptions.find((row) => row.id === optionIdValue) || settings.shippingOptions[0] || null;
 }

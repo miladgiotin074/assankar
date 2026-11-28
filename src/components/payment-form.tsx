@@ -18,6 +18,7 @@ export function PaymentForm({
   telegramUser = site.telegramUser,
   action: submitAction = submitReceipt,
   options,
+  optionsTitle = "مدت",
   initialOptionId = "",
   lockedOptionLabel = "",
 }: {
@@ -29,6 +30,7 @@ export function PaymentForm({
   telegramUser?: string;
   action?: PayAction;
   options?: { id: string; label: string; amount: number }[];
+  optionsTitle?: string;
   initialOptionId?: string;
   lockedOptionLabel?: string;
 }) {
@@ -83,12 +85,12 @@ export function PaymentForm({
   return (
     <form action={action} className="pay-form">
       {hasOptions ? (
-        <section className="pay-options" aria-label="گزینه مدت انبار">
+        <section className="pay-options" aria-label={`گزینه ${optionsTitle}`}>
           <div className="pay-options-head">
-            <h2>مدت انبار</h2>
+            <h2>{optionsTitle}</h2>
             <span>یکی را انتخاب کنید</span>
           </div>
-          <div className="pay-options-list" role="radiogroup" aria-label="مدت انبار">
+          <div className="pay-options-list" role="radiogroup" aria-label={optionsTitle}>
             {options!.map((row) => {
               const on = row.id === (selected?.id || "");
               return (

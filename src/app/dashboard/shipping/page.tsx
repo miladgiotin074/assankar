@@ -45,7 +45,7 @@ async function ShippingGate() {
         <p className="pay-kicker">مرحله باربری</p>
         <h2 className="pay-title">واریز هزینهٔ باربری</h2>
         <p className="pay-lead">
-          بعد از تأیید انبار، هزینهٔ باربری را به همان کارت واریز کنید و عکس فیش را بفرستید.
+          مدت باربری را انتخاب کنید، مبلغ همان گزینه را به کارت واریز کنید و عکس فیش را بفرستید.
         </p>
       </div>
       <BankCard
@@ -55,13 +55,17 @@ async function ShippingGate() {
         purpose="فقط برای واریز هزینهٔ باربری آسان‌کار"
       />
       <PaymentForm
-        amount={settings.shippingFee}
+        amount={payment?.amount ?? settings.shippingOptions[0]?.amount ?? settings.shippingFee}
         status={status}
         receiptUrl={receiptUrl}
         title="هزینه باربری"
         nextHint="بعد از تأیید فیش باربری، خلاصهٔ مبالغ واریزی در داشبورد می‌آید."
         telegramUser={settings.telegramUser}
         action={submitShippingReceipt}
+        options={settings.shippingOptions}
+        optionsTitle="مدت باربری"
+        initialOptionId={payment?.optionId || settings.shippingOptions[0]?.id || ""}
+        lockedOptionLabel={payment?.optionLabel || ""}
       />
     </div>
   );

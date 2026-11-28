@@ -63,6 +63,7 @@ async function WarehouseGate() {
         telegramUser={settings.telegramUser}
         action={submitWarehouseReceipt}
         options={settings.warehouseOptions}
+        optionsTitle="مدت انبار"
         initialOptionId={payment?.optionId || settings.warehouseOptions[0]?.id || ""}
         lockedOptionLabel={payment?.optionLabel || ""}
       />

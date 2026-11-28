@@ -259,7 +259,10 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
                 label: warehouse.optionLabel ? `هزینهٔ انبار · ${warehouse.optionLabel}` : "هزینهٔ انبار",
                 amount: warehouse.amount,
               },
-              { label: "هزینهٔ باربری", amount: shipping.amount },
+              {
+                label: shipping.optionLabel ? `هزینهٔ باربری · ${shipping.optionLabel}` : "هزینهٔ باربری",
+                amount: shipping.amount,
+              },
             ]}
           />
         ) : null}
@@ -394,18 +397,21 @@ async function DashboardHome({ phoneRaw }: { phoneRaw: string }) {
           </div>
         ) : warehoused && (shipStatus === "none" || shipStatus === "rejected") ? (
           <div id={shipStatus === "none" ? "dash-next" : undefined} className="dash-cta-wrap is-violet">
-            <Link href="/dashboard/shipping" className="dash-cta is-violet">
+            <Link href="/dashboard/shipping" className="dash-cta is-violet is-rich">
               <span className="dash-cta-no" aria-hidden="true">
                 ۷
               </span>
               <span>
                 <span className="dash-cta-kicker">مرحله بعد</span>
                 <strong>واریز هزینهٔ باربری</strong>
-                <small>
-                  {shipStatus === "rejected"
-                    ? "فیش باربری رد شد؛ دوباره واریز و ارسال کنید."
-                    : "مبلغ باربری را واریز کنید و عکس فیش را بفرستید."}
-                </small>
+                {shipStatus === "rejected" ? (
+                  <small>فیش باربری رد شد؛ دوباره واریز و ارسال کنید.</small>
+                ) : (
+                  <small className="dash-cta-note">
+                    <span>مدت ۶ یا ۱۲ ماهه را در صفحهٔ واریز انتخاب می‌کنید.</span>
+                    <span>مبلغ همان گزینه را واریز کنید و عکس فیش را بفرستید.</span>
+                  </small>
+                )}
               </span>
               <span className="dash-cta-go">
                 واریز

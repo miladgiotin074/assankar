@@ -3,7 +3,7 @@ import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Collection } from "mongodb";
 import { collection } from "@/lib/mongo";
-import { findWarehouseOption, getSettings } from "@/lib/settings";
+import { findShippingOption, findWarehouseOption, getSettings } from "@/lib/settings";
 
 export type PaymentStatus = "pending" | "approved" | "rejected";
 export type PaymentKind = "registration" | "insurance" | "guarantee" | "warehouse" | "shipping";
@@ -59,7 +59,10 @@ async function amountFor(kind: PaymentKind, optionId = "") {
     const option = findWarehouseOption(settings, optionId);
     return option?.amount ?? settings.warehouseFee;
   }
-  if (kind === "shipping") return settings.shippingFee;
+  if (kind === "shipping") {
+    const option = findShippingOption(settings, optionId);
+    return option?.amount ?? settings.shippingFee;
+  }
   return settings.registrationFee;
 }
 
@@ -302,11 +305,15 @@ export async function saveReceipt(
   let amount = await amountFor(kind, optionId);
   let resolvedOptionId: string | undefined;
   let optionLabel: string | undefined;
-  if (kind === "warehouse") {
+  if (kind === "warehouse" || kind === "shipping") {
     const settings = await getSettings();
-    const option = findWarehouseOption(settings, optionId);
+    const option =
+      kind === "warehouse" ? findWarehouseOption(settings, optionId) : findShippingOption(settings, optionId);
     if (!option) {
-      return { ok: false as const, error: "یکی از گزینه‌های مدت انبار را انتخاب کنید." };
+      return {
+        ok: false as const,
+        error: kind === "warehouse" ? "یکی از گزینه‌های مدت انبار را انتخاب کنید." : "یکی از گزینه‌های مدت باربری را انتخاب کنید.",
+      };
     }
     amount = option.amount;
     resolvedOptionId = option.id;
@@ -342,7 +349,7 @@ export async function saveReceipt(
       $unset: {
         reviewedAt: "",
         reviewedBy: "",
-        ...(kind === "warehouse" ? {} : { optionId: "", optionLabel: "" }),
+        ...(kind === "warehouse" || kind === "shipping" ? {} : { optionId: "", optionLabel: "" }),
       },
     },
     { upsert: true },
